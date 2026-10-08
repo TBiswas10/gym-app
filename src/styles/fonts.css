@@ -1,0 +1,16 @@
+/* Self-hosted fonts from the design handoff. No third-party font requests. */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 500 900;
+  font-stretch: 100% 125%;
+  font-display: swap;
+  src: url('../app/fonts/Archivo-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('../app/fonts/Figtree-latin.woff2') format('woff2');
+}

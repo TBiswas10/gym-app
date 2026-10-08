@@ -1,0 +1,4 @@
+/* App shell. The only deviations from components.css:
+   .screen is fixed 390x844 in the design; on a real phone it fills the screen. */
+.screen.fill{width:100%;height:100dvh}
+html,body{overscroll-behavior:none}

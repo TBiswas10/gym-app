@@ -1,0 +1,21 @@
+# dependencies and build output
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# secrets: never commit
+.env
+.env.*
+!.env.example
+
+# local tooling
+.vercel/
+.claude/
+supabase/.temp/
+.DS_Store
+
+# 11 MB design export; keep it local
+design/Workout Tracker.html
+.gstack/
