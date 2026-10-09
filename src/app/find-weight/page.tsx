@@ -6,8 +6,8 @@ import { FindWeightView, type Candidate } from "./FindWeightView";
 export const dynamic = "force-dynamic";
 
 /** One exercise at a time: the one asked for, or today's weighted exercises that have no starting weight yet. */
-export default async function FindWeightPage({ searchParams }: { searchParams: Promise<{ slug?: string; date?: string }> }) {
-  const { slug, date } = await searchParams;
+export default async function FindWeightPage({ searchParams }: { searchParams: Promise<{ slug?: string; date?: string; all?: string }> }) {
+  const { slug, date, all } = await searchParams;
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
   const uid = auth?.claims?.sub;
@@ -20,7 +20,14 @@ export default async function FindWeightPage({ searchParams }: { searchParams: P
 
   let slugs: string[] = [];
   if (slug && /^[a-z]{2,20}$/.test(slug)) slugs = [slug];
-  else {
+  else if (all) {
+    // Re-run setup for any exercise in your plan.
+    const { data: tpl } = await supabase.from("program_templates").select("id").eq("user_id", uid).eq("plan_type", state.plan_type).maybeSingle();
+    if (tpl) {
+      const { data: rows } = await supabase.from("template_exercises").select("exercise_slug, weekday, position").eq("template_id", tpl.id).order("weekday").order("position");
+      slugs = [...new Set((rows ?? []).map((r) => r.exercise_slug))];
+    }
+  } else {
     const origin = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : sydneyToday();
     const { data: tpl } = await supabase.from("program_templates").select("id").eq("user_id", uid).eq("plan_type", state.plan_type).maybeSingle();
     if (tpl) {
@@ -35,7 +42,7 @@ export default async function FindWeightPage({ searchParams }: { searchParams: P
     supabase.from("user_exercise_settings").select("exercise_slug, start_weight_kg").in("exercise_slug", slugs).not("start_weight_kg", "is", null),
   ]);
   const done = new Set((have ?? []).map((h) => h.exercise_slug));
-  const only = !!slug; // asked for one by name: always offer it, even if it already has a weight
+  const only = !!slug || !!all; // asked for by name or re-running: offer them even if they already have a weight
   const list: Candidate[] = slugs
     .map((s) => exs?.find((e) => e.slug === s))
     .filter((e): e is NonNullable<typeof e> => !!e && e.kind === "weight" && (only || !done.has(e.slug)))

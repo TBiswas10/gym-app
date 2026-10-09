@@ -54,6 +54,10 @@ describe("suggestNext: only when the top of the range is hit on BOTH sets", () =
   it("holds when soreness has been high", () => {
     expect(suggestNext(upper, lt(30, [12, 12]), { highSoreness: true })).toMatchObject({ action: "hold", reason: "soreness" });
   });
+  it("holds when you chose Hold at a check-in", () => {
+    expect(suggestNext(upper, lt(30, [12, 12]), { hold: true })).toMatchObject({ action: "hold", kg: 30, reason: "review" });
+    expect(verdict(upper, [{ kg: 30, reps: 12, secs: null }, { kg: 30, reps: 12, secs: null }], { hold: true })).toMatchObject({ up: false });
+  });
   it("adds time for planks when both holds reach the top", () => {
     expect(suggestNext(plank, lt(null, [], [40, 40]))).toMatchObject({ action: "up", secs: 45 });
     expect(suggestNext(plank, lt(null, [], [40, 35]))).toMatchObject({ action: "hold", secs: 40 });

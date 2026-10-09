@@ -3,6 +3,8 @@ import { programmeComplete, programmeWeek, isSetupWeek, sydneyDate, weekDates, l
 import { buildStrip, freeDays, missedCard, type MissedCard, type Override, type OverrideAction, type StripDay } from "../schedule";
 import type { ExerciseKind } from "../plan";
 import { highSoreness } from "../progression";
+import { checkInDue } from "../stats";
+import { suggestDeload } from "../review";
 
 export interface DayExercise {
   slug: string;
@@ -41,6 +43,9 @@ export interface TodayData {
   weekSets: number;
   toGo: string[]; // weekday names still to do this week
   highSoreness: boolean; // soreness 4-5 for three sessions in a row
+  checkIn: number | null; // a week 4/8/12 check-in that is ready
+  deloadSuggested: boolean; // weeks 6-8, none taken yet
+  inDeload: boolean; // this week is a deload week (half the sets)
 }
 
 const KINDS: ExerciseKind[] = ["weight", "timed", "bodyweight"];
@@ -49,7 +54,7 @@ const KINDS: ExerciseKind[] = ["weight", "timed", "bodyweight"];
 export async function loadToday(supabase: ServerClient, uid: string, now = new Date()): Promise<TodayData | null> {
   const today = sydneyDate(now);
 
-  const { data: state } = await supabase.from("program_state").select("start_date, plan_type").maybeSingle();
+  const { data: state } = await supabase.from("program_state").select("start_date, plan_type, deload_weeks").maybeSingle();
   if (!state) return null;
   const planType = state.plan_type as "5day" | "3day";
 
@@ -74,14 +79,15 @@ export async function loadToday(supabase: ServerClient, uid: string, now = new D
   const dates = weekDates(today);
   const [mon, sun] = [dates[0], dates[6]];
 
-  const [workoutsRes, overridesRes, restRes, settingsRes, soreRes] = await Promise.all([
+  const [workoutsRes, overridesRes, restRes, settingsRes, soreRes, reviewsRes] = await Promise.all([
     supabase.from("workouts").select("id, planned_date").eq("status", "completed"),
     supabase.from("schedule_overrides").select("planned_date, action, moved_to_date, created_at").gte("planned_date", mon).lte("planned_date", sun),
     supabase.from("cardio_entries").select("kind, logged_on").in("kind", ["walk", "stretch"]).gte("logged_on", mon).lte("logged_on", sun),
     supabase.from("user_exercise_settings").select("exercise_slug").not("start_weight_kg", "is", null),
     supabase.from("checkins").select("soreness").not("soreness", "is", null).order("created_at", { ascending: false }).limit(3),
+    supabase.from("reviews").select("week").not("applied_at", "is", null),
   ]);
-  for (const r of [workoutsRes, overridesRes, restRes, settingsRes, soreRes]) if (r.error) throw r.error;
+  for (const r of [workoutsRes, overridesRes, restRes, settingsRes, soreRes, reviewsRes]) if (r.error) throw r.error;
 
   const withWeight = new Set((settingsRes.data ?? []).map((s) => s.exercise_slug));
 
@@ -154,6 +160,9 @@ export async function loadToday(supabase: ServerClient, uid: string, now = new D
     weekDone: sessionsThisWeek.filter((d) => d.status === "done").length,
     weekPlan: liftWeekdays.length,
     weekSets,
+    checkIn: checkInDue(week, (reviewsRes.data ?? []).map((r) => r.week)),
+    deloadSuggested: suggestDeload(week, state.deload_weeks),
+    inDeload: state.deload_weeks.includes(week),
     highSoreness: highSoreness([...(soreRes.data ?? []).map((r) => r.soreness as number)].reverse()),
     toGo: strip.filter((d) => d.sessionOrigin && d.date >= today && d.status !== "done").map((d) => longDay(d.weekday)),
   };

@@ -22,7 +22,7 @@ function friendly(message: string): string {
   return "Something went wrong. Try again in a moment.";
 }
 
-export function LoginForm({ initialProblem }: { initialProblem: string | null }) {
+export function LoginForm({ initialProblem, deleted = false }: { initialProblem: string | null; deleted?: boolean }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
   const [method, setMethod] = useState<Method>("password");
@@ -96,6 +96,13 @@ export function LoginForm({ initialProblem }: { initialProblem: string | null })
           <h1 className="t-display">{headline}</h1>
           <p className="t-body c-2">Short sessions. Simple tracking. 45 to 50 minutes, start to finish.</p>
         </div>
+
+        {deleted && (
+          <div className="banner banner-success" role="status">
+            <Icon name="circle-check" />
+            <span><b>Your account is deleted.</b> Everything was removed.</span>
+          </div>
+        )}
 
         {!sent && (
           <div className="col g4" style={{ marginTop: "var(--space-2)" }}>

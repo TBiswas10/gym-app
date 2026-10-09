@@ -167,7 +167,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const [chatMode, setChatMode] = useState<"idle" | "confirm" | "error">("idle");
   const [finishing, setFinishing] = useState(false);
 
-  const verdictInfo = ex && complete && !editing ? verdictFor(exSpec(ex), ex.sets, { setup: meta.setup, highSoreness: meta.highSoreness }) : null;
+  const verdictInfo = ex && complete && !editing ? verdictFor(exSpec(ex), ex.sets, { setup: meta.setup, highSoreness: meta.highSoreness, hold: meta.hold }) : null;
   const pb = ex && complete && !editing && !ex.swapped ? isPB(ex.exKind, ex.last, ex.sets) : false;
 
   const nextLabel = next ? (next.kind === "ex" ? dispName(next) : next.kind === "cardio" ? "Cardio" : next.kind === "cool" ? "Cool-down" : "Warm-up") : null;

@@ -12,7 +12,7 @@ const ex = (slug: string, name: string, over: Partial<InitExercise> = {}): InitE
   last: { kg: 30, reps: [12, 12], secs: [] }, startWeightKg: null, notes: "", backup: `${name} backup`, logged: [], variant: null, ...over,
 });
 const init = (over: Partial<WorkoutInit> = {}): WorkoutInit => ({
-  workoutId: W, loggedOn: "2026-10-08", light: false, setup: false, highSoreness: false,
+  workoutId: W, loggedOn: "2026-10-08", light: false, setup: false, highSoreness: false, hold: false,
   exercises: [ex("chest", "Chest press"), ex("lat", "Lat pulldown", { last: { kg: 35, reps: [10, 11], secs: [] } }), ex("plank", "Plank", { kind: "timed", repLo: 20, repHi: 40, step: 5, increment: 5, last: { kg: null, reps: [], secs: [30, 30] } })],
   skipped: [],
   cardio: { machine: "bike", plannedMinutes: 10, lastParams: { bike: { res: 6, rpm: 75, min: 9 } }, logged: null, newId: "c-1" },

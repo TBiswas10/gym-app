@@ -98,6 +98,7 @@ export interface WorkoutInit {
   light: boolean;
   setup: boolean;
   highSoreness: boolean;
+  hold: boolean; // chose Hold at a check-in
   exercises: InitExercise[];
   skipped: string[];
   cardio: {
@@ -116,7 +117,7 @@ export function buildState(init: WorkoutInit): WState {
   for (const e of init.exercises) {
     const spec: Spec = { kind: e.kind, repLo: e.repLo, repHi: e.repHi, step: e.step, increment: e.increment };
     const swapped = !!e.variant;
-    const pre = prefill(spec, swapped ? null : e.last, { startWeightKg: e.startWeightKg, light: init.light, ctx: { setup: init.setup, highSoreness: init.highSoreness } });
+    const pre = prefill(spec, swapped ? null : e.last, { startWeightKg: e.startWeightKg, light: init.light, ctx: { setup: init.setup, highSoreness: init.highSoreness, hold: init.hold } });
     const lastSet = e.logged[e.logged.length - 1];
     steps.push({
       kind: "ex", slug: e.slug, name: e.name, backup: e.backup, exKind: e.kind, range: [e.repLo, e.repHi], planned: e.sets,

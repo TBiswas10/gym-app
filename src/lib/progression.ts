@@ -24,9 +24,10 @@ export interface Spec {
 export interface Context {
   setup?: boolean; // weeks 1-2
   highSoreness?: boolean;
+  hold?: boolean; // you chose "Hold" at a week 4/8/12 check-in
 }
 
-export type Reason = "top-hit" | "below-top" | "setup" | "soreness" | "no-history";
+export type Reason = "top-hit" | "below-top" | "setup" | "soreness" | "review" | "no-history";
 
 export interface Suggestion {
   action: "up" | "hold";
@@ -55,6 +56,7 @@ export function suggestNext(spec: Spec, last: LastTime | null, ctx: Context = {}
   });
   if (ctx.setup) return hold("setup");
   if (ctx.highSoreness) return hold("soreness");
+  if (ctx.hold) return hold("review");
 
   if (spec.kind === "timed") {
     if (!bothAtTop(last.secs, spec.repHi)) return hold("below-top");
@@ -140,6 +142,9 @@ export function verdict(spec: Spec, sets: SetValue[], ctx: Context = {}): Verdic
 
   if (ctx.setup) {
     return { up: false, title: "Hold this weight", sub: "Stay here for the first two weeks and focus on smooth reps." };
+  }
+  if (top && ctx.hold) {
+    return { up: false, title: "Hold this weight", sub: `You hit ${spec.repHi}${unit} on both sets. You chose to hold at your check-in, so same weight for now.` };
   }
   if (top && ctx.highSoreness) {
     return { up: false, title: "Hold this weight", sub: `You hit ${spec.repHi}${unit} on both sets, but soreness has been high. Hold for now.` };

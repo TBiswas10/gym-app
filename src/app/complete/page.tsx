@@ -19,12 +19,13 @@ export default async function CompletePage({ searchParams }: { searchParams: Pro
   const { data: workout } = await supabase.from("workouts").select("id, day_name, started_at, ended_at, planned_date").eq("id", w).maybeSingle();
   if (!workout) redirect("/");
 
-  const [{ data: sets }, { data: cardio }, { data: recent }, { data: exInfo }, { data: existing }] = await Promise.all([
+  const [{ data: sets }, { data: cardio }, { data: recent }, { data: exInfo }, { data: existing }, { data: prog }] = await Promise.all([
     supabase.from("sets").select("exercise_slug, set_number, variant, weight_kg, reps, seconds").eq("workout_id", w).order("position").order("set_number"),
     supabase.from("cardio_entries").select("kind, minutes").eq("workout_id", w).limit(1),
     supabase.from("workouts").select("id").eq("status", "completed").neq("id", w).order("planned_date", { ascending: false }).limit(12),
     supabase.from("exercises").select("slug, name, kind"),
-    supabase.from("checkins").select("soreness, energy, notes").eq("workout_id", w).maybeSingle(),
+    supabase.from("checkins").select("soreness, energy, notes, bodyweight_kg").eq("workout_id", w).maybeSingle(),
+    supabase.from("program_state").select("track_bodyweight").maybeSingle(),
   ]);
 
   const order = (recent ?? []).map((r) => r.id);
@@ -67,6 +68,8 @@ export default async function CompletePage({ searchParams }: { searchParams: Pro
         soreness: existing?.soreness ?? 2,
         energy: existing?.energy ?? 4,
         notes: existing?.notes ?? "",
+        trackBodyweight: !!prog?.track_bodyweight,
+        bodyweight: existing?.bodyweight_kg != null ? String(existing.bodyweight_kg) : "",
       }}
     />
   );

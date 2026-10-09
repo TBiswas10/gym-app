@@ -62,7 +62,10 @@ export async function saveCheckin(formData: FormData) {
   const soreness = Number(formData.get("soreness"));
   const energy = Number(formData.get("energy"));
   const notes = String(formData.get("notes") ?? "").trim().slice(0, 500);
-  if (!/^[0-9a-f-]{36}$/i.test(workoutId) || ![soreness, energy].every((n) => Number.isInteger(n) && n >= 1 && n <= 5)) redirect(`/complete?w=${workoutId}&problem=1`);
+  const bwRaw = String(formData.get("bodyweight") ?? "").trim();
+  const bodyweight = bwRaw === "" ? null : Number(bwRaw);
+  if (bodyweight !== null && !(Number.isFinite(bodyweight) && bodyweight >= 20 && bodyweight <= 400)) redirect(`/complete?w=${encodeURIComponent(workoutId)}&problem=1`);
+  if (!/^[0-9a-f-]{36}$/i.test(workoutId) || ![soreness, energy].every((n) => Number.isInteger(n) && n >= 1 && n <= 5)) redirect(`/complete?w=${encodeURIComponent(workoutId)}&problem=1`);
 
   const supabase = await createClient();
   const { data: w } = await supabase.from("workouts").select("id, status, planned_date").eq("id", workoutId).maybeSingle();
@@ -70,11 +73,11 @@ export async function saveCheckin(formData: FormData) {
   if (w.status === "in_progress") await supabase.from("workouts").update({ status: "completed", ended_at: new Date().toISOString() }).eq("id", workoutId);
 
   const { data: existing } = await supabase.from("checkins").select("id").eq("workout_id", workoutId).maybeSingle();
-  const row = { soreness, energy, notes: notes || null };
+  const row = { soreness, energy, notes: notes || null, ...(bodyweight !== null ? { bodyweight_kg: Math.round(bodyweight * 10) / 10 } : {}) };
   const { error } = existing
     ? await supabase.from("checkins").update(row).eq("id", existing.id)
     : await supabase.from("checkins").insert({ ...row, workout_id: workoutId, checked_on: sydneyToday() });
-  if (error) redirect(`/complete?w=${workoutId}&problem=1`);
+  if (error) redirect(`/complete?w=${encodeURIComponent(workoutId)}&problem=1`);
   revalidatePath("/");
   redirect("/");
 }

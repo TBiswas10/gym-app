@@ -8,6 +8,7 @@ import { countLine, estimateMinutes, formatTarget, liftMinutes, WARMUP_MIN } fro
 import type { StripDay } from "@/lib/schedule";
 import type { PlanDay, TodayData } from "@/lib/server/today-data";
 import { chooseMissed, setLight, toggleRestLog, undoMissed, type ActionResult } from "./actions";
+import { setDeloadWeek } from "./plan/actions";
 
 const joinNames = (names: string[]): string =>
   names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
@@ -26,6 +27,7 @@ export function TodayView({ data }: { data: TodayData }) {
   const todayIdx = Math.max(0, strip.findIndex((d) => d.date === today));
   const [sel, setSel] = useState(todayIdx);
   const [moving, setMoving] = useState(false);
+  const [deloadHidden, setDeloadHidden] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -248,6 +250,39 @@ export function TodayView({ data }: { data: TodayData }) {
                 </button>
               </>
             )}
+          </section>
+        )}
+
+        {data.checkIn && (
+          <Link className="verdict verdict-up" href={`/review?week=${data.checkIn}`} style={{ textDecoration: "none", color: "var(--text)" }}>
+            <span className="round round-accent"><Icon name="calendar" /></span>
+            <span className="col" style={{ flex: 1 }}>
+              <strong>Week {data.checkIn} check-in is ready</strong>
+              <span className="t-small c-2">See how it’s going and pick what’s next</span>
+            </span>
+            <span className="c-accent"><Icon name="chevron-right" /></span>
+          </Link>
+        )}
+
+        {data.inDeload && (
+          <div className="banner banner-info" role="status">
+            <Icon name="info" />
+            <span className="col">
+              <span><b>Deload week.</b> Half the sets, same weights. Easy does it.</span>
+              <button type="button" className="link" style={{ background: "none", border: 0, padding: 0, alignSelf: "flex-start" }} disabled={pending} onClick={() => run(() => setDeloadWeek(data.week, false))}>Not this week</button>
+            </span>
+          </div>
+        )}
+
+        {data.deloadSuggested && !data.inDeload && !deloadHidden && (
+          <section className="card card-raised">
+            <span className="t-eyebrow c-2">Week {data.week}</span>
+            <h2 className="t-heading">Take an easier week?</h2>
+            <p className="t-small c-2">Every 6 to 8 weeks a deload week keeps you fresh: same weights, half the sets (1 each).</p>
+            <div className="grid2">
+              <button type="button" className="btn btn-secondary" onClick={() => setDeloadHidden(true)}>Not now</button>
+              <button type="button" className="btn btn-primary" disabled={pending} onClick={() => run(() => setDeloadWeek(data.week, true))}>Make it a deload</button>
+            </div>
           </section>
         )}
 

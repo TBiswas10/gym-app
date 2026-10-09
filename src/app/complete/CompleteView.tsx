@@ -23,6 +23,8 @@ export interface CompleteData {
   soreness: number;
   energy: number;
   notes: string;
+  trackBodyweight: boolean;
+  bodyweight: string;
 }
 
 export function CompleteView({ workoutId, data, problem }: { workoutId: string; data: CompleteData; problem: boolean }) {
@@ -93,6 +95,12 @@ export function CompleteView({ workoutId, data, problem }: { workoutId: string; 
             <input id="energy" className="slider" type="range" min={1} max={5} step={1} value={energy} style={{ "--pct": `${(energy - 1) * 25}%` } as React.CSSProperties} onChange={(e) => setEnergy(Number(e.target.value))} aria-valuetext={`${energy}, ${ENERGY[energy - 1]}`} />
             <div className="row t-caption c-2" style={{ justifyContent: "space-between", textTransform: "none", letterSpacing: 0 }}><span>1 Drained</span><span>5 Buzzing</span></div>
           </div>
+          {data.trackBodyweight && (
+            <div className="field">
+              <label className="field-label" htmlFor="bw">Bodyweight (kg), once a week</label>
+              <input id="bw" name="bodyweight" className="input" type="number" inputMode="decimal" step="0.1" min="20" max="400" defaultValue={data.bodyweight} placeholder="Optional" />
+            </div>
+          )}
           <div className="field">
             <label className="field-label" htmlFor="cnotes">Notes</label>
             <textarea id="cnotes" name="notes" className="input" rows={3} defaultValue={data.notes} maxLength={500} placeholder="Anything to remember for next time?" />

@@ -93,6 +93,7 @@ export type Database = {
     Functions: {
       clone_template: { Args: { p_plan_type: string }; Returns: string };
       delete_my_account: { Args: never; Returns: undefined };
+      replace_day_exercises: { Args: { p_template: string; p_weekday: number; p_rows: Json }; Returns: undefined };
       start_program: { Args: { p_plan_type: string; p_start_date: string }; Returns: undefined };
     };
     Enums: { [_ in never]: never };

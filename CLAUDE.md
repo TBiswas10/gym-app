@@ -82,7 +82,7 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 4. Active workout (sets, last-time, rest + session timers, suggestions, undo, edit/delete)  (built, awaiting phone test)
 5. Cardio cards  (built)
 6. Chat quick-log (pure rule-based parser + confirmation card)  (built)
-7. Progress charts, week 4/8/12 reviews, Plan editor, Library + form guides, CSV export, account deletion
+7. Progress charts, week 4/8/12 reviews, Plan editor, Library + form guides, CSV export, account deletion  (built, awaiting phone test)
 7b. Remote MCP server in this app (streamable HTTP, official SDK, authenticated, rate limited, logged)
 8. Web push for rest-timer end, safe areas, offline + error states
 9. Optional: server-side LLM call for messy chat input

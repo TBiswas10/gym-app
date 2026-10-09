@@ -4,6 +4,7 @@ import { isSetupWeek, programmeWeek, sydneyDate, weekDates, weekdayOf } from "..
 import { defaultMachine, isMachine, type Feel, type MachineId, type Params } from "../cardio";
 import { highSoreness, type LastTime } from "../progression";
 import type { ExerciseKind } from "../plan";
+import { effectOf } from "../review";
 import type { CatalogItem } from "../parser";
 import type { InitExercise, SetVal, WorkoutInit } from "../workout-state";
 
@@ -30,6 +31,7 @@ export interface WorkoutPage {
     light: boolean;
     setup: boolean;
     highSoreness: boolean;
+    hold: boolean;
   };
   guides: Record<string, Guide>;
   catalog: CatalogItem[];
@@ -126,6 +128,8 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
   const mySets = mySetsRes.data ?? [];
   const deload = (state.deload_weeks ?? []).includes(week);
   const setup = isSetupWeek(week);
+  const { data: reviews } = await supabase.from("reviews").select("week, chosen, applied_at").eq("chosen", "hold").not("applied_at", "is", null);
+  const reviewHold = (reviews ?? []).some((r) => effectOf("hold", r.week).holdWeeks.includes(week));
   const sore = highSoreness([...(soreRes.data ?? []).map((r) => r.soreness as number)].reverse());
 
   const guides: Record<string, Guide> = {};
@@ -177,6 +181,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
     light,
     setup,
     highSoreness: sore,
+    hold: reviewHold,
     exercises,
     skipped: w.skipped_exercises,
     cardio: {
@@ -194,7 +199,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
       init,
       meta: {
         workoutId: w.id, sessionName: w.day_name, startedAt: w.started_at, cardioName: day.cardio_name, cardioLabel: day.cardio_label,
-        week, deload, restAlerts: state.rest_alerts ?? true, light, setup, highSoreness: sore,
+        week, deload, restAlerts: state.rest_alerts ?? true, light, setup, highSoreness: sore, hold: reviewHold,
       },
       guides, catalog, lastBySlug, lastCardio,
     },
