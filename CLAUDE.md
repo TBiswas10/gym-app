@@ -48,11 +48,13 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 - `sets.set_number` is 1 or 2 (plan fact). Client-generated UUIDs make offline retries idempotent.
 - `delete_my_account()` (SECURITY DEFINER, own account only) cascades all data. No service-role key anywhere.
 - Current week is derived from `start_date` and the Sydney date, never stored, so it cannot drift.
+- Migrations are applied through the Supabase MCP (`apply_migration`); the file name must use the version the DB records
+  (see `list_migrations`) so the repo and DB history match. Seed data is applied with `execute_sql`.
 - Later migrations: `push_subscriptions` (step 8), MCP rate limit + request log (step 7b).
 
 ## Build order (stop after each step for testing)
 1. Setup, PWA manifest + icons, Supabase login, tokens in Tailwind  (done, tested)
-2. Database tables + RLS + seed  **<- done, awaiting apply + test**
+2. Database tables + RLS + seed  (applied to the gym-app Supabase project 2026-10-09, verified)
 3. Login polish, install guide, Today screen
 4. Active workout (sets, last-time, rest + session timers, suggestions, undo, edit/delete)
 5. Cardio cards
