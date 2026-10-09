@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { DebugBadge } from "@/components/DebugBadge";
 import { KeyboardFit } from "@/components/KeyboardFit";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { BG } from "@/lib/tokens";
@@ -31,7 +30,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ServiceWorker />
         <KeyboardFit />
-        <DebugBadge />
         {children}
       </body>
     </html>
