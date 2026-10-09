@@ -1,8 +1,10 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useLayoutEffect, useRef } from "react";
-import { classifySwipe, neighbourTab, rubberband } from "@/lib/tabs";
+import { useEffect, useLayoutEffect, useRef, useTransition } from "react";
+import { haptic } from "@/lib/haptics";
+import { Icon } from "@/components/Icon";
+import { classifySwipe, neighbourTab, PULL_THRESHOLD, rubberband } from "@/lib/tabs";
 
 // Swipe left/right to move between tabs, like paging in an iPhone app: the page follows the finger 1:1, a flick
 // throws it off the edge at the speed you let go, and the next tab slides in from the other side.
@@ -30,6 +32,10 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
   // Which side the next page enters from (+1 = right), set when a swipe commits.
   const entering = useRef<0 | 1 | -1>(0);
   const reduce = useRef(false);
+  const ptr = useRef<HTMLDivElement>(null);
+  const refreshing = useRef(false);
+  const [pending, startTransition] = useTransition();
+  const settle = useRef<() => void>(() => {});
 
   useEffect(() => {
     reduce.current = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -60,7 +66,33 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
       el.style.transform = x || y ? `translate3d(${x}px,${y}px,0)` : "";
     };
 
+    // The little circle that drops in while you pull: turns as you pull, spins while refreshing.
+    const showPull = (dy: number, spinning = false) => {
+      const el2 = ptr.current;
+      if (!el2) return;
+      const p = Math.min(1, dy / PULL_THRESHOLD);
+      el2.style.opacity = String(spinning ? 1 : p);
+      el2.style.transform = `translate3d(-50%, 0, 0) rotate(${spinning ? 0 : Math.round(p * 270)}deg)`;
+      el2.classList.toggle("is-spinning", spinning);
+      el2.classList.toggle("is-ready", p >= 1);
+    };
+    const hidePull = () => {
+      const el2 = ptr.current;
+      if (!el2) return;
+      el2.style.opacity = "0";
+      el2.classList.remove("is-spinning", "is-ready");
+    };
+    settle.current = () => {
+      move(0, 0, 320);
+      hidePull();
+    };
+
+    let ready = false;
     const start = (e: TouchEvent) => {
+      if (refreshing.current) {
+        mode = "skip";
+        return;
+      }
       const here = pathRef.current;
       if (e.touches.length !== 1 || (neighbourTab(here, 1) === null && neighbourTab(here, -1) === null)) {
         mode = "skip";
@@ -79,6 +111,7 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
 
     const onMove = (e: TouchEvent) => {
       if (mode === "idle" || mode === "skip") return;
+      if (mode === "h" || mode === "v") e.cancelable && e.preventDefault(); // we own the gesture: no native bounce on top
       const t = e.touches[0];
       const dx = t.clientX - sx;
       const dy = t.clientY - sy;
@@ -95,6 +128,10 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
         move(atEdge ? rubberband(dx) : dx, 0);
       } else if (mode === "v") {
         move(0, rubberband(dy, 844, 0.35));
+        showPull(dy);
+        const nowReady = dy >= PULL_THRESHOLD;
+        if (nowReady && !ready) haptic("tap");
+        ready = nowReady;
       }
     };
 
@@ -108,9 +145,27 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
       const velocity = e.timeStamp - lt < 100 ? vx : 0;
       const result = classifySwipe(dx, dy, velocity, top);
       const target = result === "next" ? neighbourTab(pathRef.current, 1) : result === "prev" ? neighbourTab(pathRef.current, -1) : null;
+      ready = false;
+      if (result === "refresh") {
+        // Hold the page just below the finger's drop point with a spinner until the new data has arrived.
+        refreshing.current = true;
+        move(0, 56, 220);
+        showPull(PULL_THRESHOLD, true);
+        const began = Date.now();
+        startTransition(() => router.refresh());
+        window.setTimeout(() => {
+          // Never trap the screen if the refresh is slow or offline.
+          if (refreshing.current) {
+            refreshing.current = false;
+            settle.current();
+          }
+        }, 8000);
+        void began;
+        return;
+      }
       if (!target) {
         move(0, 0, 320); // not far enough: settle back
-        if (result === "refresh") router.refresh();
+        hidePull();
         return;
       }
       const dir = result === "next" ? -1 : 1; // next tab: this page leaves to the left
@@ -137,11 +192,13 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
 
     const cancel = () => {
       mode = "idle";
+      ready = false;
       move(0, 0, 250);
+      hidePull();
     };
 
     el.addEventListener("touchstart", start, { passive: true });
-    el.addEventListener("touchmove", onMove, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
     el.addEventListener("touchend", end, { passive: true });
     el.addEventListener("touchcancel", cancel, { passive: true });
     return () => {
@@ -152,8 +209,21 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
     };
   }, [router]);
 
+  // Refresh finished: let the spinner show for a moment, then ease the page back up.
+  useEffect(() => {
+    if (pending || !refreshing.current) return;
+    const t = window.setTimeout(() => {
+      refreshing.current = false;
+      settle.current();
+    }, 450);
+    return () => window.clearTimeout(t);
+  }, [pending]);
+
   return (
     <div ref={host} className="swipe-host">
+      <div ref={ptr} className="ptr" aria-hidden="true">
+        <Icon name="rotate-ccw" />
+      </div>
       {children}
     </div>
   );

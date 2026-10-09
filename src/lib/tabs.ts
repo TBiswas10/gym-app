@@ -18,6 +18,9 @@ export function neighbourTab(path: string, dir: 1 | -1): string | null {
   return TABS[i + dir]?.href ?? null;
 }
 
+/** How far (px of finger travel) you pull down before letting go refreshes. */
+export const PULL_THRESHOLD = 90;
+
 export type SwipeResult = "next" | "prev" | "refresh" | "none";
 
 /** Decide what a finished drag means. dx/dy in px (positive = right/down), vx = horizontal px/ms. */
@@ -25,7 +28,7 @@ export function classifySwipe(dx: number, dy: number, vx: number, atTop: boolean
   const ax = Math.abs(dx);
   const ay = Math.abs(dy);
   if (ax > ay * 1.5 && (ax > 80 || (ax > 30 && Math.abs(vx) > 0.5))) return dx < 0 ? "next" : "prev";
-  if (atTop && dy > 90 && ay > ax * 1.5) return "refresh";
+  if (atTop && dy > PULL_THRESHOLD && ay > ax * 1.5) return "refresh";
   return "none";
 }
 

@@ -51,3 +51,10 @@
 .num-input{appearance:none;background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;color:var(--text);text-align:center;padding:0;min-width:0;width:100%;caret-color:var(--accent)}
 .num-input:focus{outline:none;border-bottom-color:var(--accent)}
 .chip-row-tight{display:flex;gap:var(--space-2);flex-wrap:wrap}
+/* Pull to refresh indicator (rides above the page as it is pulled down) */
+.swipe-host{position:relative}
+.ptr{position:absolute;top:-48px;left:50%;width:40px;height:40px;border-radius:50%;background:var(--raised);border:1px solid var(--border-strong);color:var(--text-2);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;z-index:5;transform:translate3d(-50%,0,0)}
+.ptr.is-ready{color:var(--accent);border-color:var(--accent)}
+.ptr.is-spinning{color:var(--accent);border-color:var(--accent)}
+.ptr.is-spinning svg{animation:spin .8s linear infinite}
+@media (prefers-reduced-motion:reduce){.ptr.is-spinning svg{animation:none}}
