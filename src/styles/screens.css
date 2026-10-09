@@ -33,3 +33,10 @@
 .media-thumb{width:56px;height:56px;flex:none;aspect-ratio:1}
 @keyframes media-flip{0%{opacity:0}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.media img+img{animation:none;opacity:0}}
+/* Rest timer ring (workout). 2*pi*31 = 194.8 */
+.rest-ring{position:relative;width:72px;height:72px;flex:none;display:flex;align-items:center;justify-content:center}
+.rest-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.rest-ring circle{fill:none;stroke-width:6;stroke-linecap:round}
+.rest-ring-track{stroke:var(--border)}
+.rest-ring-fill{stroke:var(--accent);stroke-dasharray:194.8;transition:stroke-dashoffset 1s linear}
+.rest-ring .num-m{position:relative}

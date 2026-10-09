@@ -6,7 +6,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { fmtNum } from "@/lib/format";
 import type { MachineId } from "@/lib/cardio";
-import { cardioGuard, mmss, restPercent, restRemaining, restSecondsAfter, sessionClock } from "@/lib/timers";
+import { haptic } from "@/lib/haptics";
+import { cardioGuard, extendRest, mmss, restPercent, restRemaining, restSecondsAfter, sessionClock } from "@/lib/timers";
 import { isPB, verdict as verdictFor } from "@/lib/progression";
 import type { Entry, ParseContext } from "@/lib/parser";
 import type { Source } from "@/lib/ops";
@@ -106,6 +107,34 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const restLeft = rest ? restRemaining(rest.end, nowMs) : 0;
   const resting = !!rest && restLeft > 0;
 
+  // Rest finished while you're looking at the app: a tap on the haptic engine.
+  const wasResting = useRef(false);
+  useEffect(() => {
+    if (wasResting.current && !resting && rest === null) return;
+    if (wasResting.current && !resting) haptic("success");
+    wasResting.current = resting;
+  }, [resting, rest]);
+
+  // Keep the screen on during the session so the timer never goes dark mid-set (iPhone 16.4+, Home Screen app).
+  useEffect(() => {
+    let lock: { release: () => Promise<void> } | null = null;
+    const get = async () => {
+      try {
+        const wl = (navigator as unknown as { wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> } }).wakeLock;
+        if (wl && document.visibilityState === "visible") lock = await wl.request("screen");
+      } catch {
+        /* not allowed here: fine */
+      }
+    };
+    void get();
+    const vis = () => document.visibilityState === "visible" && void get();
+    document.addEventListener("visibilitychange", vis);
+    return () => {
+      document.removeEventListener("visibilitychange", vis);
+      void lock?.release().catch(() => {});
+    };
+  }, []);
+
   // ---- rest alert (push). The on-screen timer works without it; this only adds the notification.
   const [notify, setNotify] = useState(false);
   const [notifyNote, setNotifyNote] = useState<string | null>(null);
@@ -119,7 +148,9 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     if (p) void cancelRestPush(p);
   };
 
+  const lastAlert = useRef<{ title: string; body: string } | null>(null);
   const startRest = (seconds: number, alert?: { title: string; body: string }) => {
+    lastAlert.current = alert ?? null;
     const r = { end: Date.now() + seconds * 1000, total: seconds };
     setRest(r);
     try {
@@ -129,6 +160,21 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     }
     cancelPush();
     if (notify && alert) void scheduleRestPush(seconds, alert.title, alert.body).then((pid) => { pushId.current = pid; });
+  };
+  // +15 s / -15 s on a running rest; the phone alert moves with it.
+  const nudgeRest = (seconds: number) => {
+    if (!rest) return;
+    haptic("tap");
+    const r = extendRest(rest, seconds, Date.now());
+    setRest(r);
+    try {
+      window.localStorage.setItem(REST_KEY, JSON.stringify({ ...r, workoutId: id }));
+    } catch {
+      /* ignore */
+    }
+    cancelPush();
+    const left = Math.ceil((r.end - Date.now()) / 1000);
+    if (notify && lastAlert.current && left >= 10) void scheduleRestPush(left, lastAlert.current.title, lastAlert.current.body).then((pid) => { pushId.current = pid; });
   };
   const stopRest = () => {
     setRest(null);
@@ -214,6 +260,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const onLog = () => {
     if (!ex) return;
     const n = ex.sets.length + 1;
+    haptic("tap");
     run(logSet(ws, crypto.randomUUID()), { toast: `Nice work. Set ${n} logged.`, undoable: true });
     startRest(restSecondsAfter(n), restAlertText({ name: dispName(ex), setsLogged: n, planned: ex.planned, kind: ex.exKind, kg: ex.kg, reps: ex.reps, secs: ex.secs, nextName: nextLabel }));
   };
@@ -321,20 +368,28 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
         )}
 
         {resting && rest && (
-          <div className="col g1 anim-in">
+          <div className="col g2 anim-in">
             <div className="row g3">
+              <div className="rest-ring" role="progressbar" aria-label="Rest remaining" aria-valuenow={restLeft} aria-valuemin={0} aria-valuemax={rest.total}>
+                <svg viewBox="0 0 72 72" aria-hidden="true">
+                  <circle className="rest-ring-track" cx="36" cy="36" r="31" />
+                  <circle className="rest-ring-fill" cx="36" cy="36" r="31" style={{ strokeDashoffset: `${(1 - Math.min(1, restLeft / Math.max(1, rest.total))) * 194.8}` }} />
+                </svg>
+                <span className="num-m">{mmss(restLeft)}</span>
+              </div>
               <div className="col grow g1">
-                <div className="row between baseline"><span className="t-eyebrow c-accent">Rest</span><span className="num-m">{mmss(restLeft)}</span></div>
-                <div className="bar" role="progressbar" aria-label="Rest remaining" aria-valuenow={restLeft} aria-valuemin={0} aria-valuemax={rest.total}>
-                  <i style={{ width: `${restPercent(restLeft, rest.total)}%` }} />
-                </div>
+                <span className="t-eyebrow c-accent">Rest</span>
+                <span className="t-caption c-2" style={{ fontWeight: 600 }}>{notify ? "Alert when rest ends: on" : "Alert when rest ends: off"}</span>
               </div>
               <button type="button" className={`icon-btn ${notify ? "is-on" : ""}`} aria-pressed={notify} aria-label="Notify me when rest ends" onClick={toggleNotify}>
                 <Icon name={notify ? "bell" : "bell-off"} />
               </button>
-              <button type="button" className="btn btn-secondary" onClick={stopRest}>Skip</button>
             </div>
-            <span className="t-caption c-2" style={{ fontWeight: 600 }}>{notify ? "Alert when rest ends: on" : "Alert when rest ends: off"}</span>
+            <div className="row g2">
+              <button type="button" className="btn btn-secondary grow" onClick={() => nudgeRest(-15)}>−15 s</button>
+              <button type="button" className="btn btn-secondary grow" onClick={() => nudgeRest(15)}>+15 s</button>
+              <button type="button" className="btn btn-tertiary" onClick={stopRest}>Skip</button>
+            </div>
             {notifyNote && <div className="banner banner-info" role="status"><Icon name="info" /><span>{notifyNote}</span></div>}
           </div>
         )}

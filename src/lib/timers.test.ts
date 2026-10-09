@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardioGuard, elapsedSeconds, mmss, restPercent, restRemaining, restSecondsAfter, sessionClock, timerLevel } from "./timers";
+import { cardioGuard, extendRest, elapsedSeconds, mmss, restPercent, restRemaining, restSecondsAfter, sessionClock, timerLevel } from "./timers";
 
 const T0 = Date.UTC(2026, 9, 8, 9, 0, 0); // a session start (stored timestamp)
 const sec = (n: number) => T0 + n * 1000;
@@ -80,5 +80,17 @@ describe("shorten-cardio guard", () => {
     expect(cardioGuard({ ...base, elapsedS: 46 * 60, cardioDone: true }).show).toBe(false);
     expect(cardioGuard({ ...base, elapsedS: 46 * 60, dismissed: true }).show).toBe(false);
     expect(cardioGuard({ ...base, elapsedS: 46 * 60, cardioMinutes: 3 }).show).toBe(false);
+  });
+});
+
+describe("extendRest", () => {
+  it("adds time to what is left and grows the total", () => {
+    const r = extendRest({ end: 100_000 + 30_000, total: 90 }, 15, 100_000);
+    expect(r.end).toBe(100_000 + 45_000);
+    expect(r.total).toBe(105);
+  });
+  it("never goes past 5 minutes or below zero", () => {
+    expect(extendRest({ end: 100_000 + 290_000, total: 300 }, 15, 100_000).end).toBe(100_000 + 300_000);
+    expect(extendRest({ end: 100_000 + 5_000, total: 90 }, -15, 100_000).end).toBe(100_000);
   });
 });

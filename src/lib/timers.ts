@@ -55,3 +55,15 @@ export function sessionClock(startMs: number, nowMs: number) {
   const elapsed = elapsedSeconds(startMs, nowMs);
   return { elapsed, label: mmss(elapsed), level: timerLevel(elapsed) };
 }
+
+export interface Rest {
+  end: number;
+  total: number;
+}
+
+/** Add (or take off) seconds on a running rest. It never goes below 0 s left or beyond 5 minutes in total. */
+export function extendRest(rest: Rest, seconds: number, nowMs: number): Rest {
+  const left = Math.max(0, (rest.end - nowMs) / 1000);
+  const next = Math.min(300, Math.max(0, left + seconds));
+  return { end: nowMs + next * 1000, total: Math.max(rest.total, Math.min(300, rest.total + Math.max(0, seconds))) };
+}
