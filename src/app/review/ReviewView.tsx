@@ -1,5 +1,6 @@
 "use client";
 
+import { EdgeBack } from "@/components/EdgeBack";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Icon, type IconName } from "@/components/Icon";
@@ -37,6 +38,7 @@ export function ReviewView({ data }: { data: ReviewData }) {
 
   return (
     <div className="screen fill">
+      <EdgeBack />
       <div className="scroll">
         <div className="topbar">
           <Link className="btn btn-tertiary" href="/progress" style={{ paddingLeft: "var(--space-2)" }}>Progress</Link>

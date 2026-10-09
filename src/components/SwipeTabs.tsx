@@ -1,12 +1,13 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { classifySwipe, neighbourTab, rubberband } from "@/lib/tabs";
 
-// Swipe left/right to move between tabs; pull down at the top to refresh.
-// The page follows the finger 1:1 (rubber-banding at the ends), then eases back or goes.
-// Drags that start in a field or in anything that scrolls sideways (chip rows, charts) are left alone.
+// Swipe left/right to move between tabs, like paging in an iPhone app: the page follows the finger 1:1, a flick
+// throws it off the edge at the speed you let go, and the next tab slides in from the other side.
+// Pull down at the top to refresh. Drags that start in a field or in anything that scrolls sideways are left alone.
+const EASE = "cubic-bezier(0.2, 0.8, 0.2, 1)"; // --ease-out
 function leaveAlone(el: Element | null): boolean {
   for (let n: Element | null = el; n && n.tagName !== "BODY"; n = n.parentElement) {
     if (n.matches("input, textarea, select, [data-no-swipe]")) return true;
@@ -26,6 +27,26 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
   const host = useRef<HTMLDivElement>(null);
   const pathRef = useRef(path);
   pathRef.current = path;
+  // Which side the next page enters from (+1 = right), set when a swipe commits.
+  const entering = useRef<0 | 1 | -1>(0);
+  const reduce = useRef(false);
+
+  useEffect(() => {
+    reduce.current = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
+
+  // The new tab has arrived: start it just off the edge and slide it in.
+  useLayoutEffect(() => {
+    const el = host.current;
+    const side = entering.current;
+    if (!el || side === 0) return;
+    entering.current = 0;
+    el.style.transition = "none";
+    el.style.transform = `translate3d(${side * el.offsetWidth}px,0,0)`;
+    void el.offsetWidth; // commit the start position before animating
+    el.style.transition = `transform 300ms ${EASE}`;
+    el.style.transform = "";
+  }, [path]);
 
   useEffect(() => {
     const el = host.current;
@@ -33,10 +54,9 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
     let sx = 0, sy = 0, lx = 0, lt = 0, vx = 0;
     let mode: "idle" | "pending" | "h" | "v" | "skip" = "idle";
     let top = false;
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const move = (x: number, y: number, animate: boolean) => {
-      el.style.transition = animate && !reduce ? "transform var(--dur-base) var(--ease-out)" : "none";
+    const move = (x: number, y: number, ms = 0) => {
+      el.style.transition = ms && !reduce.current ? `transform ${ms}ms ${EASE}` : "none";
       el.style.transform = x || y ? `translate3d(${x}px,${y}px,0)` : "";
     };
 
@@ -54,7 +74,7 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
       mode = leaveAlone(e.target as Element) ? "skip" : "pending";
       const sp = scrollParent(e.target as Element);
       top = !sp || sp.scrollTop <= 0;
-      el.style.transition = "none";
+      el.style.transition = "none"; // a drag can grab a page that is still settling
     };
 
     const onMove = (e: TouchEvent) => {
@@ -67,14 +87,14 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
         mode = Math.abs(dx) > Math.abs(dy) * 1.5 ? "h" : top && dy > 0 ? "v" : "skip";
       }
       const dt = e.timeStamp - lt;
-      if (dt > 0) vx = (t.clientX - lx) / dt;
+      if (dt > 0) vx = 0.7 * ((t.clientX - lx) / dt) + 0.3 * vx; // smoothed px/ms
       lx = t.clientX;
       lt = e.timeStamp;
       if (mode === "h") {
         const atEdge = (dx < 0 && neighbourTab(pathRef.current, 1) === null) || (dx > 0 && neighbourTab(pathRef.current, -1) === null);
-        move(atEdge ? rubberband(dx) : dx, 0, false);
+        move(atEdge ? rubberband(dx) : dx, 0);
       } else if (mode === "v") {
-        move(0, rubberband(dy, 844, 0.35), false);
+        move(0, rubberband(dy, 844, 0.35));
       }
     };
 
@@ -83,16 +103,41 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
       mode = "idle";
       if (was !== "h" && was !== "v") return;
       const t = e.changedTouches[0];
-      const result = classifySwipe(t.clientX - sx, t.clientY - sy, e.timeStamp - lt < 80 ? vx : 0, top);
+      const dx = t.clientX - sx;
+      const dy = t.clientY - sy;
+      const velocity = e.timeStamp - lt < 100 ? vx : 0;
+      const result = classifySwipe(dx, dy, velocity, top);
       const target = result === "next" ? neighbourTab(pathRef.current, 1) : result === "prev" ? neighbourTab(pathRef.current, -1) : null;
-      move(0, 0, true);
-      if (target) router.push(target);
-      else if (result === "refresh") router.refresh();
+      if (!target) {
+        move(0, 0, 320); // not far enough: settle back
+        if (result === "refresh") router.refresh();
+        return;
+      }
+      const dir = result === "next" ? -1 : 1; // next tab: this page leaves to the left
+      const w = el.offsetWidth;
+      if (reduce.current) {
+        move(0, 0);
+        router.push(target);
+        return;
+      }
+      // Carry the finger's speed: the faster the flick, the quicker it leaves.
+      const ms = Math.round(Math.min(260, Math.max(110, (w - Math.abs(dx)) / Math.max(Math.abs(velocity), 0.9))));
+      move(dir * w, 0, ms);
+      entering.current = (-dir) as 1 | -1;
+      router.push(target);
+      // If the new tab is slow to arrive, don't leave a blank screen.
+      const from = pathRef.current;
+      window.setTimeout(() => {
+        if (pathRef.current === from && entering.current !== 0) {
+          entering.current = 0;
+          move(0, 0, 250);
+        }
+      }, 900);
     };
 
     const cancel = () => {
       mode = "idle";
-      move(0, 0, true);
+      move(0, 0, 250);
     };
 
     el.addEventListener("touchstart", start, { passive: true });

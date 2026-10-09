@@ -1,5 +1,6 @@
 "use client";
 
+import { EdgeBack } from "@/components/EdgeBack";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
@@ -48,6 +49,7 @@ export function GuideView({ slug, name, kit, kind, muscles, tabs, series, step, 
 
   return (
     <div className="screen fill">
+      <EdgeBack />
       <div className="scroll">
         <div className="topbar">
           <Link className="btn btn-tertiary" href="/library" style={{ paddingLeft: "var(--space-2)" }}>Library</Link>
