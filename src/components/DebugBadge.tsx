@@ -15,7 +15,7 @@ export function DebugBadge() {
       const bar = document.querySelector(".tabbar")?.getBoundingClientRect();
       const scr = document.querySelector(".screen.fill")?.getBoundingClientRect();
       const css = getComputedStyle(document.documentElement).getPropertyValue("--safe-bottom");
-      setT(`inner ${innerHeight} screen ${screen.height} envBottom ${safe} --safe-bottom ${css.trim()} tabbar h${bar?.height.toFixed(0)} bottom${bar?.bottom.toFixed(0)} screenEl h${scr?.height.toFixed(0)} standalone ${String((navigator as unknown as { standalone?: boolean }).standalone)} v5`);
+      setT(`inner ${innerHeight} screen ${screen.height} envBottom ${safe} --safe-bottom ${css.trim()} tabbar h${bar?.height.toFixed(0)} bottom${bar?.bottom.toFixed(0)} screenEl h${scr?.height.toFixed(0)} standalone ${String((navigator as unknown as { standalone?: boolean }).standalone)} v6 fit${document.documentElement.hasAttribute("data-fit")}`);
     };
     read();
     const id = setInterval(read, 1500);
