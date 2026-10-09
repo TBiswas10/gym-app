@@ -13,19 +13,21 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
   const { data: auth } = await supabase.auth.getClaims();
   if (!auth?.claims?.sub) redirect("/login");
 
-  const { data: ex } = await supabase.from("exercises").select("*").eq("slug", slug).maybeSingle();
-  if (!ex) notFound();
-
-  const [{ data: mine }, { data: workouts }, { data: active }] = await Promise.all([
+  // One round trip, all at once (the database is far from the server, so every extra query costs time).
+  const [{ data: ex }, { data: mine }, { data: active }, { data: rows }] = await Promise.all([
+    supabase.from("exercises").select("*").eq("slug", slug).maybeSingle(),
     supabase.from("user_exercise_settings").select("increment_kg, notes").eq("exercise_slug", slug).maybeSingle(),
-    supabase.from("workouts").select("id, planned_date").eq("status", "completed").order("planned_date"),
     supabase.from("workouts").select("id").eq("status", "in_progress").maybeSingle(),
+    supabase
+      .from("sets")
+      .select("workout_id, exercise_slug, set_number, weight_kg, reps, seconds, variant, workouts!inner(planned_date, status)")
+      .eq("exercise_slug", slug)
+      .eq("workouts.status", "completed"),
   ]);
-  let series: number[] = [];
-  if (workouts?.length) {
-    const { data: sets } = await supabase.from("sets").select("workout_id, exercise_slug, set_number, weight_kg, reps, seconds, variant").eq("exercise_slug", slug).in("workout_id", workouts.map((w) => w.id));
-    series = topSeries(workouts, sets ?? [], slug, ex.kind as ExerciseKind, 8).map((p) => p.value);
-  }
+  if (!ex) notFound();
+  const sets = (rows ?? []).map(({ workouts: _w, ...s }) => s);
+  const workouts = [...new Map((rows ?? []).map((r) => [r.workout_id, { id: r.workout_id, planned_date: (r.workouts as unknown as { planned_date: string }).planned_date }])).values()].sort((a, b) => a.planned_date.localeCompare(b.planned_date));
+  const series = workouts.length ? topSeries(workouts, sets, slug, ex.kind as ExerciseKind, 8).map((p) => p.value) : [];
 
   return (
     <GuideView

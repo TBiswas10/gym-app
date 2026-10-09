@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { KeyboardFit } from "@/components/KeyboardFit";
 import { ServiceWorker } from "@/components/ServiceWorker";
+import { SPLASH_SIZES, splashKey, splashMedia } from "@/lib/splash";
 import { BG } from "@/lib/tokens";
 import "./globals.css";
 import "@/styles/fonts.css";
@@ -12,7 +13,12 @@ import "@/styles/app.css";
 export const metadata: Metadata = {
   title: "Workout Tracker",
   description: "Short sessions. Simple tracking. 45 to 50 minutes, start to finish.",
-  appleWebApp: { capable: true, statusBarStyle: "black", title: "Workout" },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black",
+    title: "Workout",
+    startupImage: SPLASH_SIZES.map((s) => ({ url: `/splash/${splashKey(s)}`, media: splashMedia(s) })),
+  },
   icons: { apple: "/icons/180", icon: "/icons/192" },
   formatDetection: { telephone: false },
 };
@@ -22,12 +28,13 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: BG,
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-AU">
-      <body>
+    <html lang="en-AU" style={{ background: BG }}>
+      <body style={{ background: BG }}>
         <ServiceWorker />
         <KeyboardFit />
         {children}

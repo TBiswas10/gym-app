@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ExerciseMedia } from "@/components/ExerciseMedia";
 import { Icon } from "@/components/Icon";
@@ -20,6 +21,7 @@ const GROUPS = ["All", "Chest", "Back", "Shoulders", "Arms", "Legs", "Core"];
 const TABS = ["Setup", "How to do it", "Mistakes"];
 
 export function LibraryView({ items }: { items: LibItem[] }) {
+  const router = useRouter();
   const [filter, setFilter] = useState("All");
   const [open, setOpen] = useState<LibItem | null>(null);
   const [tab, setTab] = useState(0);
@@ -46,6 +48,7 @@ export function LibraryView({ items }: { items: LibItem[] }) {
               className="card"
               style={{ flexDirection: "row", alignItems: "center", gap: "var(--space-3)", textAlign: "left", color: "var(--text)", minHeight: 72, padding: "var(--space-3) var(--space-4)" }}
               aria-label={`Open guide for ${e.name}`}
+              onPointerDown={() => router.prefetch(`/library/${e.slug}`)}
               onClick={() => { setOpen(e); setTab(0); }}
             >
               <ExerciseMedia slug={e.slug} name={e.name} thumb />
@@ -89,7 +92,7 @@ export function LibraryView({ items }: { items: LibItem[] }) {
                 ))}
               </ol>
               <div className="banner banner-warning"><Icon name="triangle-alert" /><span>Sharp or joint pain? Stop and tell someone.</span></div>
-              <Link className="btn btn-secondary btn-block" href={`/library/${open.slug}`}>Open full guide and progress</Link>
+              <Link className="btn btn-secondary btn-block" prefetch href={`/library/${open.slug}`}>Open full guide and progress</Link>
             </div>
           </div>
         </>
