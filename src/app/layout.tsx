@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { KeyboardFit } from "@/components/KeyboardFit";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { BG } from "@/lib/tokens";
 import "./globals.css";
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en-AU">
       <body>
         <ServiceWorker />
+        <KeyboardFit />
         {children}
       </body>
     </html>

@@ -97,6 +97,7 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 - Sheets leave the way they arrived (`anim-out`, then unmount); scrim fades. Reduced motion swaps slides for short fades.
 - Tabs never wait: all four are prefetched (`prefetch` + `router.prefetch`), `staleTimes.dynamic = 30s` keeps visited ones, no skeleton (`loading.tsx` removed), tap lights the tab on pointer-down. Every write action calls `revalidatePath("/", "layout")` so cached tabs never show old data.
 - `SwipeTabs` (layout): swipe left/right between tabs (follows the finger, rubber-bands at the ends), pull down at the top to refresh. Logic in `src/lib/tabs.ts` (tested). Ignores fields and sideways-scrolling rows (`data-no-swipe` opts out).
+- Keyboard: `KeyboardFit` (root layout) shrinks `.screen.fill` to the visible area (`--app-h`) while the keyboard is open and swaps the home-indicator padding for `--space-3`, so bottom bars and fields stay clear. Audit (ios-design craft checks): contrast of text/text-2/accent passes 4.5:1; text-3 (3.9:1) is used only on disabled controls; icon-only buttons have labels; focus rings present.
 - Only `--dur-*` / `--ease-*` tokens; no new colours (so no translucent bars). No animation library added.
 
 ## Build order (stop after each step for testing)
