@@ -6,7 +6,7 @@ import { adjustParam, cleanParams, initialParams, MACHINES, type Feel, type Mach
 import type { Entry } from "./parser";
 import { finalSets } from "./parser";
 import type { ExerciseKind } from "./plan";
-import { prefill, type LastTime, type Spec } from "./progression";
+import { prefill, type LastTime, type Spec, type Stall } from "./progression";
 import type { Op, Source } from "./ops";
 
 export type Status = "todo" | "done" | "skipped";
@@ -25,6 +25,7 @@ export interface ExStep {
   backup: string;
   exKind: ExerciseKind;
   range: [number, number];
+  stall?: Stall | null;
   planned: number;
   step: number;
   increment: number;
@@ -86,6 +87,7 @@ export interface InitExercise {
   step: number;
   increment: number;
   last: LastTime | null;
+  stall?: Stall | null;
   startWeightKg: number | null;
   notes: string;
   backup: string;
@@ -121,7 +123,7 @@ export function buildState(init: WorkoutInit): WState {
     const lastSet = e.logged[e.logged.length - 1];
     steps.push({
       kind: "ex", slug: e.slug, name: e.name, backup: e.backup, exKind: e.kind, range: [e.repLo, e.repHi], planned: e.sets,
-      step: e.step, increment: e.increment, last: e.last, sets: e.logged,
+      step: e.step, increment: e.increment, last: e.last, stall: swapped ? null : e.stall ?? null, sets: e.logged,
       status: init.skipped.includes(e.slug) ? "skipped" : e.logged.length >= e.sets ? "done" : "todo",
       swapped, notes: e.notes, light: pre.light && !swapped,
       kg: lastSet ? (lastSet.kg ?? 0) : pre.kg,

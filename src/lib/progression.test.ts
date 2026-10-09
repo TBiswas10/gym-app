@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bothAtTop, highSoreness, isPB, lighten, prefill, roundToStep, suggestNext, verdict, type LastTime, type Spec } from "./progression";
+import { stallCheck, bothAtTop, highSoreness, isPB, lighten, prefill, roundToStep, suggestNext, verdict, type LastTime, type Spec } from "./progression";
 
 const upper: Spec = { kind: "weight", repLo: 8, repHi: 12, step: 2.5, increment: 2.5 };
 const legs: Spec = { kind: "weight", repLo: 8, repHi: 12, step: 5, increment: 5 };
@@ -151,5 +151,24 @@ describe("highSoreness", () => {
     expect(highSoreness([4, 5, 3])).toBe(false);
     expect(highSoreness([5, 5])).toBe(false);
     expect(highSoreness([])).toBe(false);
+  });
+});
+
+describe("stallCheck", () => {
+  const spec = { kind: "weight" as const, repLo: 8, repHi: 12, step: 2.5 };
+  const sess = (kg: number, reps: number[]) => ({ kg, reps, secs: [] });
+  it("flags 3 sessions at the same weight that never hit the top on both sets", () => {
+    const r = stallCheck(spec, [sess(40, [10, 9]), sess(40, [10, 10]), sess(40, [9, 9])]);
+    expect(r?.title).toBe("Same 40 kg for 3 sessions");
+    expect(r?.tip).toContain("12 reps");
+  });
+  it("is gentler when it's one rep away", () => {
+    expect(stallCheck(spec, [sess(40, [11, 11]), sess(40, [11, 10]), sess(40, [11, 11])])?.tip).toContain("One more rep");
+  });
+  it("says nothing when the weight changed, history is short, or the top was hit", () => {
+    expect(stallCheck(spec, [sess(42.5, [10, 10]), sess(40, [10, 10]), sess(40, [10, 10])])).toBeNull();
+    expect(stallCheck(spec, [sess(40, [10, 10]), sess(40, [10, 10])])).toBeNull();
+    expect(stallCheck(spec, [sess(40, [12, 12]), sess(40, [10, 10]), sess(40, [10, 10])])).toBeNull();
+    expect(stallCheck({ ...spec, kind: "timed" }, [sess(40, [10, 10]), sess(40, [10, 10]), sess(40, [10, 10])])).toBeNull();
   });
 });

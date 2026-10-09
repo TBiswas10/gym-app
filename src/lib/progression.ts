@@ -171,3 +171,31 @@ export function verdict(spec: Spec, sets: SetValue[], ctx: Context = {}): Verdic
 export function highSoreness(recent: number[], sessions = 3): boolean {
   return recent.length >= sessions && recent.slice(-sessions).every((s) => s >= 4);
 }
+
+export interface Stall {
+  sessions: number;
+  kg: number;
+  title: string;
+  tip: string;
+}
+
+/**
+ * Same weight for 3 sessions in a row without ever hitting the top of the range on both sets = stalled.
+ * `recent` is newest first. This only adds advice; the "up only when both sets hit the top" rule is unchanged.
+ */
+export function stallCheck(spec: { kind: ExerciseKind; repLo: number; repHi: number; step: number }, recent: LastTime[]): Stall | null {
+  if (spec.kind !== "weight" || recent.length < 3) return null;
+  const three = recent.slice(0, 3);
+  const kg = three[0].kg;
+  if (!kg || three.some((s) => s.kg !== kg || s.reps.length < 2)) return null;
+  if (three.some((s) => s.reps.every((r) => r >= spec.repHi))) return null; // it earned a jump at some point
+  const best = Math.max(...three.map((s) => Math.min(...s.reps)));
+  const small = spec.step > 1 ? 1 : spec.step;
+  const tip =
+    best >= spec.repHi - 1
+      ? `One more rep on each set earns the jump. If it stays stuck, a small step of ${fmtKg(small)} kg is fine.`
+      : `Aim for ${spec.repHi} reps on both sets before adding weight. If you can’t, try ${fmtKg(Math.max(0, kg - spec.step))} kg for a week and build back up.`;
+  return { sessions: 3, kg, title: `Same ${fmtKg(kg)} kg for 3 sessions`, tip };
+}
+
+const fmtKg = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(1));

@@ -40,3 +40,10 @@
 .rest-ring-track{stroke:var(--border)}
 .rest-ring-fill{stroke:var(--accent);stroke-dasharray:194.8;transition:stroke-dashoffset 1s linear}
 .rest-ring .num-m{position:relative}
+/* Consistency bars (Progress) */
+.consistency{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--space-1);align-items:end}
+.consistency-col{display:flex;flex-direction:column;align-items:center;gap:var(--space-1)}
+.consistency-track{width:100%;height:56px;border-radius:var(--radius-sm);background:var(--raised);display:flex;align-items:flex-end;overflow:hidden}
+.consistency-track i{display:block;width:100%;background:var(--border-strong);border-radius:var(--radius-sm)}
+.consistency-track i.is-full{background:var(--accent)}
+.consistency-col.is-now .t-caption{color:var(--accent)}

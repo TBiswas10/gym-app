@@ -1,7 +1,7 @@
 import type { ServerClient } from "../supabase/server";
 import { programmeWeek, sydneyDate, weekDates } from "../dates";
 import type { ExerciseKind } from "../plan";
-import { checkInDue, exercisesWithData, nextCheckIn, topSeries, weekCells, weekStats, type WeekCell } from "../stats";
+import { checkInDue, consistency, exercisesWithData, nextCheckIn, topSeries, weekCells, weekStats, type WeekCell } from "../stats";
 import { fmtNum } from "../format";
 
 export interface ProgressData {
@@ -11,6 +11,7 @@ export interface ProgressData {
   thisWeek: { sessions: number; planned: number; sets: number; groups: [string, number][]; pbs: { name: string; text: string }[] };
   trend: { soreness: number; energy: number }[];
   cells: { week: number; cell: WeekCell }[];
+  consistency: { weeks: { week: number; done: number; planned: number }[]; streak: number };
   next: number | null;
   due: number | null;
 }
@@ -74,6 +75,7 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
     },
     trend: [...(checkRes.data ?? [])].reverse().map((c) => ({ soreness: c.soreness as number, energy: c.energy as number })),
     cells: weekCells(week, done),
+    consistency: consistency(state?.start_date ?? today, workouts.map((w) => w.planned_date), planned, week),
     next: nextCheckIn(week, done),
     due: checkInDue(week, done),
   };

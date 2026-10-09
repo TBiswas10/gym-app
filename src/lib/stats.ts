@@ -1,5 +1,6 @@
 // Progress numbers. Pure functions over rows already loaded from the database.
 
+import { programmeWeek } from "./dates";
 import { isPB, type LastTime } from "./progression";
 import type { ExerciseKind } from "./plan";
 
@@ -140,4 +141,29 @@ export function strengthChange(points: SeriesPoint[]): { from: number; to: numbe
   const from = points[0].value;
   const to = points[points.length - 1].value;
   return { from, to, delta: Math.round((to - from) * 10) / 10 };
+}
+
+export interface WeekDone {
+  week: number;
+  done: number;
+  planned: number;
+}
+
+/** Sessions finished in each of the 12 programme weeks, against the plan, plus the current run of full weeks. */
+export function consistency(startDate: string, doneDates: string[], planned: number, currentWeek: number): { weeks: WeekDone[]; streak: number } {
+  const counts = Array.from({ length: 12 }, () => 0);
+  for (const d of doneDates) {
+    const w = programmeWeek(startDate, d);
+    if (w >= 1 && w <= 12) counts[w - 1]++;
+  }
+  const weeks = counts.map((done, i) => ({ week: i + 1, done, planned }));
+  // The current week is still in progress, so it only extends the run once it's full; it never breaks it.
+  let streak = 0;
+  for (let w = Math.min(currentWeek, 12); w >= 1; w--) {
+    const full = weeks[w - 1].done >= planned;
+    if (w === currentWeek && !full) continue;
+    if (!full) break;
+    streak++;
+  }
+  return { weeks, streak };
 }

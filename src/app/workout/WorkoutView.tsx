@@ -515,6 +515,13 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
               </div>
             )}
 
+            {!complete && ex.stall && (
+              <div className="banner banner-info" role="status">
+                <Icon name="info" />
+                <span><b>{ex.stall.title}.</b> {ex.stall.tip}</span>
+              </div>
+            )}
+
             <div className="grid2">
               <button type="button" className="btn btn-secondary" onClick={() => run(swap(ws), { toast: ex.swapped ? "Swap undone." : `Swapped to ${ex.backup}.`, undoable: true })}>
                 <Icon name="repeat" />{ex.swapped ? "Undo swap" : "Swap"}

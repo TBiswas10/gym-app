@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkInDue, exercisesWithData, nextCheckIn, strengthChange, topSeries, topValue, weekCells, weekStats, type HistSet, type HistWorkout } from "./stats";
+import { checkInDue, consistency, exercisesWithData, nextCheckIn, strengthChange, topSeries, topValue, weekCells, weekStats, type HistSet, type HistWorkout } from "./stats";
 import { average, effectOf, reasonFor, recommend, suggestDeload } from "./review";
 
 const W = (id: string, d: string): HistWorkout => ({ id, planned_date: d });
@@ -132,5 +132,25 @@ describe("deload every 6-8 weeks", () => {
   it("stops suggesting once one was taken recently", () => {
     expect(suggestDeload(7, [7])).toBe(false);
     expect(suggestDeload(7, [5])).toBe(false);
+  });
+});
+
+describe("consistency", () => {
+  // Programme starts Mon 2026-09-28: week 1 = 28 Sep - 4 Oct, week 2 = 5 - 11 Oct.
+  const start = "2026-09-28";
+  it("counts sessions per programme week", () => {
+    const r = consistency(start, ["2026-09-28", "2026-09-29", "2026-10-05"], 5, 2);
+    expect(r.weeks[0]).toEqual({ week: 1, done: 2, planned: 5 });
+    expect(r.weeks[1].done).toBe(1);
+  });
+  it("builds a streak of full weeks, not breaking on the week still in progress", () => {
+    const wk1 = ["2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-03"];
+    expect(consistency(start, wk1, 5, 2).streak).toBe(1);
+    expect(consistency(start, [...wk1, "2026-10-05"], 5, 2).streak).toBe(1);
+    expect(consistency(start, [], 5, 2).streak).toBe(0);
+  });
+  it("a missed full week ends the run", () => {
+    const wk2 = ["2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-10"];
+    expect(consistency(start, wk2, 5, 3).streak).toBe(1); // week 3 in progress, week 2 full, week 1 missed
   });
 });

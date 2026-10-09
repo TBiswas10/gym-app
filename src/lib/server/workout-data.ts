@@ -3,7 +3,7 @@ import type { ServerClient } from "../supabase/server";
 import type { Database } from "../database.types";
 import { isSetupWeek, programmeWeek, sydneyDate, weekDates, weekdayOf } from "../dates";
 import { defaultMachine, isMachine, type Feel, type MachineId, type Params } from "../cardio";
-import { highSoreness, type LastTime } from "../progression";
+import { highSoreness, stallCheck, type LastTime } from "../progression";
 import type { ExerciseKind } from "../plan";
 import { effectOf } from "../review";
 import type { CatalogItem } from "../parser";
@@ -59,6 +59,25 @@ export function lastTimes(rows: { workout_id: string; exercise_slug: string; set
         reps: ordered.map((s) => s.reps).filter((v): v is number => v !== null),
         secs: ordered.map((s) => s.seconds).filter((v): v is number => v !== null),
       };
+    }
+  }
+  return out;
+}
+
+/** Per exercise: up to `n` most recent completed sessions, newest first. */
+export function recentSessions(rows: { workout_id: string; exercise_slug: string; set_number: number; weight_kg: number | null; reps: number | null; seconds: number | null }[], workoutOrder: string[], n = 3): Record<string, LastTime[]> {
+  const out: Record<string, LastTime[]> = {};
+  for (const wid of workoutOrder) {
+    const bySlug = new Map<string, typeof rows>();
+    for (const r of rows) if (r.workout_id === wid) bySlug.set(r.exercise_slug, [...(bySlug.get(r.exercise_slug) ?? []), r]);
+    for (const [slug, sets] of bySlug) {
+      if ((out[slug]?.length ?? 0) >= n) continue;
+      const ordered = [...sets].sort((a, b) => a.set_number - b.set_number);
+      (out[slug] ??= []).push({
+        kg: ordered[0].weight_kg,
+        reps: ordered.map((s) => s.reps).filter((v): v is number => v !== null),
+        secs: ordered.map((s) => s.seconds).filter((v): v is number => v !== null),
+      });
     }
   }
   return out;
@@ -138,6 +157,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
     historySets = data ?? [];
   }
   const lastBySlug = lastTimes(historySets, workoutOrder);
+  const recentBySlug = recentSessions(historySets, workoutOrder, 3);
 
   const settings = new Map((settingsRes.data ?? []).map((s) => [s.exercise_slug, s]));
   const mySets = mySetsRes.data ?? [];
@@ -163,6 +183,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
       step: Number(ex.weight_step_kg),
       increment: Number(s?.increment_kg ?? ex.default_increment_kg),
       last: lastBySlug[e.exercise_slug] ?? null,
+      stall: setup ? null : stallCheck({ kind: asKind(ex.kind), repLo: e.rep_lo, repHi: e.rep_hi, step: Number(ex.weight_step_kg) }, recentBySlug[e.exercise_slug] ?? []),
       startWeightKg: s?.start_weight_kg != null ? Number(s.start_weight_kg) : null,
       notes: s?.notes ?? ex.default_notes ?? "",
       backup: ex.backup_name ?? "a similar exercise",

@@ -22,7 +22,7 @@ const progress = (over: Partial<ProgressData> = {}): ProgressData => ({
   ],
   thisWeek: { sessions: 3, planned: 5, sets: 32, groups: [["Legs", 8], ["Chest", 6], ["Shoulders", 6], ["Arms", 6], ["Back", 4], ["Core", 2]], pbs: [{ name: "Chest press", text: "30 kg × 12" }] },
   trend: [{ soreness: 4, energy: 2 }, { soreness: 3, energy: 3 }, { soreness: 2, energy: 4 }],
-  cells: weekCells(3), next: 4, due: null, ...over,
+  cells: weekCells(3), consistency: { weeks: Array.from({ length: 12 }, (_, i) => ({ week: i + 1, done: i < 2 ? 5 : i === 2 ? 3 : 0, planned: 5 })), streak: 2 }, next: 4, due: null, ...over,
 });
 
 describe("Progress", () => {
@@ -32,6 +32,12 @@ describe("Progress", () => {
     expect(out).toContain("wk-now");
     expect(out).toContain("wk-check");
   });
+  it("shows consistency and the run of full weeks", () => {
+    const out = renderToStaticMarkup(<ProgressView data={progress()} />);
+    expect(out).toContain("Consistency");
+    expect(out).toContain("2 full weeks in a row");
+  });
+
   it("has a friendly empty state", () => {
     const out = renderToStaticMarkup(<ProgressView data={progress({ empty: true, chips: [], trend: [], thisWeek: { sessions: 0, planned: 5, sets: 0, groups: [], pbs: [] } })} />);
     expect(out).toContain("Your first session shows up here");

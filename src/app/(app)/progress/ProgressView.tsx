@@ -107,6 +107,21 @@ export function ProgressView({ data }: { data: ProgressData }) {
           )}
         </section>
 
+        <section className="card" aria-label="Consistency">
+          <div className="row between baseline">
+            <h2 className="t-heading">Consistency</h2>
+            <span className="t-small c-2">{data.consistency.streak > 0 ? `${data.consistency.streak} ${data.consistency.streak === 1 ? "full week" : "full weeks"} in a row` : "Finish every planned session to start a run"}</span>
+          </div>
+          <div className="consistency" role="img" aria-label="Sessions finished each week against the plan">
+            {data.consistency.weeks.map((w) => (
+              <span key={w.week} className={`consistency-col ${w.week === data.week ? "is-now" : ""}`}>
+                <span className="consistency-track"><i style={{ height: `${Math.min(100, Math.round((w.done / Math.max(1, w.planned)) * 100))}%` }} className={w.done >= w.planned ? "is-full" : ""} /></span>
+                <span className="t-caption c-2">{w.week}</span>
+              </span>
+            ))}
+          </div>
+        </section>
+
         <section className="card">
           <h2 className="t-heading">12-week program</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(6,minmax(0,1fr))", gap: "var(--space-2)" }}>
