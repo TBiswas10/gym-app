@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ExerciseMedia } from "@/components/ExerciseMedia";
 import { Icon } from "@/components/Icon";
 import type { Guide } from "@/lib/server/workout-data";
 
@@ -26,6 +27,7 @@ export function GuideSheet({ guide, slug, onClose: done }: { guide: Guide; slug:
               <Icon name="x" />
             </button>
           </div>
+          <ExerciseMedia slug={slug} name={guide.name} />
           <div className="row g2 wrap">
             {guide.muscles.map((m, i) => (
               <span key={m} className={`tag ${i === 0 ? "tag-accent" : ""}`}>{m}</span>

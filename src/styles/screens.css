@@ -26,3 +26,10 @@
 .ios-row.hot{position:relative;background:var(--accent);color:var(--on-accent);font-weight:800;min-height:52px}
 .app-tile{width:52px;height:52px;border-radius:13px;background:var(--border)}
 .app-tile.ours{position:relative;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center}
+/* Exercise photos (Library, guides): two frames swapping. */
+.media{position:relative;display:block;overflow:hidden;aspect-ratio:3/2;width:100%;border-radius:var(--radius-sm);background:var(--raised)}
+.media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.media img+img{animation:media-flip 2s steps(1,end) infinite}
+.media-thumb{width:56px;height:56px;flex:none;aspect-ratio:1}
+@keyframes media-flip{0%{opacity:0}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.media img+img{animation:none;opacity:0}}

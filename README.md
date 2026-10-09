@@ -76,3 +76,6 @@ The app includes a remote MCP server so Claude can read and log your workouts. S
 - `src/app` routes, `src/styles` design tokens + component CSS, `src/lib` helpers, `src/proxy.ts` session guard.
 - `design/` design export reference. `tailwind.config.js` is the exported theme, used as-is.
 - `CLAUDE.md` project rules and build order.
+
+## Credits
+Exercise photos come from [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (public domain), saved in `public/exercises/<slug>/0.jpg` and `1.jpg`.

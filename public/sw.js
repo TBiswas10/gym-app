@@ -3,7 +3,7 @@
    2. Speed: static files (fonts, scripts, styles, icons) are cached after the first visit.
    3. Push: shows the "rest is over" notification. Works only once the app is on the iPhone Home Screen. */
 
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = "wt-" + VERSION;
 const SHELL = ["/offline", "/icons/192", "/icons/180", "/manifest.webmanifest"];
 
@@ -53,7 +53,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Static files never change under the same name: cache first.
-  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || url.pathname === "/manifest.webmanifest") {
+  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || url.pathname.startsWith("/exercises/") || url.pathname === "/manifest.webmanifest") {
     event.respondWith(
       caches.match(req).then(
         (hit) =>

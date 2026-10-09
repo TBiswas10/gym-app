@@ -3,6 +3,7 @@
 import { EdgeBack } from "@/components/EdgeBack";
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { ExerciseMedia } from "@/components/ExerciseMedia";
 import { Icon } from "@/components/Icon";
 import { LineChart } from "@/components/LineChart";
 import { fmtNum } from "@/lib/format";
@@ -54,6 +55,7 @@ export function GuideView({ slug, name, kit, kind, muscles, tabs, series, step, 
         <div className="topbar">
           <Link className="btn btn-tertiary" href="/library" style={{ paddingLeft: "var(--space-2)" }}>Library</Link>
         </div>
+        <ExerciseMedia slug={slug} name={name} />
         <div className="col g2">
           <h1 className="t-title">{name}</h1>
           <div className="chip-row" style={{ flexWrap: "wrap" }}>

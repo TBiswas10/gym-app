@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ExerciseMedia } from "@/components/ExerciseMedia";
 import { Icon } from "@/components/Icon";
 
 export interface LibItem {
@@ -47,7 +48,7 @@ export function LibraryView({ items }: { items: LibItem[] }) {
               aria-label={`Open guide for ${e.name}`}
               onClick={() => { setOpen(e); setTab(0); }}
             >
-              <span className="round round-subtle"><Icon name="dumbbell" /></span>
+              <ExerciseMedia slug={e.slug} name={e.name} thumb />
               <span className="col" style={{ flex: 1, minWidth: 0 }}>
                 <strong className="t-heading">{e.name}</strong>
                 <span className="t-small c-2">{e.group} · {e.kit}</span>
@@ -69,6 +70,7 @@ export function LibraryView({ items }: { items: LibItem[] }) {
                 <h2 className="t-title">{open.name}</h2>
                 <button type="button" className="icon-btn" aria-label="Close guide" onClick={() => setOpen(null)}><Icon name="x" /></button>
               </div>
+              <ExerciseMedia slug={open.slug} name={open.name} />
               <div className="row g2 wrap">
                 {open.muscles.map((m) => <span key={m} className="tag tag-accent">{m}</span>)}
                 <span className="tag">{open.kit}</span>
