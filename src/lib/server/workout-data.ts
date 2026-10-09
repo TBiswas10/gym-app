@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { ServerClient } from "../supabase/server";
+import type { Database } from "../database.types";
 import { isSetupWeek, programmeWeek, sydneyDate, weekDates, weekdayOf } from "../dates";
 import { defaultMachine, isMachine, type Feel, type MachineId, type Params } from "../cardio";
 import { highSoreness, type LastTime } from "../progression";
@@ -63,6 +64,34 @@ export function lastTimes(rows: { workout_id: string; exercise_slug: string; set
   return out;
 }
 
+type WorkoutRow = Database["public"]["Tables"]["workouts"]["Row"];
+
+/**
+ * Start the session planned for `date` (an origin date this week). Returns null unless it is a real session:
+ * a planned lifting day this week, on or after the start date, not already done, skipped or moved.
+ */
+export async function startSession(
+  supabase: ServerClient,
+  ctx: { startDate: string; planType: "5day" | "3day"; templateId: string; week: number; today: string },
+  date: string,
+): Promise<WorkoutRow | null> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const dates = weekDates(ctx.today);
+  const weekday = weekdayOf(date);
+  const [{ data: day }, { data: ovr }, { data: done }] = await Promise.all([
+    supabase.from("template_days").select("weekday, full_name").eq("template_id", ctx.templateId).eq("weekday", weekday).maybeSingle(),
+    supabase.from("schedule_overrides").select("planned_date, action, moved_to_date, created_at").eq("planned_date", date).maybeSingle(),
+    supabase.from("workouts").select("id").eq("status", "completed").eq("planned_date", date).limit(1),
+  ]);
+  if (!day || !dates.includes(date) || date < ctx.startDate || done?.length || ovr?.action === "skipped" || ovr?.action === "moved") return null;
+  const { data: created, error } = await supabase
+    .from("workouts")
+    .insert({ planned_date: date, week: ctx.week, plan_type: ctx.planType, weekday, day_name: day.full_name, is_light: ovr?.action === "light" })
+    .select("*")
+    .single();
+  return error || !created ? null : created;
+}
+
 export async function loadWorkout(supabase: ServerClient, uid: string, dateParam: string | null, now = new Date()): Promise<Loaded> {
   const today = sydneyDate(now);
 
@@ -78,23 +107,9 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
   if (!tpl) return { redirect: "/" };
 
   if (!workout) {
-    if (!dateParam || !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) return { redirect: "/" };
-    const dates = weekDates(today);
-    const weekday = weekdayOf(dateParam);
-    const [{ data: day }, { data: ovr }, { data: done }] = await Promise.all([
-      supabase.from("template_days").select("weekday, full_name").eq("template_id", tpl.id).eq("weekday", weekday).maybeSingle(),
-      supabase.from("schedule_overrides").select("planned_date, action, moved_to_date, created_at").eq("planned_date", dateParam).maybeSingle(),
-      supabase.from("workouts").select("id").eq("status", "completed").eq("planned_date", dateParam).limit(1),
-    ]);
-    // Only a real session this week, on or after the start date, that has not been done and was not skipped.
-    if (!day || !dates.includes(dateParam) || dateParam < state.start_date || done?.length || ovr?.action === "skipped" || ovr?.action === "moved") return { redirect: "/" };
-    const { data: created, error } = await supabase
-      .from("workouts")
-      .insert({ planned_date: dateParam, week, plan_type: planType, weekday, day_name: day.full_name, is_light: ovr?.action === "light" })
-      .select("*")
-      .single();
-    if (error || !created) return { redirect: "/" };
-    workout = created;
+    if (!dateParam) return { redirect: "/" };
+    workout = await startSession(supabase, { startDate: state.start_date, planType, templateId: tpl.id, week, today }, dateParam);
+    if (!workout) return { redirect: "/" };
   }
   const w = workout!;
 

@@ -54,6 +54,9 @@ Later steps add VAPID keys (push) and MCP settings; they will be documented here
 4. On the iPhone, open the URL in **Safari** > Share > **Add to Home Screen**, then open it from the Home Screen.
    Web push only works once the app is installed this way (iOS 16.4+).
 
+## Use it from Claude
+The app includes a remote MCP server so Claude can read and log your workouts. Setup steps and a test checklist: [docs/MCP.md](docs/MCP.md).
+
 ## Project layout
 - `src/app` routes, `src/styles` design tokens + component CSS, `src/lib` helpers, `src/proxy.ts` session guard.
 - `design/` design export reference. `tailwind.config.js` is the exported theme, used as-is.

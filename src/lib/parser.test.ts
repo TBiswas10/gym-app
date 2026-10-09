@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { closest, confirmCopy, errorCopy, finalSets, keepAsKilos, lbToKg, parseQuickLog, summarise, type CatalogItem, type ParseContext } from "./parser";
+import { closest, confirmCopy, errorCopy, finalSets, findExercises, keepAsKilos, lbToKg, parseQuickLog, summarise, type CatalogItem, type ParseContext } from "./parser";
 import type { LastTime } from "./progression";
 
 const catalog: CatalogItem[] = [
@@ -191,5 +191,17 @@ describe("confirmation card wording", () => {
   });
   it("summarises", () => {
     expect(summarise({ kind: "weight", kg: 32.5, reps: [8, 9], secs: [] })).toBe("32.5 kg × 8, 32.5 kg × 9");
+  });
+});
+
+describe("findExercises", () => {
+  it("finds an exact slug or name, a unique partial, or lists the candidates", () => {
+    const f = (t: string) => findExercises(t, catalog).map((c) => c.slug);
+    expect(f("chest")).toEqual(["chest"]);
+    expect(f("Lat Pulldown")).toEqual(["lat"]);
+    expect(f("pulldown")).toEqual(["lat"]);
+    expect(f("press").length).toBeGreaterThan(1);
+    expect(f("nonsense words")).toEqual([]);
+    expect(f("")).toEqual([]);
   });
 });

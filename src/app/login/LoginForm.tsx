@@ -22,7 +22,7 @@ function friendly(message: string): string {
   return "Something went wrong. Try again in a moment.";
 }
 
-export function LoginForm({ initialProblem, deleted = false }: { initialProblem: string | null; deleted?: boolean }) {
+export function LoginForm({ initialProblem, deleted = false, next = "/" }: { initialProblem: string | null; deleted?: boolean; next?: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
   const [method, setMethod] = useState<Method>("password");
@@ -50,7 +50,7 @@ export function LoginForm({ initialProblem, deleted = false }: { initialProblem:
     }
     setBusy(true);
     const supabase = createClient();
-    const redirectTo = `${window.location.origin}/auth/callback`;
+    const redirectTo = `${window.location.origin}/auth/callback${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`;
     try {
       if (!pwm) {
         const { error } = await supabase.auth.signInWithOtp({
@@ -62,7 +62,7 @@ export function LoginForm({ initialProblem, deleted = false }: { initialProblem:
       } else if (login) {
         const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
         if (error) throw error;
-        router.replace("/");
+        router.replace(next);
         router.refresh();
       } else {
         const { data, error } = await supabase.auth.signUp({
@@ -72,7 +72,7 @@ export function LoginForm({ initialProblem, deleted = false }: { initialProblem:
         });
         if (error) throw error;
         if (data.session) {
-          router.replace("/");
+          router.replace(next);
           router.refresh();
         } else setSent(true);
       }

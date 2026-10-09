@@ -23,6 +23,12 @@ export type Database = {
         Update: { backup_name?: string | null; category?: string; cues?: string[]; default_increment_kg?: number; default_notes?: string; kind?: string; kit?: string; mistakes?: string[]; muscle_group?: string; muscles?: string[]; name?: string; rep_hi?: number; rep_lo?: number; setup?: string[]; slug?: string; sort_order?: number; weight_step_kg?: number };
         Relationships: [];
       };
+      mcp_requests: {
+        Row: { client_id: string | null; created_at: string; id: number; method: string; ms: number; ok: boolean; status: number; tool: string | null; user_id: string };
+        Insert: { client_id?: string | null; created_at?: string; id?: number; method: string; ms: number; ok: boolean; status: number; tool?: string | null; user_id?: string };
+        Update: { client_id?: string | null; created_at?: string; id?: number; method?: string; ms?: number; ok?: boolean; status?: number; tool?: string | null; user_id?: string };
+        Relationships: [];
+      };
       program_state: {
         Row: { created_at: string; deload_weeks: number[]; plan_type: string; rest_alerts: boolean; start_date: string; track_bodyweight: boolean; updated_at: string; user_id: string };
         Insert: { created_at?: string; deload_weeks?: number[]; plan_type: string; rest_alerts?: boolean; start_date: string; track_bodyweight?: boolean; updated_at?: string; user_id?: string };

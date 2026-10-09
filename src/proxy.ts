@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Paths that work without a session.
-const PUBLIC = [/^\/login$/, /^\/auth\//, /^\/manifest\.webmanifest$/, /^\/icons\//];
+// /mcp checks its own bearer token; /.well-known tells connectors where to sign in.
+const PUBLIC = [/^\/login$/, /^\/auth\//, /^\/manifest\.webmanifest$/, /^\/icons\//, /^\/mcp$/, /^\/\.well-known\//];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -29,13 +30,18 @@ export async function proxy(request: NextRequest) {
 
   if (!signedIn && !PUBLIC.some((r) => r.test(path))) {
     const url = request.nextUrl.clone();
+    const back = path === "/" ? "" : `${path}${request.nextUrl.search}`;
     url.pathname = "/login";
-    url.search = "";
+    url.search = back ? `?next=${encodeURIComponent(back)}` : "";
     return NextResponse.redirect(url);
   }
   if (signedIn && path === "/login") {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    const next = request.nextUrl.searchParams.get("next");
+    // Same-site paths only.
+    const target = next && next.startsWith("/") && !next.startsWith("//") ? new URL(next, request.url) : null;
+    url.pathname = target?.pathname ?? "/";
+    url.search = target?.search ?? "";
     return NextResponse.redirect(url);
   }
   return response;

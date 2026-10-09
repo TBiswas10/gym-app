@@ -75,6 +75,14 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 - Quick log (`parser.ts`): pure; always returns an entry to CONFIRM or a problem with fixes; pounds are offered, never auto-converted.
 - `/workout` starts or resumes the single in-progress session (partial unique index). Start links use prefetch={false}.
 
+## MCP server (step 7b, see docs/MCP.md)
+- `/mcp` (stateless streamable HTTP, `@modelcontextprotocol/sdk`, zod). Auth = Supabase OAuth 2.1 access tokens (must carry
+  `client_id`); `/.well-known/oauth-protected-resource` points clients at Supabase Auth; `/oauth/consent` is the approval page.
+- The server acts AS the user (token-based client, RLS applies). No service-role key anywhere.
+- Migration `mcp_hardening`: connector tokens cannot delete, change plan/settings/reviews or call account/plan functions
+  (RESTRICTIVE policies on `auth.jwt() ->> 'client_id'`); `mcp_requests` = log + rate-limit counts.
+- Read tools never write. Write tools (`log_sets`, `log_cardio`, `log_checkin`) are narrow, validated, replace-not-delete.
+
 ## Build order (stop after each step for testing)
 1. Setup, PWA manifest + icons, Supabase login, tokens in Tailwind  (done, tested)
 2. Database tables + RLS + seed  (applied to the gym-app Supabase project 2026-10-09, verified)
@@ -83,7 +91,7 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 5. Cardio cards  (built)
 6. Chat quick-log (pure rule-based parser + confirmation card)  (built)
 7. Progress charts, week 4/8/12 reviews, Plan editor, Library + form guides, CSV export, account deletion  (built, awaiting phone test)
-7b. Remote MCP server in this app (streamable HTTP, official SDK, authenticated, rate limited, logged)
+7b. Remote MCP server in this app (streamable HTTP, official SDK, authenticated, rate limited, logged)  (built; needs Supabase OAuth server enabled, see docs/MCP.md)
 8. Web push for rest-timer end, safe areas, offline + error states
 9. Optional: server-side LLM call for messy chat input
 

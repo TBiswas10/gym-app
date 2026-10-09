@@ -113,6 +113,15 @@ export function closest(text: string, catalog: CatalogItem[]): string[] {
   return out.slice(0, 3);
 }
 
+/** Exercises a typed name could mean: exact slug or name first, otherwise every word-prefix match. Never guesses. */
+export function findExercises(text: string, catalog: CatalogItem[]): CatalogItem[] {
+  const t = text.trim().toLowerCase();
+  const exact = catalog.filter((c) => c.slug === t || c.name.toLowerCase() === t);
+  if (exact.length === 1) return exact;
+  const typed = t.split(/[\s/\-]+/).filter(Boolean);
+  return typed.length ? catalog.filter((c) => matches(typed, c)) : [];
+}
+
 // ---------------------------------------------------------------- parsing
 
 const SAME = /^(.*?)\s*\b(?:same as last time|same as last|as last time|same again|same)$/;
