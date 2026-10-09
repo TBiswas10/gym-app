@@ -20,6 +20,9 @@ import { CardioCard } from "./CardioCard";
 import { ChatBar } from "./ChatBar";
 import { GuideSheet } from "./GuideSheet";
 import { useSync } from "./useSync";
+import { cancelRestPush, disableRestAlerts, enableRestAlerts, PUSH_MESSAGE, pushState, scheduleRestPush } from "@/lib/push-client";
+import { restAlertText } from "@/lib/push";
+import { saveSettings } from "@/app/(app)/plan/actions";
 import { loadQueue } from "@/lib/sync-queue";
 
 const WS_KEY = (id: string) => `wt.ws.${id}`;
@@ -103,7 +106,20 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const restLeft = rest ? restRemaining(rest.end, nowMs) : 0;
   const resting = !!rest && restLeft > 0;
 
-  const startRest = (seconds: number) => {
+  // ---- rest alert (push). The on-screen timer works without it; this only adds the notification.
+  const [notify, setNotify] = useState(false);
+  const [notifyNote, setNotifyNote] = useState<string | null>(null);
+  const pushId = useRef<string | null>(null);
+  useEffect(() => {
+    void pushState().then((st) => st === "on" && meta.restAlerts && setNotify(true));
+  }, [meta.restAlerts]);
+  const cancelPush = () => {
+    const p = pushId.current;
+    pushId.current = null;
+    if (p) void cancelRestPush(p);
+  };
+
+  const startRest = (seconds: number, alert?: { title: string; body: string }) => {
     const r = { end: Date.now() + seconds * 1000, total: seconds };
     setRest(r);
     try {
@@ -111,6 +127,8 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     } catch {
       /* ignore */
     }
+    cancelPush();
+    if (notify && alert) void scheduleRestPush(seconds, alert.title, alert.body).then((pid) => { pushId.current = pid; });
   };
   const stopRest = () => {
     setRest(null);
@@ -119,6 +137,22 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     } catch {
       /* ignore */
     }
+    cancelPush();
+  };
+  const toggleNotify = async () => {
+    setNotifyNote(null);
+    if (notify) {
+      setNotify(false);
+      cancelPush();
+      void saveSettings({ restAlerts: false });
+      void disableRestAlerts();
+      return;
+    }
+    const r = await enableRestAlerts();
+    if (r === "on") {
+      setNotify(true);
+      void saveSettings({ restAlerts: true });
+    } else setNotifyNote(PUSH_MESSAGE[r]);
   };
 
   // ---- toast + undo
@@ -181,7 +215,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     if (!ex) return;
     const n = ex.sets.length + 1;
     run(logSet(ws, crypto.randomUUID()), { toast: `Nice work. Set ${n} logged.`, undoable: true });
-    startRest(restSecondsAfter(n));
+    startRest(restSecondsAfter(n), restAlertText({ name: dispName(ex), setsLogged: n, planned: ex.planned, kind: ex.exKind, kg: ex.kg, reps: ex.reps, secs: ex.secs, nextName: nextLabel }));
   };
   const onUpdate = () => {
     const i = ws.editIdx;
@@ -215,7 +249,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     const planned = plannedFor(entry.slug);
     const ids = Array.from({ length: Math.min(entry.total, planned) }, () => crypto.randomUUID());
     run(applyEntry(ws, entry, planned, ids), { toast: `Saved to ${entry.name}.`, undoable: true, source: "chat" });
-    startRest(restSecondsAfter(2));
+    startRest(restSecondsAfter(2), restAlertText({ name: entry.name, setsLogged: planned, planned, kind: entry.kind, kg: entry.kg, reps: null, secs: null, nextName: nextLabel }));
   };
   const chatPlaceholder = ex
     ? `Quick log: ${dispName(ex).toLowerCase()} ${ex.exKind === "timed" ? "30 sec 30 sec" : ex.exKind === "bodyweight" ? "12 12" : `${fmtNum(ex.kg)}kg ${ex.reps} ${ex.reps}`}`
@@ -295,8 +329,13 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                   <i style={{ width: `${restPercent(restLeft, rest.total)}%` }} />
                 </div>
               </div>
+              <button type="button" className={`icon-btn ${notify ? "is-on" : ""}`} aria-pressed={notify} aria-label="Notify me when rest ends" onClick={toggleNotify}>
+                <Icon name={notify ? "bell" : "bell-off"} />
+              </button>
               <button type="button" className="btn btn-secondary" onClick={stopRest}>Skip</button>
             </div>
+            <span className="t-caption c-2" style={{ fontWeight: 600 }}>{notify ? "Alert when rest ends: on" : "Alert when rest ends: off"}</span>
+            {notifyNote && <div className="banner banner-info" role="status"><Icon name="info" /><span>{notifyNote}</span></div>}
           </div>
         )}
       </header>

@@ -127,3 +127,30 @@ describe("Find your weight", () => {
     for (const t of ["Find your weight", "Chest press", "Try 1", "20", "Easy", "+5 kg", "Just right", "Too hard", "−2.5 kg", "1 of 2", "Most people find their weight in 2 or 3 tries."]) expect(out).toContain(t);
   });
 });
+
+import OfflinePage from "./offline/page";
+import NotFound from "./not-found";
+import ErrorScreen from "./error";
+import Loading from "./(app)/loading";
+
+describe("Offline, error and not-found screens", () => {
+  it("offline page is calm and says logged sets are safe", () => {
+    const out = renderToStaticMarkup(<OfflinePage />);
+    expect(out).toContain("You’re offline");
+    expect(out).toContain("safe on this phone");
+    expect(out).toContain("Try again");
+  });
+  it("error screen never shows technical text", () => {
+    const out = renderToStaticMarkup(<ErrorScreen error={Object.assign(new Error("ECONNRESET stack trace at line 5"), { digest: "abc" })} reset={() => {}} />);
+    expect(out).toContain("That didn’t load");
+    expect(out).toContain("Back to Today");
+    expect(out).not.toContain("ECONNRESET");
+    expect(out).not.toContain("stack");
+  });
+  it("404 sends you home", () => {
+    expect(renderToStaticMarkup(<NotFound />)).toContain("We can’t find that");
+  });
+  it("loading state has skeleton blocks", () => {
+    expect(renderToStaticMarkup(<Loading />)).toContain("skeleton");
+  });
+});

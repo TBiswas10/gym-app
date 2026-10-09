@@ -2,8 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Paths that work without a session.
-// /mcp checks its own bearer token; /.well-known tells connectors where to sign in.
-const PUBLIC = [/^\/login$/, /^\/auth\//, /^\/manifest\.webmanifest$/, /^\/icons\//, /^\/mcp$/, /^\/\.well-known\//];
+// /mcp checks its own bearer token; /.well-known tells connectors where to sign in;
+// /offline and /sw.js must load without a session (they are what works when you have no signal).
+const PUBLIC = [/^\/login$/, /^\/auth\//, /^\/manifest\.webmanifest$/, /^\/icons\//, /^\/mcp$/, /^\/\.well-known\//, /^\/offline$/, /^\/sw\.js$/];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });

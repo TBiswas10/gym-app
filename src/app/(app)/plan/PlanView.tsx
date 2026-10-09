@@ -8,6 +8,7 @@ import { shortDay } from "@/lib/dates";
 import { estimateMinutes } from "@/lib/plan";
 import { add, estimateNote, move, rangeLabel, rangesFor, removeAt, setRange, setSets, type Row } from "@/lib/plan-edit";
 import type { PlanData } from "@/lib/server/plan-data";
+import { disableRestAlerts, enableRestAlerts, PUSH_MESSAGE } from "@/lib/push-client";
 import { deleteAccount, saveSettings, savePlanDay, switchPlan, type Result } from "./actions";
 
 export function PlanView({ data, deleteProblem }: { data: PlanData; deleteProblem: boolean }) {
@@ -48,6 +49,43 @@ export function PlanView({ data, deleteProblem }: { data: PlanData; deleteProble
     if (p === data.planType) return;
     run(() => switchPlan(p));
   };
+
+  const [alertNote, setAlertNote] = useState<{ ok: boolean; text: string } | null>(null);
+
+  /** Turning alerts on asks permission (this is the tap) and subscribes this phone. */
+  const toggleAlerts = (value: boolean) => {
+    setAlertNote(null);
+    if (!value) {
+      setRestAlerts(false);
+      run(() => saveSettings({ restAlerts: false }), () => setRestAlerts(true));
+      void disableRestAlerts();
+      return;
+    }
+    startTransition(async () => {
+      const status = await enableRestAlerts();
+      if (status !== "on") {
+        setAlertNote({ ok: false, text: PUSH_MESSAGE[status] });
+        return;
+      }
+      setRestAlerts(true);
+      const r = await saveSettings({ restAlerts: true });
+      if (!r.ok) {
+        setRestAlerts(false);
+        setError(r.error);
+      }
+    });
+  };
+
+  const sendTest = () =>
+    startTransition(async () => {
+      try {
+        const res = await fetch("/api/push/test", { method: "POST" });
+        const j = (await res.json()) as { sent: number; reason: string };
+        setAlertNote(j.sent ? { ok: true, text: "Sent. It should appear in a few seconds." } : { ok: false, text: j.reason === "no-device" ? "No phone is set up for alerts yet. Turn the toggle off and on again." : "Couldn’t send a test. Try again in a moment." });
+      } catch {
+        setAlertNote({ ok: false, text: "Couldn’t reach the server. Check your connection." });
+      }
+    });
 
   const toggle = (key: "restAlerts" | "trackBodyweight", value: boolean) => {
     const [set, prev] = key === "restAlerts" ? [setRestAlerts, restAlerts] : [setBodyweight, bodyweight];
@@ -141,8 +179,20 @@ export function PlanView({ data, deleteProblem }: { data: PlanData; deleteProble
         <section className="card" style={{ gap: 0, padding: "var(--space-1) var(--space-4)" }}>
           <div className="switch-row list-row">
             <span className="col"><span className="t-body" style={{ fontWeight: 600 }}>Notify me when rest ends</span><span className="t-small c-2">Needs notification permission</span></span>
-            <button type="button" className="switch" role="switch" aria-checked={restAlerts} aria-label="Notify me when rest ends" onClick={() => toggle("restAlerts", !restAlerts)}><span className="switch-track"><span className="switch-knob"><Icon name="check" /></span></span></button>
+            <button type="button" className="switch" role="switch" aria-checked={restAlerts} aria-label="Notify me when rest ends" onClick={() => toggleAlerts(!restAlerts)}><span className="switch-track"><span className="switch-knob"><Icon name="check" /></span></span></button>
           </div>
+          {restAlerts && (
+            <div className="list-row">
+              <span className="col"><span className="t-body" style={{ fontWeight: 600 }}>Test the alert</span><span className="t-small c-2">Sends a notification to this phone now</span></span>
+              <button type="button" className="btn btn-secondary" disabled={pending} onClick={sendTest}>Send test</button>
+            </div>
+          )}
+          {alertNote && (
+            <div className={`banner ${alertNote.ok ? "banner-success" : "banner-info"}`} role="status" style={{ margin: "var(--space-2) 0" }}>
+              <Icon name={alertNote.ok ? "circle-check" : "info"} />
+              <span>{alertNote.text}</span>
+            </div>
+          )}
           <div className="switch-row list-row">
             <span className="col"><span className="t-body" style={{ fontWeight: 600 }}>Bodyweight tracking</span><span className="t-small c-2">Log your weight once a week</span></span>
             <button type="button" className="switch" role="switch" aria-checked={bodyweight} aria-label="Bodyweight tracking" onClick={() => toggle("trackBodyweight", !bodyweight)}><span className="switch-track"><span className="switch-knob"><Icon name="check" /></span></span></button>

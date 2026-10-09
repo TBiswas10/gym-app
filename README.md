@@ -44,6 +44,9 @@ See `.env.example`. Real values live in `.env.local` (local) and Vercel project 
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | browser + server | Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser + server | Public key; protected by row-level security |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | browser + server | Web push public key |
+| `VAPID_PRIVATE_KEY` | server only | Web push private key. Secret. |
+| `VAPID_SUBJECT` | server only | Contact URL for push services (your app's https URL) |
 
 Later steps add VAPID keys (push) and MCP settings; they will be documented here.
 
@@ -53,6 +56,18 @@ Later steps add VAPID keys (push) and MCP settings; they will be documented here
 3. Deploy, then add the deployed URL to Supabase Site URL / Redirect URLs (see above).
 4. On the iPhone, open the URL in **Safari** > Share > **Add to Home Screen**, then open it from the Home Screen.
    Web push only works once the app is installed this way (iOS 16.4+).
+
+## Rest-timer notifications (web push)
+The rest timer always counts down on screen. The notification when rest ends is sent by the server through web push.
+- **It only works once the app is installed to the iPhone Home Screen** (Safari > Share > Add to Home Screen, iOS 16.4+),
+  opened from that icon, and after you tap Allow on the Notifications screen (or turn on "Notify me when rest ends" in Plan).
+  In a normal Safari tab iPhone does not offer web push at all.
+- If you tap "Don't Allow", or later block it in iPhone Settings > Notifications > Workout, nothing breaks: the on-screen
+  timer keeps working and the app explains how to turn alerts back on. Plan > "Send test" checks the whole chain.
+- Keys: generate once with `node -e "const k=require('web-push').generateVAPIDKeys();console.log(k)"`, put them in
+  `.env.local` and in Vercel (the private key is never committed or sent to the browser).
+- No signal at the gym? Logged sets are kept on the phone and sent when you're back online. A screen that can't load shows
+  the offline page.
 
 ## Use it from Claude
 The app includes a remote MCP server so Claude can read and log your workouts. Setup steps and a test checklist: [docs/MCP.md](docs/MCP.md).

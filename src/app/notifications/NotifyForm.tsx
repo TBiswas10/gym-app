@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import { completeOnboarding } from "@/lib/auth-actions";
+import { enableRestAlerts } from "@/lib/push-client";
 
 type Answer = "ask" | "yes" | "no" | "needs-install" | "blocked";
 
@@ -11,14 +12,8 @@ export function NotifyForm({ saveProblem }: { saveProblem: boolean }) {
 
   // Ask only after a tap, never on load. A web page can only ask once the app is on the Home Screen.
   async function allow() {
-    if (typeof Notification === "undefined") return setAnswer("needs-install");
-    if (Notification.permission === "denied") return setAnswer("blocked");
-    try {
-      const result = await Notification.requestPermission();
-      setAnswer(result === "granted" ? "yes" : "no");
-    } catch {
-      setAnswer("no");
-    }
+    const r = await enableRestAlerts();
+    setAnswer(r === "on" ? "yes" : r === "denied" ? "blocked" : r === "needs-install" ? "needs-install" : "no");
   }
 
   const asking = answer === "ask";

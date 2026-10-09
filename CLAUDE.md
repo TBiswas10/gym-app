@@ -83,6 +83,15 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
   (RESTRICTIVE policies on `auth.jwt() ->> 'client_id'`); `mcp_requests` = log + rate-limit counts.
 - Read tools never write. Write tools (`log_sets`, `log_cardio`, `log_checkin`) are narrow, validated, replace-not-delete.
 
+## Push, offline and errors (step 8)
+- `public/sw.js`: offline fallback (`/offline`, never caches data pages), caches static files, shows push notifications.
+  Registered in production only. `push_subscriptions` + `rest_timers` tables (RLS, closed to connector tokens).
+- Rest alert flow: phone POSTs `/api/push/rest` {seconds,title,body} -> row in `rest_timers` -> `after()` waits, claims the row
+  (pending -> sent) and sends with `web-push`; skip/undo POSTs `/api/push/cancel`. VAPID keys: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`,
+  `VAPID_PRIVATE_KEY` (server only), `VAPID_SUBJECT` (the app URL, not an email).
+- Push works only from the installed Home Screen app (iOS 16.4+) after a tap; denied/unsupported fall back to the on-screen timer.
+- Friendly `error.tsx`, `global-error.tsx`, `not-found.tsx`, `(app)/loading.tsx`, offline banner; security headers in `next.config.ts`.
+
 ## Build order (stop after each step for testing)
 1. Setup, PWA manifest + icons, Supabase login, tokens in Tailwind  (done, tested)
 2. Database tables + RLS + seed  (applied to the gym-app Supabase project 2026-10-09, verified)
@@ -92,7 +101,7 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 6. Chat quick-log (pure rule-based parser + confirmation card)  (built)
 7. Progress charts, week 4/8/12 reviews, Plan editor, Library + form guides, CSV export, account deletion  (built, awaiting phone test)
 7b. Remote MCP server in this app (streamable HTTP, official SDK, authenticated, rate limited, logged)  (built; needs Supabase OAuth server enabled, see docs/MCP.md)
-8. Web push for rest-timer end, safe areas, offline + error states
+8. Web push for rest-timer end, safe areas, offline + error states  (built, awaiting phone test)
 9. Optional: server-side LLM call for messy chat input
 
 ## Working rules

@@ -29,6 +29,18 @@ export type Database = {
         Update: { client_id?: string | null; created_at?: string; id?: number; method?: string; ms?: number; ok?: boolean; status?: number; tool?: string | null; user_id?: string };
         Relationships: [];
       };
+      push_subscriptions: {
+        Row: { auth: string; created_at: string; endpoint: string; id: string; p256dh: string; user_agent: string | null; user_id: string };
+        Insert: { auth: string; created_at?: string; endpoint: string; id?: string; p256dh: string; user_agent?: string | null; user_id?: string };
+        Update: { auth?: string; created_at?: string; endpoint?: string; id?: string; p256dh?: string; user_agent?: string | null; user_id?: string };
+        Relationships: [];
+      };
+      rest_timers: {
+        Row: { body: string; created_at: string; ends_at: string; id: string; status: string; title: string; user_id: string };
+        Insert: { body?: string; created_at?: string; ends_at: string; id?: string; status?: string; title: string; user_id?: string };
+        Update: { body?: string; created_at?: string; ends_at?: string; id?: string; status?: string; title?: string; user_id?: string };
+        Relationships: [];
+      };
       program_state: {
         Row: { created_at: string; deload_weeks: number[]; plan_type: string; rest_alerts: boolean; start_date: string; track_bodyweight: boolean; updated_at: string; user_id: string };
         Insert: { created_at?: string; deload_weeks?: number[]; plan_type: string; rest_alerts?: boolean; start_date: string; track_bodyweight?: boolean; updated_at?: string; user_id?: string };
