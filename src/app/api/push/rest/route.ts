@@ -5,7 +5,7 @@ import { createLimiter } from "@/lib/rate-limit";
 import { pushConfigured, sendToUser } from "@/lib/server/push";
 
 // The server waits out the rest, then sends the alert. Fluid Compute allows this; rests are 10-300 s.
-export const maxDuration = 120;
+export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 const limiter = createLimiter(40, 60_000);

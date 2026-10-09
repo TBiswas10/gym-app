@@ -13,5 +13,6 @@ export async function POST() {
   if (!limiter.hit(uid).ok) return Response.json({ sent: 0, reason: "slow-down" }, { status: 429 });
   if (!pushConfigured()) return Response.json({ sent: 0, reason: "not-configured" });
   const r = await sendToUser(supabase, { title: "Rest’s up. This is a test", body: "Notifications are working. Ready when you are.", url: "/plan" });
-  return Response.json({ sent: r.sent, reason: r.sent ? "ok" : "no-device" });
+  const rejected = r.failed[0];
+  return Response.json({ sent: r.sent, reason: r.sent ? "ok" : rejected ? "rejected" : "no-device", status: rejected?.status ?? null, removed: r.removed });
 }

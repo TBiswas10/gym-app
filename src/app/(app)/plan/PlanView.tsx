@@ -80,8 +80,8 @@ export function PlanView({ data, deleteProblem }: { data: PlanData; deleteProble
     startTransition(async () => {
       try {
         const res = await fetch("/api/push/test", { method: "POST" });
-        const j = (await res.json()) as { sent: number; reason: string };
-        setAlertNote(j.sent ? { ok: true, text: "Sent. It should appear in a few seconds." } : { ok: false, text: j.reason === "no-device" ? "No phone is set up for alerts yet. Turn the toggle off and on again." : "Couldn’t send a test. Try again in a moment." });
+        const j = (await res.json()) as { sent: number; reason: string; status?: number | null; removed?: number };
+        setAlertNote(j.sent ? { ok: true, text: "Sent. It should appear in a few seconds." } : { ok: false, text: j.reason === "rejected" ? (j.removed ? "Your phone’s alert link had expired, so I cleared it. Turn the toggle off and on again, then press Send test." : `Apple’s alert service refused the message (code ${j.status ?? "?"}). Turn the toggle off and on again; if it still fails, tell me the code.`) : j.reason === "no-device" ? "No phone is set up for alerts yet. Turn the toggle off and on again." : j.reason === "not-configured" ? "Alerts aren’t set up on the server yet." : "Couldn’t send a test. Try again in a moment." });
       } catch {
         setAlertNote({ ok: false, text: "Couldn’t reach the server. Check your connection." });
       }
