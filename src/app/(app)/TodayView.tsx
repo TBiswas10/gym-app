@@ -322,7 +322,7 @@ export function TodayView({ data }: { data: TodayData }) {
                 <li key={e.slug} className="list-row" style={{ minHeight: "var(--size-tap)" }}>
                   <span className="t-body" style={{ fontWeight: 600 }}>{e.name}</span>
                   <span className="t-small c-2" style={{ whiteSpace: "nowrap" }}>
-                    {data.setup && !e.hasStartWeight ? "Find weight" : formatTarget(e.sets, e.repLo, e.repHi, e.kind)}
+                    {data.setup && e.kind === "weight" && !e.hasStartWeight ? "Find weight" : formatTarget(e.sets, e.repLo, e.repHi, e.kind)}
                   </span>
                 </li>
               ))}

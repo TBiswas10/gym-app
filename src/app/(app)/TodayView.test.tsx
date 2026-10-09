@@ -70,6 +70,12 @@ describe("Today screen", () => {
     expect(html(d)).toContain("Find weight");
   });
 
+  it("never asks to find a weight for planks or bodyweight moves", () => {
+    const d = make({ today: "2026-10-08", start: "2026-10-08" });
+    d.days[4] = { ...d.days[4], exercises: d.days[4].exercises.map((e) => ({ ...e, kind: "timed" as const, hasStartWeight: false })) };
+    expect(html(d)).not.toContain("Find weight");
+  });
+
   it("renders a rest day with walk and stretch", () => {
     const out = html(make({ today: "2026-10-09", start: "2026-09-21", completed: ["2026-10-05", "2026-10-07", "2026-10-08"] }));
     expect(out).toContain("Rest day");
