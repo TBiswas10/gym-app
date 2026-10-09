@@ -22,3 +22,5 @@ design/Workout Tracker.html
 
 # local MCP connection config (project ref only, but personal)
 .mcp.json
+
+.vercel

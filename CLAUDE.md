@@ -85,5 +85,8 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 - Keep this file updated as we go.
 
 ## Notes
+- Deployed to Vercel (project `gym-app`, team tirtha-biswas-projects) by CLI: `vercel deploy --prod`. Production URL
+  https://gym-app-one-xi.vercel.app . Env vars (the two NEXT_PUBLIC_SUPABASE_* values) are set in Vercel for Production.
+  The GitHub repo (TBiswas10/gym-app) is PUBLIC and nothing has been pushed to it; ask before pushing.
 - `design/Workout Tracker.html` (11 MB bundled design export) is gitignored; `design/tokens.json` is committed.
 - Design deviation: `.screen` is fixed 390x844 in the design; the app uses `.screen.fill` (100% x 100dvh).
