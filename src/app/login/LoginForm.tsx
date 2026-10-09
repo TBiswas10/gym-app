@@ -106,15 +106,7 @@ export function LoginForm({ initialProblem, deleted = false, next = "/" }: { ini
 
         {!sent && (
           <div className="col g4" style={{ marginTop: "var(--space-2)" }}>
-            <div className="segmented" role="tablist" aria-label="Account">
-              <button type="button" className="seg" role="tab" aria-selected={login} onClick={() => setMode("login")}>
-                Log in
-              </button>
-              <button type="button" className="seg" role="tab" aria-selected={!login} onClick={() => setMode("create")}>
-                Create account
-              </button>
-            </div>
-
+            {/* Single-user app with signups switched off in Supabase: no "Create account" tab. */}
             <div className="field">
               <label className="field-label" htmlFor="email">Email</label>
               <input
