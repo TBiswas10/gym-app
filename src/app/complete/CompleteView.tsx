@@ -16,6 +16,7 @@ const CONFETTI = [
 
 export interface CompleteData {
   name: string;
+  line: string;
   sets: number;
   time: string;
   pbs: { name: string; text: string }[];
@@ -51,6 +52,7 @@ export function CompleteView({ workoutId, data, problem }: { workoutId: string; 
           </div>
           <h1 className="t-display">Nice work.</h1>
           <p className="t-body c-2">{data.name} · {data.sets} sets done</p>
+          <p className="t-body c-accent" style={{ fontWeight: 700 }}>{data.line}</p>
           <div className="grid3" style={{ width: "100%" }}>
             {[
               { v: data.sets, l: "SETS", cls: "" },

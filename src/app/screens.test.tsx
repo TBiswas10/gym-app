@@ -22,7 +22,7 @@ const progress = (over: Partial<ProgressData> = {}): ProgressData => ({
   ],
   thisWeek: { sessions: 3, planned: 5, sets: 32, groups: [["Legs", 8], ["Chest", 6], ["Shoulders", 6], ["Arms", 6], ["Back", 4], ["Core", 2]], pbs: [{ name: "Chest press", text: "30 kg × 12" }] },
   trend: [{ soreness: 4, energy: 2 }, { soreness: 3, energy: 3 }, { soreness: 2, energy: 4 }],
-  cells: weekCells(3), consistency: { weeks: Array.from({ length: 12 }, (_, i) => ({ week: i + 1, done: i < 2 ? 5 : i === 2 ? 3 : 0, planned: 5 })), streak: 2 }, next: 4, due: null, ...over,
+  cells: weekCells(3), records: [{ name: "Chest press", text: "32.5 kg × 10" }], consistency: { weeks: Array.from({ length: 12 }, (_, i) => ({ week: i + 1, done: i < 2 ? 5 : i === 2 ? 3 : 0, planned: 5 })), streak: 2 }, next: 4, due: null, ...over,
 });
 
 describe("Progress", () => {
@@ -36,6 +36,12 @@ describe("Progress", () => {
     const out = renderToStaticMarkup(<ProgressView data={progress()} />);
     expect(out).toContain("Consistency");
     expect(out).toContain("2 full weeks in a row");
+  });
+
+  it("lists all-time records", () => {
+    const out = renderToStaticMarkup(<ProgressView data={progress()} />);
+    expect(out).toContain("Records");
+    expect(out).toContain("32.5 kg × 10");
   });
 
   it("has a friendly empty state", () => {
@@ -116,7 +122,7 @@ describe("Review", () => {
 });
 
 describe("Session complete", () => {
-  const data = { name: "Upper (light)", sets: 12, time: "46:12", pbs: [{ name: "Chest press", text: "30 kg × 12" }], cardio: "10 min on the bike", soreness: 2, energy: 4, notes: "", trackBodyweight: true, bodyweight: "" };
+  const data = { name: "Upper (light)", line: "2 of 5 sessions this week. 3 to go.", sets: 12, time: "46:12", pbs: [{ name: "Chest press", text: "30 kg × 12" }], cardio: "10 min on the bike", soreness: 2, energy: 4, notes: "", trackBodyweight: true, bodyweight: "" };
   it("renders the celebration, stats and check-in", () => {
     const out = renderToStaticMarkup(<CompleteView workoutId="w" data={data} problem={false} />);
     for (const t of ["Nice work.", "Upper (light) · 12 sets done", "46:12", "NEW PBS", "Chest press", "Cardio: 10 min on the bike", "How do you feel?", "2 · A little", "4 · Good", "Bodyweight (kg)", "Save and finish"]) expect(out).toContain(t);

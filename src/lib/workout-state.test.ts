@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  adjust, adjustCardio, advance, applyEntry, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exercises,
-  finishCardio, goTo, logSet, nextIndex, sameAsLast, setFeel, setNotes, skip, startEdit, swap, totalSets, updateSet, wrapUp,
+  addKg, adjust, adjustCardio, advance, applyEntry, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exercises,
+  finishCardio, goTo, logSet, nextIndex, sameAsLast, setFeel, setNotes, skip, startEdit, setValue, swap, totalSets, updateSet, restoreLast, wrapUp,
   type ExStep, type InitExercise, type WState, type WorkoutInit,
 } from "./workout-state";
 import type { Entry } from "./parser";
@@ -247,5 +247,27 @@ describe("cardio", () => {
   });
   it("counts total sets", () => {
     expect(totalSets(logSet(logSet(start(), "a"), "b"))).toBe(2);
+  });
+});
+
+describe("typing numbers, +jump and last time", () => {
+  it("types a weight, clamping and rounding", () => {
+    const s = start();
+    expect((currentStep(setValue(s, "kg", 37.5)) as ExStep).kg).toBe(37.5);
+    expect((currentStep(setValue(s, "kg", -5)) as ExStep).kg).toBe(0);
+    expect((currentStep(setValue(s, "kg", 9999)) as ExStep).kg).toBe(400);
+    expect((currentStep(setValue(s, "reps", 10.6)) as ExStep).reps).toBe(11);
+    expect((currentStep(setValue(s, "kg", NaN)) as ExStep).kg).toBe((currentStep(s) as ExStep).kg);
+  });
+  it("adds the jump on top of what's showing", () => {
+    const s = start();
+    const before = (currentStep(s) as ExStep).kg;
+    expect((currentStep(addKg(s, 2.5)) as ExStep).kg).toBe(before + 2.5);
+  });
+  it("puts last session's numbers back", () => {
+    const s = adjust(adjust(start(), "kg", 1), "reps", 1);
+    const e = currentStep(restoreLast(s)) as ExStep;
+    expect(e.kg).toBe(e.last?.kg);
+    expect(e.reps).toBe(e.last?.reps[0]);
   });
 });

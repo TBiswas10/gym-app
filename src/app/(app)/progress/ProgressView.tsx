@@ -107,6 +107,20 @@ export function ProgressView({ data }: { data: ProgressData }) {
           )}
         </section>
 
+        {data.records.length > 0 && (
+          <section className="card" aria-label="Records">
+            <h2 className="t-heading">Records</h2>
+            <div className="col g2">
+              {data.records.map((r) => (
+                <div key={r.name} className="row between g3">
+                  <span className="t-body">{r.name}</span>
+                  <span className="t-body" style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{r.text}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="card" aria-label="Consistency">
           <div className="row between baseline">
             <h2 className="t-heading">Consistency</h2>

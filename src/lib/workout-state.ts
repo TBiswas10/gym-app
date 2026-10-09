@@ -187,6 +187,29 @@ export function adjust(s: WState, field: "kg" | "reps" | "secs", dir: 1 | -1): W
   return replaceStep(s, s.cur, { secs: Math.max(5, e.secs + dir * 5) });
 }
 
+/** Type a number straight into the weight / reps / seconds box. */
+export function setValue(s: WState, field: "kg" | "reps" | "secs", value: number): WState {
+  const e = currentStep(s);
+  if (!isEx(e) || !Number.isFinite(value)) return s;
+  if (field === "kg") return replaceStep(s, s.cur, { kg: Math.min(400, Math.max(0, Math.round(value * 100) / 100)) });
+  if (field === "reps") return replaceStep(s, s.cur, { reps: Math.min(100, Math.max(0, Math.round(value))) });
+  return replaceStep(s, s.cur, { secs: Math.min(600, Math.max(5, Math.round(value))) });
+}
+
+/** Add a weight jump on top of what's showing (the "+2.5" chip). */
+export function addKg(s: WState, delta: number): WState {
+  const e = currentStep(s);
+  return isEx(e) ? setValue(s, "kg", e.kg + delta) : s;
+}
+
+/** Put last session's numbers (first set) back in the boxes. */
+export function restoreLast(s: WState): WState {
+  const e = currentStep(s);
+  if (!isEx(e) || !e.last) return s;
+  if (e.exKind === "timed") return replaceStep(s, s.cur, { secs: e.last.secs[0] ?? e.secs });
+  return replaceStep(s, s.cur, { kg: e.last.kg ?? e.kg, reps: e.last.reps[0] ?? e.reps });
+}
+
 // ---------------------------------------------------------------- sets
 
 /** Log the next set from the steppers. */

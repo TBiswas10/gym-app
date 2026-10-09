@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useOptimistic, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { formatLongDate, longDay, weekdayOf } from "@/lib/dates";
 import { countLine, estimateMinutes, formatTarget, liftMinutes, WARMUP_MIN } from "@/lib/plan";
@@ -27,6 +27,16 @@ export function TodayView({ data }: { data: TodayData }) {
   const todayIdx = Math.max(0, strip.findIndex((d) => d.date === today));
   const [sel, setSel] = useState(todayIdx);
   const [moving, setMoving] = useState(false);
+  // The setup note is long. After you've seen it once, it shrinks to a single line so the workout sits higher.
+  const [compactSetup, setCompactSetup] = useState(false);
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem("wt.setupSeen")) setCompactSetup(true);
+      else window.localStorage.setItem("wt.setupSeen", "1");
+    } catch {
+      /* storage blocked: keep the full note */
+    }
+  }, []);
   const [deloadHidden, setDeloadHidden] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -123,7 +133,13 @@ export function TodayView({ data }: { data: TodayData }) {
           </div>
         )}
 
-        {data.setup && (
+        {data.setup && compactSetup && (
+          <Link className="row between g3 card card-accent" href="/find-weight" style={{ padding: "var(--space-3) var(--space-4)", textDecoration: "none", color: "var(--text)" }}>
+            <span className="t-eyebrow c-accent">Setup mode · weeks 1 and 2</span>
+            <span className="link">How it works <Icon name="chevron-right" size={20} /></span>
+          </Link>
+        )}
+        {data.setup && !compactSetup && (
           <section className="card card-accent">
             <div className="row g3 start">
               <span className="round round-accent">

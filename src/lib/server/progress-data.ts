@@ -1,7 +1,7 @@
 import type { ServerClient } from "../supabase/server";
 import { programmeWeek, sydneyDate, weekDates } from "../dates";
 import type { ExerciseKind } from "../plan";
-import { checkInDue, consistency, exercisesWithData, nextCheckIn, topSeries, weekCells, weekStats, type WeekCell } from "../stats";
+import { checkInDue, consistency, records, exercisesWithData, nextCheckIn, topSeries, weekCells, weekStats, type WeekCell } from "../stats";
 import { fmtNum } from "../format";
 
 export interface ProgressData {
@@ -11,6 +11,7 @@ export interface ProgressData {
   thisWeek: { sessions: number; planned: number; sets: number; groups: [string, number][]; pbs: { name: string; text: string }[] };
   trend: { soreness: number; energy: number }[];
   cells: { week: number; cell: WeekCell }[];
+  records: { name: string; text: string }[];
   consistency: { weeks: { week: number; done: number; planned: number }[]; streak: number };
   next: number | null;
   due: number | null;
@@ -74,6 +75,13 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
       }),
     },
     trend: [...(checkRes.data ?? [])].reverse().map((c) => ({ soreness: c.soreness as number, energy: c.energy as number })),
+    records: records(sets, Object.fromEntries([...info].map(([slug, e]) => [slug, kindOf(e.kind)])))
+      .map((r) => {
+        const e = info.get(r.slug)!;
+        const k = kindOf(e.kind);
+        const v = r.value;
+        return { name: e.name, text: k === "timed" ? `${v.secs} s` : k === "bodyweight" && !v.kg ? `Bodyweight × ${v.reps}` : `${fmtNum(v.kg ?? 0)} kg × ${v.reps}` };
+      }),
     cells: weekCells(week, done),
     consistency: consistency(state?.start_date ?? today, workouts.map((w) => w.planned_date), planned, week),
     next: nextCheckIn(week, done),

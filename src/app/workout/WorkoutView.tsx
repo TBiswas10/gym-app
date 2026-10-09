@@ -6,15 +6,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { fmtNum } from "@/lib/format";
 import type { MachineId } from "@/lib/cardio";
+import { NumField } from "@/components/NumField";
 import { haptic } from "@/lib/haptics";
 import { cardioGuard, extendRest, mmss, restPercent, restRemaining, restSecondsAfter, sessionClock } from "@/lib/timers";
 import { isPB, verdict as verdictFor } from "@/lib/progression";
 import type { Entry, ParseContext } from "@/lib/parser";
 import type { Source } from "@/lib/ops";
 import {
-  adjust, adjustCardio, advance, applyEntry, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exSpec, exercises,
-  finishCardio, goTo, loadEntryIntoSteppers, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setNotes, skip, startEdit, swap,
-  updateSet, wrapUp, type ExStep, type Step, type WState,
+  addKg, adjust, adjustCardio, advance, applyEntry, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exSpec, exercises,
+  finishCardio, goTo, loadEntryIntoSteppers, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setNotes, setValue, skip, startEdit, swap,
+  updateSet, restoreLast, wrapUp, type ExStep, type Step, type WState,
 } from "@/lib/workout-state";
 import type { WorkoutPage } from "@/lib/server/workout-data";
 import { CardioCard } from "./CardioCard";
@@ -302,6 +303,10 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     ? `Quick log: ${dispName(ex).toLowerCase()} ${ex.exKind === "timed" ? "30 sec 30 sec" : ex.exKind === "bodyweight" ? "12 12" : `${fmtNum(ex.kg)}kg ${ex.reps} ${ex.reps}`}`
     : "Quick log: chest press 30kg 12 12";
 
+  const lastSuggestion = ex && !ex.swapped && ex.last && ex.exKind === "weight" && ex.last.kg != null && ex.last.reps.length >= 2
+    ? `${dispName(ex).toLowerCase()} ${fmtNum(ex.last.kg)}kg ${ex.last.reps[0]} ${ex.last.reps[1]}`
+    : null;
+
   // primary button
   let primaryLabel = "";
   let primaryAct: () => void = () => {};
@@ -472,14 +477,14 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                     <div className="stepper">
                       <span className="t-caption c-2" style={{ width: 40 }}>KG</span>
                       <button type="button" className="step-btn" aria-label="Decrease weight" onClick={() => local(adjust(ws, "kg", -1))}><Icon name="minus" /></button>
-                      <span className="num-l step-val">{ex.exKind === "bodyweight" && !ex.kg ? "BW" : fmtNum(ex.kg)}</span>
+                      <NumField label="Weight in kilograms" decimal value={ex.kg} shown={ex.exKind === "bodyweight" && !ex.kg ? "BW" : fmtNum(ex.kg)} onCommit={(v) => local(setValue(ws, "kg", v))} />
                       <button type="button" className="step-btn" aria-label="Increase weight" onClick={() => local(adjust(ws, "kg", 1))}><Icon name="plus" /></button>
                     </div>
                     <hr className="divider" />
                     <div className="stepper">
                       <span className="t-caption c-2" style={{ width: 40 }}>REPS</span>
                       <button type="button" className="step-btn" aria-label="One fewer rep" onClick={() => local(adjust(ws, "reps", -1))}><Icon name="minus" /></button>
-                      <span className="num-l step-val">{ex.reps}</span>
+                      <NumField label="Reps" value={ex.reps} onCommit={(v) => local(setValue(ws, "reps", v))} />
                       <button type="button" className="step-btn" aria-label="One more rep" onClick={() => local(adjust(ws, "reps", 1))}><Icon name="plus" /></button>
                     </div>
                   </>
@@ -488,8 +493,14 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                   <div className="stepper">
                     <span className="t-caption c-2" style={{ width: 40 }}>SEC</span>
                     <button type="button" className="step-btn" aria-label="Five seconds less" onClick={() => local(adjust(ws, "secs", -1))}><Icon name="minus" /></button>
-                    <span className="num-l step-val">{ex.secs}</span>
+                    <NumField label="Seconds" value={ex.secs} onCommit={(v) => local(setValue(ws, "secs", v))} />
                     <button type="button" className="step-btn" aria-label="Five seconds more" onClick={() => local(adjust(ws, "secs", 1))}><Icon name="plus" /></button>
+                  </div>
+                )}
+                {!editing && (ex.last || ex.exKind === "weight") && (
+                  <div className="chip-row-tight">
+                    {ex.last && <button type="button" className="chip" onClick={() => local(restoreLast(ws))}>Same as last time</button>}
+                    {ex.exKind === "weight" && ex.increment > 0 && <button type="button" className="chip" onClick={() => local(addKg(ws, ex.increment))}>+{fmtNum(ex.increment)} kg</button>}
                   </div>
                 )}
               </div>
@@ -612,7 +623,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
         </div>
       )}
 
-      <ChatBar ctx={parseCtx} placeholder={chatPlaceholder} plannedFor={plannedFor} onSave={onChatSave} onEdit={(e) => local(loadEntryIntoSteppers(ws, e))} onModeChange={setChatMode}>
+      <ChatBar ctx={parseCtx} placeholder={chatPlaceholder} plannedFor={plannedFor} onSave={onChatSave} onEdit={(e) => local(loadEntryIntoSteppers(ws, e))} onModeChange={setChatMode} suggestion={lastSuggestion}>
         <button type="button" className={`btn btn-primary btn-cta ${finishing ? "is-loading" : ""}`} onClick={primaryAct} disabled={finishing}>{primaryLabel}</button>
       </ChatBar>
 

@@ -47,3 +47,7 @@
 .consistency-track i{display:block;width:100%;background:var(--border-strong);border-radius:var(--radius-sm)}
 .consistency-track i.is-full{background:var(--accent)}
 .consistency-col.is-now .t-caption{color:var(--accent)}
+/* Tappable number between the stepper buttons */
+.num-input{appearance:none;background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;color:var(--text);text-align:center;padding:0;min-width:0;width:100%;caret-color:var(--accent)}
+.num-input:focus{outline:none;border-bottom-color:var(--accent)}
+.chip-row-tight{display:flex;gap:var(--space-2);flex-wrap:wrap}

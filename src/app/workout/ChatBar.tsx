@@ -19,12 +19,14 @@ interface Props {
   onSave: (entry: Entry) => void;
   onEdit: (entry: Entry) => void;
   onModeChange?: (mode: Mode) => void;
+  /** One-tap text for "same as last time", e.g. "lat pulldown 35kg 10 10". */
+  suggestion?: string | null;
   /** The primary button, shown above the input while nothing else is open. */
   children?: React.ReactNode;
 }
 
 /** Quick log: type a set, read it back, and only then save. Never saves a guess. */
-export function ChatBar({ ctx, placeholder, plannedFor, onSave, onEdit, onModeChange, children }: Props) {
+export function ChatBar({ ctx, placeholder, plannedFor, onSave, onEdit, onModeChange, suggestion, children }: Props) {
   const [text, setText] = useState("");
   const [mode, setModeState] = useState<Mode>("idle");
   const [entry, setEntry] = useState<Entry | null>(null);
@@ -146,6 +148,12 @@ export function ChatBar({ ctx, placeholder, plannedFor, onSave, onEdit, onModeCh
       )}
 
       {mode === "idle" && children}
+
+      {mode === "idle" && !text && suggestion && (
+        <div className="chip-row-tight">
+          <button type="button" className="chip" onClick={() => setText(suggestion)}>Same as last: {suggestion}</button>
+        </div>
+      )}
 
       <form className="chat-bar" onSubmit={submit} style={{ margin: 0 }}>
         <label className="sr" htmlFor="quicklog">Quick log</label>

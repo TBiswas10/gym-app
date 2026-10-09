@@ -167,3 +167,28 @@ export function consistency(startDate: string, doneDates: string[], planned: num
   }
   return { weeks, streak };
 }
+
+export interface RecordRow {
+  slug: string;
+  value: { kg: number | null; reps: number | null; secs: number | null };
+}
+
+/** All-time best per exercise: heaviest weight (then most reps at it), longest hold, or most bodyweight reps. Swapped sets are ignored. */
+export function records(sets: HistSet[], kinds: Record<string, ExerciseKind>): RecordRow[] {
+  const best = new Map<string, RecordRow["value"]>();
+  for (const s of sets) {
+    const kind = kinds[s.exercise_slug];
+    if (!kind || s.variant) continue;
+    const cur = best.get(s.exercise_slug);
+    const v = { kg: s.weight_kg, reps: s.reps, secs: s.seconds };
+    const better =
+      !cur ||
+      (kind === "timed"
+        ? (v.secs ?? 0) > (cur.secs ?? 0)
+        : kind === "bodyweight" && !(v.kg && v.kg > 0)
+          ? (v.reps ?? 0) > (cur.reps ?? 0)
+          : (v.kg ?? 0) > (cur.kg ?? 0) || ((v.kg ?? 0) === (cur.kg ?? 0) && (v.reps ?? 0) > (cur.reps ?? 0)));
+    if (better) best.set(s.exercise_slug, v);
+  }
+  return [...best].map(([slug, value]) => ({ slug, value }));
+}

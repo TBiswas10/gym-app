@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkInDue, consistency, exercisesWithData, nextCheckIn, strengthChange, topSeries, topValue, weekCells, weekStats, type HistSet, type HistWorkout } from "./stats";
+import { checkInDue, consistency, records, exercisesWithData, nextCheckIn, strengthChange, topSeries, topValue, weekCells, weekStats, type HistSet, type HistWorkout } from "./stats";
 import { average, effectOf, reasonFor, recommend, suggestDeload } from "./review";
 
 const W = (id: string, d: string): HistWorkout => ({ id, planned_date: d });
@@ -152,5 +152,19 @@ describe("consistency", () => {
   it("a missed full week ends the run", () => {
     const wk2 = ["2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-10"];
     expect(consistency(start, wk2, 5, 3).streak).toBe(1); // week 3 in progress, week 2 full, week 1 missed
+  });
+});
+
+describe("records", () => {
+  const set = (slug: string, kg: number | null, reps: number | null, secs: number | null = null, variant: string | null = null): HistSet => ({ workout_id: "w", exercise_slug: slug, set_number: 1, weight_kg: kg, reps, seconds: secs, variant });
+  it("keeps the heaviest weight, then the most reps at it", () => {
+    const r = records([set("chest", 30, 12), set("chest", 32.5, 8), set("chest", 32.5, 10), set("chest", 25, 15)], { chest: "weight" });
+    expect(r).toEqual([{ slug: "chest", value: { kg: 32.5, reps: 10, secs: null } }]);
+  });
+  it("handles holds and bodyweight, and ignores swapped sets", () => {
+    const r = records([set("plank", null, null, 40), set("plank", null, null, 55), set("back", 0, 12), set("back", 0, 15), set("chest", 99, 5, null, "dumbbell")], { plank: "timed", back: "bodyweight", chest: "weight" });
+    expect(r.find((x) => x.slug === "plank")?.value.secs).toBe(55);
+    expect(r.find((x) => x.slug === "back")?.value.reps).toBe(15);
+    expect(r.find((x) => x.slug === "chest")).toBeUndefined();
   });
 });
