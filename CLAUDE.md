@@ -52,10 +52,22 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
   (see `list_migrations`) so the repo and DB history match. Seed data is applied with `execute_sql`.
 - Later migrations: `push_subscriptions` (step 8), MCP rate limit + request log (step 7b).
 
+## App structure and rules from step 3
+- Routes: `(app)/` has the tab bar (Today `/`, `/progress`, `/library`, `/plan`); `/install` and `/notifications` are onboarding;
+  `/workout` and `/find-weight` are placeholders until step 4. First sign-in with no `program_state` goes
+  `/` -> `/install` -> `/notifications` -> `completeOnboarding()` (starts the 5-day plan from today, Sydney date).
+- Schedule model (`src/lib/schedule.ts`): a session is identified by its ORIGIN date; a move puts it on another slot date
+  in the same week; workouts are recorded against the origin date. `schedule_overrides` holds skipped / moved / light.
+- Pure, tested logic lives in `src/lib` (`dates`, `plan`, `schedule`); screens only render it. `npm test` runs vitest
+  (also server-renders TodayView with fixtures for the design's states).
+- `src/lib/database.types.ts` is generated from the live schema (regenerate after each migration).
+- One-off design styles that are not in components.css live ONLY in `src/styles/screens.css` (review list for the token rule).
+- Server actions are the only write path for Today (RLS applies); optimistic UI via `useOptimistic`.
+
 ## Build order (stop after each step for testing)
 1. Setup, PWA manifest + icons, Supabase login, tokens in Tailwind  (done, tested)
 2. Database tables + RLS + seed  (applied to the gym-app Supabase project 2026-10-09, verified)
-3. Login polish, install guide, Today screen
+3. Install guide, notifications screen, Today screen  **<- done, awaiting test**
 4. Active workout (sets, last-time, rest + session timers, suggestions, undo, edit/delete)
 5. Cardio cards
 6. Chat quick-log (pure rule-based parser + confirmation card)

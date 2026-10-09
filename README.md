@@ -11,7 +11,7 @@ cp .env.example .env.local   # then fill in the two Supabase values
 npm run dev
 ```
 
-Open http://localhost:3000. Other scripts: `npm run typecheck`, `npm run build`, `npm start`.
+Open http://localhost:3000. Other scripts: `npm test` (unit tests), `npm run typecheck`, `npm run build`, `npm start`.
 
 ### Supabase (one-time)
 1. Create a project at supabase.com.

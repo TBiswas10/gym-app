@@ -4,6 +4,7 @@ import "./globals.css";
 import "@/styles/fonts.css";
 import "@/styles/tokens.css";
 import "@/styles/components.css";
+import "@/styles/screens.css";
 import "@/styles/app.css";
 
 export const metadata: Metadata = {

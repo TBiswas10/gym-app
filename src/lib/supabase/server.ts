@@ -1,11 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import type { Database } from "../database.types";
 
 // Server client for Server Components, route handlers and actions. Acts as the signed-in user,
 // so RLS applies. There is deliberately no service-role client in this app.
 export async function createClient() {
   const store = await cookies();
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -22,3 +23,5 @@ export async function createClient() {
     },
   );
 }
+
+export type ServerClient = Awaited<ReturnType<typeof createClient>>;
