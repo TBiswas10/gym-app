@@ -19,3 +19,6 @@ supabase/.temp/
 # 11 MB design export; keep it local
 design/Workout Tracker.html
 .gstack/
+
+# local MCP connection config (project ref only, but personal)
+.mcp.json

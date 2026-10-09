@@ -37,9 +37,22 @@ Suggest a higher weight only when the top of the rep range is hit on BOTH sets, 
 machine stacks 2.5 or 5 kg); increments editable per exercise. Soreness 4-5 for 3 sessions in a row: suggest hold/light.
 Deload suggestion around week 7 (half the sets). Check-in "Add a set" was dropped: all exercises stay at 2 sets.
 
+## Database (supabase/migrations + supabase/seed.sql)
+- Global, read-only: `exercises` (17, with form guides and progression steps). Templates: `program_templates`,
+  `template_days`, `template_exercises` hold built-ins (`user_id is null`) and the user's own editable copy
+  (made by `start_program()` / `clone_template()`).
+- User-owned (RLS `user_id = auth.uid()`): `program_state` (+ view `program_state_view` with derived `current_week`),
+  `user_exercise_settings`, `schedule_overrides` (skipped/moved/light days), `workouts`, `sets`, `cardio_entries`,
+  `checkins` (soreness/energy/bodyweight), `reviews` (weeks 4/8/12: build | hold | deload).
+- Child rows reference `(workout_id, user_id)`, so a row can never point at someone else's workout.
+- `sets.set_number` is 1 or 2 (plan fact). Client-generated UUIDs make offline retries idempotent.
+- `delete_my_account()` (SECURITY DEFINER, own account only) cascades all data. No service-role key anywhere.
+- Current week is derived from `start_date` and the Sydney date, never stored, so it cannot drift.
+- Later migrations: `push_subscriptions` (step 8), MCP rate limit + request log (step 7b).
+
 ## Build order (stop after each step for testing)
-1. Setup, PWA manifest + icons, Supabase login, tokens in Tailwind  **<- done, awaiting test**
-2. Database tables + RLS + seed
+1. Setup, PWA manifest + icons, Supabase login, tokens in Tailwind  (done, tested)
+2. Database tables + RLS + seed  **<- done, awaiting apply + test**
 3. Login polish, install guide, Today screen
 4. Active workout (sets, last-time, rest + session timers, suggestions, undo, edit/delete)
 5. Cardio cards

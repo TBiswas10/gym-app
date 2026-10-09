@@ -23,6 +23,20 @@ Open http://localhost:3000. Other scripts: `npm run typecheck`, `npm run build`,
    turn **off** "Allow new users to sign up" so nobody else can register.
 5. Email: the built-in Supabase email sender is fine for one user (low hourly limit).
 
+### Database (migrations + seed)
+Schema lives in `supabase/migrations` (applied in filename order); reference data is `supabase/seed.sql`
+(safe to re-run). Never change the database by hand: add a new migration file instead.
+
+Option A, Supabase CLI (recommended; tracks which migrations ran):
+```bash
+npx supabase login
+npx supabase link --project-ref YOUR_PROJECT_REF      # asks for your database password
+npx supabase db push                                   # applies new migrations
+```
+Then load the seed by pasting `supabase/seed.sql` into the dashboard SQL Editor and running it.
+Option B, no CLI: in the Supabase dashboard open SQL Editor and run each file in `supabase/migrations`
+in order, then `supabase/seed.sql`.
+
 ## Environment variables
 See `.env.example`. Real values live in `.env.local` (local) and Vercel project settings (deployed). Never commit them.
 
