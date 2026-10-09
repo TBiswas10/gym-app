@@ -26,7 +26,7 @@ export async function setLight(plannedDate: string, on: boolean): Promise<Action
     const { error } = await supabase.from("schedule_overrides").delete().eq("planned_date", plannedDate).eq("action", "light");
     if (error) return { ok: false, error: FRIENDLY };
   }
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -43,7 +43,7 @@ export async function chooseMissed(plannedDate: string, action: "skipped" | "lig
     .from("schedule_overrides")
     .upsert({ planned_date: plannedDate, action, moved_to_date: action === "moved" ? movedTo! : null }, { onConflict: "user_id,planned_date" });
   if (error) return { ok: false, error: FRIENDLY };
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -53,7 +53,7 @@ export async function undoMissed(plannedDate: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("schedule_overrides").delete().eq("planned_date", plannedDate);
   if (error) return { ok: false, error: FRIENDLY };
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -74,6 +74,6 @@ export async function toggleRestLog(date: string, kind: "walk" | "stretch", on: 
     const { error } = await supabase.from("cardio_entries").delete().eq("kind", kind).eq("logged_on", date);
     if (error) return { ok: false, error: FRIENDLY };
   }
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true };
 }

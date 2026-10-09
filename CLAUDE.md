@@ -95,6 +95,8 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 ## Motion and feel (Apple-style polish, tokens only)
 - Feedback on press (`:active`), never on release: buttons, tabs, sets all scale/tint instantly. `touch-action: manipulation` removes the tap delay.
 - Sheets leave the way they arrived (`anim-out`, then unmount); scrim fades. Reduced motion swaps slides for short fades.
+- Tabs never wait: all four are prefetched (`prefetch` + `router.prefetch`), `staleTimes.dynamic = 30s` keeps visited ones, no skeleton (`loading.tsx` removed), tap lights the tab on pointer-down. Every write action calls `revalidatePath("/", "layout")` so cached tabs never show old data.
+- `SwipeTabs` (layout): swipe left/right between tabs (follows the finger, rubber-bands at the ends), pull down at the top to refresh. Logic in `src/lib/tabs.ts` (tested). Ignores fields and sideways-scrolling rows (`data-no-swipe` opts out).
 - Only `--dur-*` / `--ease-*` tokens; no new colours (so no translucent bars). No animation library added.
 
 ## Build order (stop after each step for testing)

@@ -38,7 +38,7 @@ export async function applyReview(week: number, chosen: string): Promise<ReviewR
     const { error: e2 } = await supabase.from("program_state").update({ deload_weeks: merged }).not("user_id", "is", null);
     if (e2) return { ok: false, error: FRIENDLY };
   }
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   revalidatePath("/progress");
   return { ok: true, text: `Added to your plan: ${REC_LABEL[choice]}` };
 }

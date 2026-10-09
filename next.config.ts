@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Keep visited screens briefly so returning to a tab is instant; saving anything refreshes them.
+  experimental: { staleTimes: { dynamic: 30, static: 180 } },
   async headers() {
     return [
       {

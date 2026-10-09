@@ -131,7 +131,6 @@ describe("Find your weight", () => {
 import OfflinePage from "./offline/page";
 import NotFound from "./not-found";
 import ErrorScreen from "./error";
-import Loading from "./(app)/loading";
 
 describe("Offline, error and not-found screens", () => {
   it("offline page is calm and says logged sets are safe", () => {
@@ -149,8 +148,5 @@ describe("Offline, error and not-found screens", () => {
   });
   it("404 sends you home", () => {
     expect(renderToStaticMarkup(<NotFound />)).toContain("We can’t find that");
-  });
-  it("loading state has skeleton blocks", () => {
-    expect(renderToStaticMarkup(<Loading />)).toContain("skeleton");
   });
 });

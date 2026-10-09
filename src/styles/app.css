@@ -2,3 +2,7 @@
    .screen is fixed 390x844 in the design; on a real phone it fills the screen. */
 .screen.fill{width:100%;height:100dvh}
 html,body{overscroll-behavior:none}
+.swipe-host{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;will-change:transform}
+html,body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+.scroll{overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
+input,textarea{-webkit-touch-callout:default;user-select:text}

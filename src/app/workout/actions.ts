@@ -39,7 +39,7 @@ export async function applyOpsAction(raw: unknown): Promise<FlushResponse> {
 
   const res = await applyOps(supabase, valid);
   if (res.retry) return { done: at[res.done] ?? raw.length, retry: true, dropped: res.dropped + invalid };
-  if (valid.some((o) => o.t === "finish")) revalidatePath("/");
+  if (valid.some((o) => o.t === "finish")) revalidatePath("/", "layout");
   return { done: raw.length, retry: false, dropped: res.dropped + invalid };
 }
 
@@ -52,7 +52,7 @@ export async function saveStartWeight(slug: string, kg: number): Promise<Result>
   const supabase = await createClient();
   const { error } = await supabase.from("user_exercise_settings").upsert({ exercise_slug: slug, start_weight_kg: Math.round(kg * 10) / 10 }, { onConflict: "user_id,exercise_slug" });
   if (error) return { ok: false, error: FRIENDLY };
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -78,6 +78,6 @@ export async function saveCheckin(formData: FormData) {
     ? await supabase.from("checkins").update(row).eq("id", existing.id)
     : await supabase.from("checkins").insert({ ...row, workout_id: workoutId, checked_on: sydneyToday() });
   if (error) redirect(`/complete?w=${encodeURIComponent(workoutId)}&problem=1`);
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   redirect("/");
 }

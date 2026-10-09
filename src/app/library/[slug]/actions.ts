@@ -12,7 +12,7 @@ export async function saveMachineNotes(slug: string, notes: string): Promise<Res
   const supabase = await createClient();
   const { error } = await supabase.from("user_exercise_settings").upsert({ exercise_slug: slug, notes: notes.trim() || null }, { onConflict: "user_id,exercise_slug" });
   if (error) return { ok: false, error: FRIENDLY };
-  revalidatePath("/workout");
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -22,6 +22,6 @@ export async function saveIncrement(slug: string, increment: number | null): Pro
   const supabase = await createClient();
   const { error } = await supabase.from("user_exercise_settings").upsert({ exercise_slug: slug, increment_kg: increment === null ? null : Math.round(increment * 10) / 10 }, { onConflict: "user_id,exercise_slug" });
   if (error) return { ok: false, error: FRIENDLY };
-  revalidatePath("/workout");
+  revalidatePath("/", "layout");
   return { ok: true };
 }
