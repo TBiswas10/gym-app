@@ -134,9 +134,9 @@ export function TodayView({ data }: { data: TodayData }) {
         )}
 
         {data.setup && compactSetup && (
-          <Link className="row between g3 card card-accent" href="/find-weight" style={{ padding: "var(--space-3) var(--space-4)", textDecoration: "none", color: "var(--text)" }}>
+          <Link className="card card-accent" href="/find-weight" style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", minHeight: "var(--size-tap)", padding: "var(--space-2) var(--space-4)", textDecoration: "none", color: "var(--text)" }}>
             <span className="t-eyebrow c-accent">Setup mode · weeks 1 and 2</span>
-            <span className="link">How it works <Icon name="chevron-right" size={20} /></span>
+            <span className="link" style={{ whiteSpace: "nowrap" }}>How it works <Icon name="chevron-right" size={20} /></span>
           </Link>
         )}
         {data.setup && !compactSetup && (
