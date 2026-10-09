@@ -92,16 +92,21 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 - Push works only from the installed Home Screen app (iOS 16.4+) after a tap; denied/unsupported fall back to the on-screen timer.
 - Friendly `error.tsx`, `global-error.tsx`, `not-found.tsx`, `(app)/loading.tsx`, offline banner; security headers in `next.config.ts`.
 
+## Motion and feel (Apple-style polish, tokens only)
+- Feedback on press (`:active`), never on release: buttons, tabs, sets all scale/tint instantly. `touch-action: manipulation` removes the tap delay.
+- Sheets leave the way they arrived (`anim-out`, then unmount); scrim fades. Reduced motion swaps slides for short fades.
+- Only `--dur-*` / `--ease-*` tokens; no new colours (so no translucent bars). No animation library added.
+
 ## Build order (stop after each step for testing)
 1. Setup, PWA manifest + icons, Supabase login, tokens in Tailwind  (done, tested)
 2. Database tables + RLS + seed  (applied to the gym-app Supabase project 2026-10-09, verified)
 3. Install guide, notifications screen, Today screen  (done, tested)
-4. Active workout (sets, last-time, rest + session timers, suggestions, undo, edit/delete)  (built, awaiting phone test)
+4. Active workout (sets, last-time, rest + session timers, suggestions, undo, edit/delete)  (built and deployed, awaiting phone test)
 5. Cardio cards  (built)
 6. Chat quick-log (pure rule-based parser + confirmation card)  (built)
-7. Progress charts, week 4/8/12 reviews, Plan editor, Library + form guides, CSV export, account deletion  (built, awaiting phone test)
+7. Progress charts, week 4/8/12 reviews, Plan editor, Library + form guides, CSV export, account deletion  (built and deployed, awaiting phone test)
 7b. Remote MCP server in this app (streamable HTTP, official SDK, authenticated, rate limited, logged)  (built; needs Supabase OAuth server enabled, see docs/MCP.md)
-8. Web push for rest-timer end, safe areas, offline + error states  (built, awaiting phone test)
+8. Web push for rest-timer end, safe areas, offline + error states  (built and deployed, awaiting phone test)
 9. Optional: server-side LLM call for messy chat input
 
 ## Working rules

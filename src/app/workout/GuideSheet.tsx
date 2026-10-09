@@ -8,13 +8,16 @@ import type { Guide } from "@/lib/server/workout-data";
 const TABS = ["Setup", "Form cues", "Mistakes"] as const;
 
 /** Bottom sheet with a quick form guide for the exercise on screen. */
-export function GuideSheet({ guide, slug, onClose }: { guide: Guide; slug: string; onClose: () => void }) {
+export function GuideSheet({ guide, slug, onClose: done }: { guide: Guide; slug: string; onClose: () => void }) {
   const [tab, setTab] = useState(0);
+  // Leave the way it arrived: play the exit, then unmount (a second tap while leaving is ignored).
+  const [leaving, setLeaving] = useState(false);
+  const onClose = () => setLeaving(true);
   const items = [guide.setup, guide.cues, guide.mistakes][tab];
   return (
     <>
-      <div className="scrim" onClick={onClose} />
-      <div className="sheet-wrap">
+      <div className={`scrim ${leaving ? "anim-out" : "anim-fade"}`} onClick={onClose} />
+      <div className={`sheet-wrap ${leaving ? "anim-out" : ""}`} onAnimationEnd={() => leaving && done()}>
         <div className="sheet" role="dialog" aria-label="Form guide" style={{ maxHeight: 640, overflowY: "auto" }}>
           <span className="sheet-grab" />
           <div className="row between g3 start">
