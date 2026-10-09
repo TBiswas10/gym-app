@@ -9,3 +9,5 @@ html,body{overscroll-behavior:none}
 html,body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 .scroll{overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
 input,textarea{-webkit-touch-callout:default;user-select:text}
+/* The status bar is a solid black strip above the app, so the app only needs a little breathing room under it. */
+:root{--safe-top:calc(env(safe-area-inset-top, 0px) + var(--space-6))}

@@ -13,7 +13,7 @@ import "@/styles/app.css";
 export const metadata: Metadata = {
   title: "Workout Tracker",
   description: "Short sessions. Simple tracking. 45 to 50 minutes, start to finish.",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Workout" },
+  appleWebApp: { capable: true, statusBarStyle: "black", title: "Workout" },
   icons: { apple: "/icons/180", icon: "/icons/192" },
   formatDetection: { telephone: false },
 };
