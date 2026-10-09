@@ -1,0 +1,522 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Icon } from "@/components/Icon";
+import { fmtNum } from "@/lib/format";
+import type { MachineId } from "@/lib/cardio";
+import { cardioGuard, mmss, restPercent, restRemaining, restSecondsAfter, sessionClock } from "@/lib/timers";
+import { isPB, verdict as verdictFor } from "@/lib/progression";
+import type { Entry, ParseContext } from "@/lib/parser";
+import type { Source } from "@/lib/ops";
+import {
+  adjust, adjustCardio, advance, applyEntry, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exSpec, exercises,
+  finishCardio, goTo, loadEntryIntoSteppers, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setNotes, skip, startEdit, swap,
+  updateSet, wrapUp, type ExStep, type Step, type WState,
+} from "@/lib/workout-state";
+import type { WorkoutPage } from "@/lib/server/workout-data";
+import { CardioCard } from "./CardioCard";
+import { ChatBar } from "./ChatBar";
+import { GuideSheet } from "./GuideSheet";
+import { useSync } from "./useSync";
+import { loadQueue } from "@/lib/sync-queue";
+
+const WS_KEY = (id: string) => `wt.ws.${id}`;
+const REST_KEY = "wt.rest";
+
+interface Toast {
+  text: string;
+  until: number;
+  undo: { prev: WState; next: WState } | null;
+}
+
+const targetLabel = (e: ExStep): string => `${e.range[0]}–${e.range[1]}${e.exKind === "timed" ? " s" : ""}`;
+const setText = (e: ExStep, v: { kg: number | null; reps: number | null; secs: number | null }): string =>
+  e.exKind === "timed" ? `${v.secs} s` : e.exKind === "bodyweight" && !v.kg ? `BW × ${v.reps}` : `${fmtNum(v.kg ?? 0)} kg × ${v.reps}`;
+const lastLabel = (e: ExStep): string => {
+  if (!e.last) return "";
+  if (e.exKind === "timed") return e.last.secs.map((s) => `${s} s`).join(", ");
+  return `${e.exKind === "bodyweight" ? "Bodyweight" : `${fmtNum(e.last.kg ?? 0)} kg`} · ${e.last.reps.join(", ")}`;
+};
+const dispName = (e: ExStep): string => (e.swapped ? e.backup : e.name);
+
+export function WorkoutView({ page }: { page: WorkoutPage }) {
+  const router = useRouter();
+  const { init, meta, guides, catalog, lastBySlug, lastCardio } = page;
+  const id = meta.workoutId;
+  const { pending, online, signedOut, enqueue } = useSync();
+
+  // ---- state: starts from the server, then prefers what is saved on this phone (it may hold newer sets)
+  const [ws, setWs] = useState<WState>(() => buildState(init));
+  const wsRef = useRef(ws);
+  const commit = useCallback((next: WState) => {
+    wsRef.current = next;
+    setWs(next);
+  }, []);
+  useEffect(() => {
+    try {
+      for (let i = window.localStorage.length - 1; i >= 0; i--) {
+        const k = window.localStorage.key(i);
+        if (k?.startsWith("wt.ws.") && k !== WS_KEY(id)) window.localStorage.removeItem(k);
+      }
+      const raw = window.localStorage.getItem(WS_KEY(id));
+      if (raw) {
+        const saved = JSON.parse(raw) as WState;
+        if (saved.workoutId === id && Array.isArray(saved.steps)) commit(saved);
+      }
+    } catch {
+      /* no storage: the server copy is used */
+    }
+  }, [id, commit]);
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(WS_KEY(id), JSON.stringify(ws));
+    } catch {
+      /* ignore */
+    }
+  }, [id, ws]);
+
+  // ---- clocks (start time and rest end time are stored; every tick recalculates from the real clock)
+  const startMs = useMemo(() => Date.parse(meta.startedAt), [meta.startedAt]);
+  const [now, setNow] = useState<number | null>(null);
+  const [rest, setRest] = useState<{ end: number; total: number } | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const tick = () => setNow(Date.now());
+    const iv = window.setInterval(tick, 1000);
+    const vis = () => document.visibilityState === "visible" && tick();
+    document.addEventListener("visibilitychange", vis);
+    try {
+      const raw = JSON.parse(window.localStorage.getItem(REST_KEY) ?? "null");
+      if (raw?.workoutId === id && raw.end > Date.now()) setRest({ end: raw.end, total: raw.total });
+    } catch {
+      /* ignore */
+    }
+    return () => {
+      window.clearInterval(iv);
+      document.removeEventListener("visibilitychange", vis);
+    };
+  }, [id]);
+  const nowMs = now ?? startMs;
+  const clock = sessionClock(startMs, nowMs);
+  const restLeft = rest ? restRemaining(rest.end, nowMs) : 0;
+  const resting = !!rest && restLeft > 0;
+
+  const startRest = (seconds: number) => {
+    const r = { end: Date.now() + seconds * 1000, total: seconds };
+    setRest(r);
+    try {
+      window.localStorage.setItem(REST_KEY, JSON.stringify({ ...r, workoutId: id }));
+    } catch {
+      /* ignore */
+    }
+  };
+  const stopRest = () => {
+    setRest(null);
+    try {
+      window.localStorage.removeItem(REST_KEY);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  // ---- toast + undo
+  const [toast, setToast] = useState<Toast | null>(null);
+  const toastLive = toast && nowMs < toast.until ? toast : null;
+  const flash = (text: string, undo: Toast["undo"] = null) => setToast({ text, until: Date.now() + 5000, undo });
+
+  /** Apply a change: update the screen, queue what the server needs, and optionally offer Undo. */
+  const run = (next: WState, o: { toast?: string; undoable?: boolean; source?: Source } = {}) => {
+    const prev = wsRef.current;
+    commit(next);
+    enqueue(diffOps(prev, next, o.source));
+    if (o.toast) flash(o.toast, o.undoable ? { prev, next } : null);
+  };
+  /** A change that is only on screen (steppers, picking things). */
+  const local = (next: WState) => commit(next);
+
+  const doUndo = () => {
+    if (!toast?.undo) return;
+    const { prev, next } = toast.undo;
+    commit(prev);
+    enqueue(diffOps(next, prev));
+    stopRest();
+    setToast(null);
+  };
+
+  // ---- derived
+  const steps = ws.steps;
+  const s: Step = currentStep(ws);
+  const exs = exercises(ws);
+  const cardioStep = steps.find((x) => x.kind === "cardio")!;
+  const cardioIdx = steps.findIndex((x) => x.kind === "cardio");
+  const ex = s.kind === "ex" ? s : null;
+  const editing = !!ex && ws.editIdx >= 0 && ws.editIdx < ex.sets.length;
+  const complete = !!ex && ex.sets.length >= ex.planned;
+  const exNo = steps.slice(0, ws.cur + 1).filter((x) => x.kind === "ex").length;
+  const ni = nextIndex(steps, ws.cur);
+  const next = steps[ni] && steps[ni].status === "todo" && ni > ws.cur ? steps[ni] : null;
+  const level = clock.level;
+  const todoLifts = exs.filter((e) => e.status === "todo").length;
+  const cardioMin = ws.cardio.params[ws.cardio.machine].min ?? 10;
+  const [guardOff, setGuardOff] = useState(false);
+  const guard = cardioGuard({ elapsedS: clock.elapsed, todoLifts, cardioMinutes: cardioMin, cardioDone: cardioStep.status === "done", dismissed: guardOff });
+  const showAmber = level === "warn" && !guard.show;
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [chatMode, setChatMode] = useState<"idle" | "confirm" | "error">("idle");
+  const [finishing, setFinishing] = useState(false);
+
+  const verdictInfo = ex && complete && !editing ? verdictFor(exSpec(ex), ex.sets, { setup: meta.setup, highSoreness: meta.highSoreness }) : null;
+  const pb = ex && complete && !editing && !ex.swapped ? isPB(ex.exKind, ex.last, ex.sets) : false;
+
+  const nextLabel = next ? (next.kind === "ex" ? dispName(next) : next.kind === "cardio" ? "Cardio" : next.kind === "cool" ? "Cool-down" : "Warm-up") : null;
+  const nextSub = (n: Step): string =>
+    n.kind === "ex"
+      ? `${n.planned} × ${targetLabel(n)}${n.last && !n.swapped ? ` · Last ${lastLabel(n)}` : " · First time"}`
+      : n.kind === "cardio" ? meta.cardioLabel : "2–3 min · optional";
+
+  // ---- actions
+  const onLog = () => {
+    if (!ex) return;
+    const n = ex.sets.length + 1;
+    run(logSet(ws, crypto.randomUUID()), { toast: `Nice work. Set ${n} logged.`, undoable: true });
+    startRest(restSecondsAfter(n));
+  };
+  const onUpdate = () => {
+    const i = ws.editIdx;
+    run(updateSet(ws), { toast: `Set ${i + 1} updated.`, undoable: true });
+  };
+  const onDelete = () => run(deleteSet(ws), { toast: "Set deleted.", undoable: true });
+  const onSkip = () => {
+    const label = ex ? dispName(ex) : s.kind === "warm" ? "Warm-up" : s.kind === "cardio" ? "Cardio" : "Cool-down";
+    run(skip(ws), { toast: `Skipped ${label}.`, undoable: true });
+    stopRest();
+  };
+  const onFinish = async () => {
+    setFinishing(true);
+    enqueue([{ t: "finish", workoutId: id, endedAt: new Date().toISOString() }]);
+    for (let i = 0; i < 20 && loadQueue().length > 0; i++) await new Promise((r) => setTimeout(r, 200));
+    router.push(`/complete?w=${id}`);
+  };
+
+  const parseCtx: ParseContext = useMemo(
+    () => ({
+      catalog,
+      last: (slug) => exs.find((e) => e.slug === slug && !e.swapped)?.last ?? lastBySlug[slug] ?? null,
+      currentSlug: ex?.slug ?? null,
+      plannedSets: 2,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [catalog, lastBySlug, ex?.slug, ws.steps],
+  );
+  const plannedFor = (slug: string) => exs.find((e) => e.slug === slug)?.planned ?? 2;
+  const onChatSave = (entry: Entry) => {
+    const planned = plannedFor(entry.slug);
+    const ids = Array.from({ length: Math.min(entry.total, planned) }, () => crypto.randomUUID());
+    run(applyEntry(ws, entry, planned, ids), { toast: `Saved to ${entry.name}.`, undoable: true, source: "chat" });
+    startRest(restSecondsAfter(2));
+  };
+  const chatPlaceholder = ex
+    ? `Quick log: ${dispName(ex).toLowerCase()} ${ex.exKind === "timed" ? "30 sec 30 sec" : ex.exKind === "bodyweight" ? "12 12" : `${fmtNum(ex.kg)}kg ${ex.reps} ${ex.reps}`}`
+    : "Quick log: chest press 30kg 12 12";
+
+  // primary button
+  let primaryLabel = "";
+  let primaryAct: () => void = () => {};
+  if (s.kind === "warm") { primaryLabel = "Warm-up done"; primaryAct = () => { local(advance(ws)); }; }
+  else if (ex) {
+    if (editing) { primaryLabel = `Update set ${ws.editIdx + 1}`; primaryAct = onUpdate; }
+    else if (ex.sets.length < ex.planned) { primaryLabel = `Log set ${ex.sets.length + 1}`; primaryAct = onLog; }
+    else { primaryLabel = nextLabel ? `Next: ${nextLabel}` : "Next"; primaryAct = () => { stopRest(); run(advance(ws)); }; }
+  } else if (s.kind === "cardio") { primaryLabel = "Cardio done"; primaryAct = () => run(finishCardio(ws), { toast: "Cardio logged.", undoable: true }); }
+  else { primaryLabel = "Finish session"; primaryAct = onFinish; }
+
+  return (
+    <div className="screen fill">
+      <header className="head" style={{ paddingBottom: "var(--space-3)" }}>
+        <div className="topbar" style={{ alignItems: "center" }}>
+          <Link className="icon-btn" href="/" aria-label="Leave workout"><Icon name="x" /></Link>
+          <div className="col" style={{ alignItems: "center" }}>
+            <span className="t-eyebrow c-2" style={{ fontSize: ".75rem" }}>{meta.sessionName}</span>
+            <span className={`timer ${level === "warn" ? "warn" : level === "over" ? "over" : ""}`} role="timer" aria-label="Elapsed time">{clock.label}</span>
+          </div>
+          <div className="col" style={{ width: 64, alignItems: "flex-end" }}>
+            <span className="t-caption c-2">{s.kind === "ex" ? "Lift" : s.kind === "warm" ? "Start" : s.kind === "cardio" ? "Cardio" : "Last bit"}</span>
+            <span className="t-body bold tnum">
+              {s.kind === "ex" ? `${exNo} of ${exs.length}` : s.kind === "warm" ? "Warm-up" : s.kind === "cardio" ? `${cardioMin} min` : "Cool-down"}
+            </span>
+          </div>
+        </div>
+        <div className="segs" aria-hidden="true">
+          {steps.map((x, i) => (
+            <i key={i} className={x.status === "done" ? "done" : x.status === "skipped" ? "skip" : i === ws.cur ? "now" : ""} />
+          ))}
+        </div>
+
+        {showAmber && (
+          <div className="timer-note warn" role="status"><Icon name="clock" size={16} />40 min in. Aim to wrap up by 50:00.</div>
+        )}
+        {guard.show && (
+          <div className="card card-warning anim-in" role="alert" style={{ gap: "var(--space-2)", padding: "var(--space-3)" }}>
+            <span className="t-small row g2 start">
+              <Icon name="triangle-alert" size={16} />
+              <span>
+                <b className="c-warning">You’re at {Math.floor(clock.elapsed / 60)} min.</b>{" "}
+                {guard.roomLeft ? `Shorten cardio to ${guard.guardMinutes} min and you’ll finish by 50:00.` : "Not much time left. Do 3 easy minutes of cardio, then wrap up."}
+              </span>
+            </span>
+            <div className="grid2">
+              <button type="button" className="btn btn-warning" onClick={() => { run(goTo(setCardioMinutes(ws, guard.guardMinutes), cardioIdx)); setGuardOff(true); }}>
+                Set cardio to {guard.guardMinutes} min
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => setGuardOff(true)}>Keep {cardioMin} min</button>
+            </div>
+          </div>
+        )}
+        {level === "over" && (
+          <div className="banner banner-danger anim-in" role="alert" style={{ alignItems: "center" }}>
+            <Icon name="triangle-alert" size={16} />
+            <span className="grow"><b>50 min.</b> Time to wrap up.</span>
+            {ws.cur < cardioIdx ? (
+              <button type="button" className="btn btn-danger" onClick={() => run(wrapUp(ws))}>Skip to cardio</button>
+            ) : (
+              <button type="button" className="btn btn-danger" onClick={onFinish}>Finish up</button>
+            )}
+          </div>
+        )}
+
+        {resting && rest && (
+          <div className="col g1 anim-in">
+            <div className="row g3">
+              <div className="col grow g1">
+                <div className="row between baseline"><span className="t-eyebrow c-accent">Rest</span><span className="num-m">{mmss(restLeft)}</span></div>
+                <div className="bar" role="progressbar" aria-label="Rest remaining" aria-valuenow={restLeft} aria-valuemin={0} aria-valuemax={rest.total}>
+                  <i style={{ width: `${restPercent(restLeft, rest.total)}%` }} />
+                </div>
+              </div>
+              <button type="button" className="btn btn-secondary" onClick={stopRest}>Skip</button>
+            </div>
+          </div>
+        )}
+      </header>
+
+      <main className="scroll under-bar" style={{ paddingTop: "var(--space-1)" }}>
+        {!online && pending > 0 && (
+          <div className="banner banner-warning" role="status">
+            <Icon name="triangle-alert" />
+            <span><b>Offline.</b> Your {pending} {pending === 1 ? "change is" : "changes are"} saved on this phone. We’ll sync when you’re back online.</span>
+          </div>
+        )}
+        {signedOut && (
+          <div className="banner banner-danger" role="alert">
+            <Icon name="circle-alert" />
+            <span><b>You’ve been signed out.</b> Your sets are safe on this phone. <Link className="link" href="/login">Log in</Link> to sync them.</span>
+          </div>
+        )}
+        <div className="banner banner-warning"><Icon name="triangle-alert" /><span>Sharp or joint pain? Stop and tell someone.</span></div>
+
+        {s.kind === "warm" && (
+          <section className="card anim-in" style={{ padding: "var(--space-6)" }}>
+            <span className="t-eyebrow c-accent">Step 1 · 7 min</span>
+            <h1 className="t-title">Warm-up</h1>
+            <ul className="list" style={{ margin: 0, padding: 0, listStyle: "none" }}>
+              <li className="list-row"><span>Easy bike or cross-trainer</span><strong>5 min</strong></li>
+              <li className="list-row"><span>Arm circles, band pull-aparts</span><strong>2 min</strong></li>
+              <li className="list-row c-2"><span>Then one light practice set of your first exercise.</span></li>
+            </ul>
+          </section>
+        )}
+
+        {ex && (
+          <section className="card">
+            <div className="row between start g3">
+              <div className="col g2 grow">
+                <h1 className="t-title">{dispName(ex)}</h1>
+                <div className="row g2 wrap">
+                  <span className="tag tag-accent">{ex.planned} {ex.planned === 1 ? "set" : "sets"} · {targetLabel(ex)}</span>
+                  {ex.swapped && <span className="tag">Swapped from {ex.name}</span>}
+                  {ex.light && !ex.swapped && <span className="tag tag-info">Light, 20% off</span>}
+                </div>
+              </div>
+              <button type="button" className="icon-btn" aria-label={`Form guide for ${dispName(ex)}`} onClick={() => setGuideOpen(true)}><Icon name="info" /></button>
+            </div>
+
+            {ex.last && !ex.swapped && <p className="t-small c-2">Last time: <strong className="c-text">{lastLabel(ex)}</strong></p>}
+            {(!ex.last || ex.swapped) && (
+              <div className="banner banner-info">
+                <Icon name="info" />
+                <span className="col">
+                  <span>{ex.swapped ? "No history for this one. Start light and use the steppers." : "First time on this one. Pick a weight you can lift 10 times with 1 or 2 left."}</span>
+                  {!ex.swapped && ex.exKind === "weight" && <Link className="link" href={`/find-weight?slug=${ex.slug}`}>Find my weight <Icon name="chevron-right" size={20} /></Link>}
+                </span>
+              </div>
+            )}
+
+            <div className="grid2">
+              {Array.from({ length: ex.planned }, (_, i) => {
+                const v = ex.sets[i];
+                const isCur = !v && i === ex.sets.length && !editing;
+                const isEd = editing && ws.editIdx === i;
+                const value = v ? setText(ex, v) : isCur ? "Now" : "";
+                const cls = isEd ? "logged editing" : v ? "logged" : isCur ? "now" : "todo";
+                return v ? (
+                  <button key={i} type="button" className={`set ${cls}`} aria-label={`Edit set ${i + 1}: ${value}`} onClick={() => local(startEdit(ws, i))}>
+                    <span className="set-n">Set {i + 1}</span><span className="set-v">{value}</span>
+                  </button>
+                ) : (
+                  <div key={i} className={`set ${cls}`}><span className="set-n">Set {i + 1}</span><span className="set-v">{value}</span></div>
+                );
+              })}
+            </div>
+            {editing && <p className="t-small c-accent bold anim-in">Editing set {ws.editIdx + 1}. Change the numbers, then update.</p>}
+
+            {(!complete || editing) && (
+              <div className="card card-raised" style={{ gap: "var(--space-2)", padding: "var(--space-3)" }}>
+                {ex.exKind !== "timed" && (
+                  <>
+                    <div className="stepper">
+                      <span className="t-caption c-2" style={{ width: 40 }}>KG</span>
+                      <button type="button" className="step-btn" aria-label="Decrease weight" onClick={() => local(adjust(ws, "kg", -1))}><Icon name="minus" /></button>
+                      <span className="num-l step-val">{ex.exKind === "bodyweight" && !ex.kg ? "BW" : fmtNum(ex.kg)}</span>
+                      <button type="button" className="step-btn" aria-label="Increase weight" onClick={() => local(adjust(ws, "kg", 1))}><Icon name="plus" /></button>
+                    </div>
+                    <hr className="divider" />
+                    <div className="stepper">
+                      <span className="t-caption c-2" style={{ width: 40 }}>REPS</span>
+                      <button type="button" className="step-btn" aria-label="One fewer rep" onClick={() => local(adjust(ws, "reps", -1))}><Icon name="minus" /></button>
+                      <span className="num-l step-val">{ex.reps}</span>
+                      <button type="button" className="step-btn" aria-label="One more rep" onClick={() => local(adjust(ws, "reps", 1))}><Icon name="plus" /></button>
+                    </div>
+                  </>
+                )}
+                {ex.exKind === "timed" && (
+                  <div className="stepper">
+                    <span className="t-caption c-2" style={{ width: 40 }}>SEC</span>
+                    <button type="button" className="step-btn" aria-label="Five seconds less" onClick={() => local(adjust(ws, "secs", -1))}><Icon name="minus" /></button>
+                    <span className="num-l step-val">{ex.secs}</span>
+                    <button type="button" className="step-btn" aria-label="Five seconds more" onClick={() => local(adjust(ws, "secs", 1))}><Icon name="plus" /></button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {editing && (
+              <div className="grid2">
+                <button type="button" className="btn btn-secondary" onClick={() => local(cancelEdit(ws))}>Cancel</button>
+                <button type="button" className="btn btn-danger" onClick={onDelete}><Icon name="trash" />Delete set</button>
+              </div>
+            )}
+
+            {verdictInfo && (
+              <div className={`verdict ${verdictInfo.up ? "verdict-up" : ""} anim-pop`}>
+                <span className={`round ${verdictInfo.up ? "round-accent" : ""}`}><Icon name={verdictInfo.up ? "arrow-up" : "equal"} /></span>
+                <span className="col grow">
+                  <span className="row g2 wrap">
+                    <strong className="t-heading" style={{ fontSize: "1.0625rem" }}>{verdictInfo.title}</strong>
+                    {pb && <span className="badge-pb"><Icon name="trophy" size={16} />PB</span>}
+                  </span>
+                  <span className="t-small c-2">{verdictInfo.sub}</span>
+                </span>
+              </div>
+            )}
+
+            <div className="grid2">
+              <button type="button" className="btn btn-secondary" onClick={() => run(swap(ws), { toast: ex.swapped ? "Swap undone." : `Swapped to ${ex.backup}.`, undoable: true })}>
+                <Icon name="repeat" />{ex.swapped ? "Undo swap" : "Swap"}
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={onSkip}><Icon name="skip-forward" />Skip</button>
+            </div>
+            {ex.swapped && <p className="t-small c-2">Machine busy? Backup: {ex.backup}. Tap Undo swap when the machine frees up.</p>}
+
+            <div className="field">
+              <label className="field-label" htmlFor="notes">Machine notes</label>
+              <input
+                className="input" id="notes" value={ex.notes} placeholder="Seat height, pad position…"
+                onChange={(e) => local(setNotes(ws, e.target.value))}
+                onBlur={() => enqueue([{ t: "notes", slug: ex.slug, notes: ex.notes.slice(0, 200) }])}
+              />
+            </div>
+          </section>
+        )}
+
+        {s.kind === "cardio" && (
+          <CardioCard
+            cardio={ws.cardio}
+            planLabel={meta.cardioLabel}
+            planName={meta.cardioName}
+            last={lastCardio}
+            onMachine={(m: MachineId) => local(chooseMachine(ws, m))}
+            onAdjust={(k, d) => local(adjustCardio(ws, k, d))}
+            onSame={(p) => local(sameAsLast(ws, p))}
+            onFeel={(f) => local(setFeel(ws, f))}
+          />
+        )}
+
+        {s.kind === "cool" && (
+          <section className="card anim-in" style={{ padding: "var(--space-6)" }}>
+            <span className="t-eyebrow c-2">Optional · 2 to 3 min</span>
+            <h1 className="t-title">Cool-down</h1>
+            <p className="t-body c-2">Slow breaths and one easy stretch for the muscles you used most. 30 seconds each side.</p>
+            <button type="button" className="btn btn-secondary btn-block" onClick={onFinish}>Skip cool-down</button>
+          </section>
+        )}
+
+        {nextLabel && next && (
+          <div className="card card-dashed" style={{ flexDirection: "row", alignItems: "center", gap: "var(--space-3)" }}>
+            <span className="t-eyebrow c-2" style={{ flex: "none" }}>Up next</span>
+            <span className="col grow"><strong>{nextLabel}</strong><span className="t-small c-2">{nextSub(next)}</span></span>
+          </div>
+        )}
+
+        <section className="col g1" aria-label="Session checklist">
+          <h2 className="t-eyebrow c-2" style={{ margin: "var(--space-2) var(--space-1)" }}>Checklist</h2>
+          {steps.map((x, i) => {
+            const title = x.kind === "ex" ? dispName(x) : x.kind === "warm" ? "Warm-up" : x.kind === "cardio" ? "Cardio" : "Cool-down";
+            const sub =
+              x.kind === "ex"
+                ? x.sets.length ? x.sets.map((v) => (x.exKind === "timed" ? `${v.secs} s` : `${x.exKind === "bodyweight" && !v.kg ? "BW" : fmtNum(v.kg ?? 0)}×${v.reps}`)).join(", ") : x.status === "skipped" ? "Skipped" : `${x.planned} × ${targetLabel(x)}`
+                : x.status === "skipped" ? "Skipped" : x.kind === "warm" ? "7 min" : x.kind === "cardio" ? `${meta.cardioLabel}` : "2–3 min · optional";
+            const dotCls = x.status === "done" ? "dot-done" : i === ws.cur ? "dot-today" : x.status === "skipped" ? "dot-rest" : "";
+            return (
+              <button key={i} type="button" className={`check-row ${i === ws.cur ? "cur" : ""}`} onClick={() => local(goTo(ws, i))}>
+                <span className={`dot ${dotCls}`}>{x.status === "done" && <Icon name="check" size={16} />}{x.status === "skipped" && <Icon name="skip-forward" size={16} />}</span>
+                <span className="col grow"><strong className={x.status === "done" || x.status === "skipped" ? "c-2" : ""}>{title}</strong><span className="t-small c-2">{sub}</span></span>
+              </button>
+            );
+          })}
+          {ws.extras.length > 0 && (
+            <>
+              <h2 className="t-eyebrow c-2" style={{ margin: "var(--space-3) var(--space-1) var(--space-1)" }}>Also logged</h2>
+              {ws.extras.map((x) => (
+                <div key={x.slug} className="check-row">
+                  <span className="dot dot-done"><Icon name="check" size={16} /></span>
+                  <span className="col grow"><strong>{x.name}</strong><span className="t-small c-2">{x.sets.map((v) => (x.exKind === "timed" ? `${v.secs} s` : `${fmtNum(v.kg ?? 0)} kg × ${v.reps}`)).join(", ")}</span></span>
+                </div>
+              ))}
+            </>
+          )}
+        </section>
+      </main>
+
+      {toastLive && (
+        <div className="toast" role="status" style={chatMode === "idle" ? { bottom: 184 } : { top: 120 }}>
+          <div className="toast-body">
+            <span className="row g2"><Icon name="circle-check" />{toastLive.text}</span>
+            {toastLive.undo && (
+              <button type="button" className="btn" aria-label="Undo last change" onClick={doUndo}><Icon name="undo" />Undo</button>
+            )}
+          </div>
+          <span className="toast-time" style={{ width: `${Math.max(0, Math.min(100, Math.round((toastLive.until - nowMs) / 50)))}%` }} />
+        </div>
+      )}
+
+      <ChatBar ctx={parseCtx} placeholder={chatPlaceholder} plannedFor={plannedFor} onSave={onChatSave} onEdit={(e) => local(loadEntryIntoSteppers(ws, e))} onModeChange={setChatMode}>
+        <button type="button" className={`btn btn-primary btn-cta ${finishing ? "is-loading" : ""}`} onClick={primaryAct} disabled={finishing}>{primaryLabel}</button>
+      </ChatBar>
+
+      {guideOpen && ex && guides[ex.slug] && <GuideSheet guide={guides[ex.slug]} slug={ex.slug} onClose={() => setGuideOpen(false)} />}
+      <span className="sr" aria-live="polite">{online ? "" : "Offline"}</span>
+    </div>
+  );
+}

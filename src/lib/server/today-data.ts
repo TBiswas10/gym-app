@@ -2,6 +2,7 @@ import type { ServerClient } from "../supabase/server";
 import { programmeComplete, programmeWeek, isSetupWeek, sydneyDate, weekDates, longDay } from "../dates";
 import { buildStrip, freeDays, missedCard, type MissedCard, type Override, type OverrideAction, type StripDay } from "../schedule";
 import type { ExerciseKind } from "../plan";
+import { highSoreness } from "../progression";
 
 export interface DayExercise {
   slug: string;
@@ -39,6 +40,7 @@ export interface TodayData {
   weekPlan: number;
   weekSets: number;
   toGo: string[]; // weekday names still to do this week
+  highSoreness: boolean; // soreness 4-5 for three sessions in a row
 }
 
 const KINDS: ExerciseKind[] = ["weight", "timed", "bodyweight"];
@@ -72,13 +74,14 @@ export async function loadToday(supabase: ServerClient, uid: string, now = new D
   const dates = weekDates(today);
   const [mon, sun] = [dates[0], dates[6]];
 
-  const [workoutsRes, overridesRes, restRes, settingsRes] = await Promise.all([
+  const [workoutsRes, overridesRes, restRes, settingsRes, soreRes] = await Promise.all([
     supabase.from("workouts").select("id, planned_date").eq("status", "completed"),
     supabase.from("schedule_overrides").select("planned_date, action, moved_to_date, created_at").gte("planned_date", mon).lte("planned_date", sun),
     supabase.from("cardio_entries").select("kind, logged_on").in("kind", ["walk", "stretch"]).gte("logged_on", mon).lte("logged_on", sun),
     supabase.from("user_exercise_settings").select("exercise_slug").not("start_weight_kg", "is", null),
+    supabase.from("checkins").select("soreness").not("soreness", "is", null).order("created_at", { ascending: false }).limit(3),
   ]);
-  for (const r of [workoutsRes, overridesRes, restRes, settingsRes]) if (r.error) throw r.error;
+  for (const r of [workoutsRes, overridesRes, restRes, settingsRes, soreRes]) if (r.error) throw r.error;
 
   const withWeight = new Set((settingsRes.data ?? []).map((s) => s.exercise_slug));
 
@@ -151,6 +154,7 @@ export async function loadToday(supabase: ServerClient, uid: string, now = new D
     weekDone: sessionsThisWeek.filter((d) => d.status === "done").length,
     weekPlan: liftWeekdays.length,
     weekSets,
+    highSoreness: highSoreness([...(soreRes.data ?? []).map((r) => r.soreness as number)].reverse()),
     toGo: strip.filter((d) => d.sessionOrigin && d.date >= today && d.status !== "done").map((d) => longDay(d.weekday)),
   };
 }

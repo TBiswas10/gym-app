@@ -29,7 +29,7 @@ function make(opts: { today: string; start: string; completed?: string[]; overri
     today: opts.today, startDate: opts.start, week, complete: false, setup: isSetupWeek(week), planType: "5day", days: DAYS, strip,
     missed: missedCard(strip, overrides, completed, opts.today),
     free: freeDays(strip, opts.today).map((d) => ({ date: d.date, label: longDay(d.weekday) })),
-    restLogs: {}, totalDone: opts.totalDone ?? 0, weekDone: opts.weekDone ?? 0, weekPlan: 5, weekSets: opts.weekSets ?? 0, toGo: opts.toGo ?? [],
+    restLogs: {}, totalDone: opts.totalDone ?? 0, weekDone: opts.weekDone ?? 0, weekPlan: 5, weekSets: opts.weekSets ?? 0, toGo: opts.toGo ?? [], highSoreness: false,
   };
 }
 const html = (d: TodayData) => renderToStaticMarkup(<TodayView data={d} />);

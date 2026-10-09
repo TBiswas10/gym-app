@@ -64,13 +64,24 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 - One-off design styles that are not in components.css live ONLY in `src/styles/screens.css` (review list for the token rule).
 - Server actions are the only write path for Today (RLS applies); optimistic UI via `useOptimistic`.
 
+## Workout architecture (steps 4-6)
+- `workout-state.ts` is the whole state of a session and every change to it (pure). `diffOps(a, b)` turns a change into
+  server operations (`ops.ts`); undo is `diffOps(b, a)`. Operations are idempotent and validated by `ops-validate.ts`
+  (the server also relies on RLS and DB constraints). `sync-queue.ts` + `useSync` keep a queue on the phone, so sets
+  survive losing signal and are sent in order when the network returns.
+- Timers (`timers.ts`): the session stores its start timestamp (workouts.started_at), rest stores its end time; both are
+  recalculated from the clock every tick and on visibilitychange. Amber at 40:00, red at 50:00, Saturday-style cardio guard at 45:00.
+- Progression (`progression.ts`): up only when the top of the range is hit on BOTH sets; weeks 1-2 and high soreness hold.
+- Quick log (`parser.ts`): pure; always returns an entry to CONFIRM or a problem with fixes; pounds are offered, never auto-converted.
+- `/workout` starts or resumes the single in-progress session (partial unique index). Start links use prefetch={false}.
+
 ## Build order (stop after each step for testing)
 1. Setup, PWA manifest + icons, Supabase login, tokens in Tailwind  (done, tested)
 2. Database tables + RLS + seed  (applied to the gym-app Supabase project 2026-10-09, verified)
-3. Install guide, notifications screen, Today screen  **<- done, awaiting test**
-4. Active workout (sets, last-time, rest + session timers, suggestions, undo, edit/delete)
-5. Cardio cards
-6. Chat quick-log (pure rule-based parser + confirmation card)
+3. Install guide, notifications screen, Today screen  (done, tested)
+4. Active workout (sets, last-time, rest + session timers, suggestions, undo, edit/delete)  (built, awaiting phone test)
+5. Cardio cards  (built)
+6. Chat quick-log (pure rule-based parser + confirmation card)  (built)
 7. Progress charts, week 4/8/12 reviews, Plan editor, Library + form guides, CSV export, account deletion
 7b. Remote MCP server in this app (streamable HTTP, official SDK, authenticated, rate limited, logged)
 8. Web push for rest-timer end, safe areas, offline + error states

@@ -62,7 +62,9 @@ export function TodayView({ data }: { data: TodayData }) {
   const when =
     d.status === "today" ? `Today · ${longName}` : d.status === "done" ? `${longName} · Done` : d.status === "missed" ? `${longName} · Missed` : longName;
   const startable = !!plan && (d.status === "today" || d.status === "next" || d.status === "light");
-  const startHref = `/workout?date=${d.sessionOrigin}`;
+  // In weeks 1-2 an exercise with no starting weight goes through "Find your weight" first.
+  const needsWeights = data.setup && !!plan && plan.exercises.some((e) => e.kind === "weight" && !e.hasStartWeight);
+  const startHref = needsWeights ? `/find-weight?date=${d.sessionOrigin}` : `/workout?date=${d.sessionOrigin}`;
   const startLabel = light ? "Start light workout" : d.status === "today" ? "Start workout" : `Start ${longName}’s workout`;
   const showLightToggle = !!plan && d.status !== "missed" && d.status !== "done";
 
@@ -231,7 +233,7 @@ export function TodayView({ data }: { data: TodayData }) {
                   </div>
                 </div>
                 {m.state === "light" && (
-                  <Link className="btn btn-primary btn-block" href={`/workout?date=${m.origin}`}>
+                  <Link className="btn btn-primary btn-block" href={`/workout?date=${m.origin}`} prefetch={false}>
                     Start light {mPlan.shortName}
                   </Link>
                 )}
@@ -247,6 +249,13 @@ export function TodayView({ data }: { data: TodayData }) {
               </>
             )}
           </section>
+        )}
+
+        {data.highSoreness && plan && d.status !== "done" && (
+          <div className="banner banner-warning" role="status">
+            <Icon name="triangle-alert" />
+            <span><b>Soreness has been high for three sessions.</b> Hold your weights today, or switch on Go light.</span>
+          </div>
         )}
 
         {/* selected day: workout */}
@@ -396,7 +405,7 @@ export function TodayView({ data }: { data: TodayData }) {
       {(startable || sel !== todayIdx) && (
       <div className="bottom-bar above-tabs">
         {startable && (
-          <Link className="btn btn-primary btn-cta" href={startHref}>
+          <Link className="btn btn-primary btn-cta" href={startHref} prefetch={false}>
             <Icon name="play" />
             {startLabel}
           </Link>
