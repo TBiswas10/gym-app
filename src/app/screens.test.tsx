@@ -7,12 +7,14 @@ import { LibraryView } from "./(app)/library/LibraryView";
 import { PlanView } from "./(app)/plan/PlanView";
 import { ReviewView } from "./review/ReviewView";
 import { CompleteView } from "./complete/CompleteView";
-import { FindWeightView } from "./find-weight/FindWeightView";
 import { GuideView } from "./library/[slug]/GuideView";
 import { weekCells } from "@/lib/stats";
 import type { ProgressData } from "@/lib/server/progress-data";
 import type { PlanData } from "@/lib/server/plan-data";
 import type { ReviewData } from "@/lib/server/review-data";
+import OfflinePage from "./offline/page";
+import NotFound from "./not-found";
+import ErrorScreen from "./error";
 
 const progress = (over: Partial<ProgressData> = {}): ProgressData => ({
   week: 3, empty: false,
@@ -152,17 +154,6 @@ describe("Session complete", () => {
     expect(renderToStaticMarkup(<CompleteView workoutId="w" data={data} problem />)).toContain("Couldn’t save that");
   });
 });
-
-describe("Find your weight", () => {
-  it("renders the first try with the design's choices", () => {
-    const out = renderToStaticMarkup(<FindWeightView after="/" list={[{ slug: "chest", name: "Chest press", category: "upper", step: 2.5 }, { slug: "legpress", name: "Leg press", category: "lower", step: 5 }]} />);
-    for (const t of ["Find your weight", "Chest press", "Try 1", "20", "Easy", "+5 kg", "Just right", "Too hard", "−2.5 kg", "1 of 2", "Most people find their weight in 2 or 3 tries."]) expect(out).toContain(t);
-  });
-});
-
-import OfflinePage from "./offline/page";
-import NotFound from "./not-found";
-import ErrorScreen from "./error";
 
 describe("Offline, error and not-found screens", () => {
   it("offline page is calm and says logged sets are safe", () => {

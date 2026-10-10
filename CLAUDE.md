@@ -54,7 +54,7 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 
 ## App structure and rules from step 3
 - Routes: `(app)/` has the tab bar (Today `/`, `/progress`, `/library`, `/plan`); `/install` and `/notifications` are onboarding;
-  `/workout` and `/find-weight` are placeholders until step 4. First sign-in with no `program_state` goes
+  `/workout` is the session screen (there is no separate find-weight step any more: weights are found inside the workout). First sign-in with no `program_state` goes
   `/` -> `/install` -> `/notifications` -> `completeOnboarding()` (starts the 5-day plan from today, Sydney date).
 - Schedule model (`src/lib/schedule.ts`): a session is identified by its ORIGIN date; a move puts it on another slot date
   in the same week; workouts are recorded against the origin date. `schedule_overrides` holds skipped / moved / light.
@@ -120,12 +120,12 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 1. Setup, PWA manifest + icons, Supabase login, tokens in Tailwind  (done, tested)
 2. Database tables + RLS + seed  (applied to the gym-app Supabase project 2026-10-09, verified)
 3. Install guide, notifications screen, Today screen  (done, tested)
-4. Active workout (sets, last-time, rest + session timers, suggestions, undo, edit/delete)  (built and deployed, awaiting phone test)
+4. Active workout (sets, last-time, rest + session timers, suggestions, undo, edit/delete)  (done, tested on a phone)
 5. Cardio cards  (built)
-6. Chat quick-log (pure rule-based parser + confirmation card)  (built)
-7. Progress charts, week 4/8/12 reviews, Plan editor, Library + form guides, CSV export, account deletion  (built and deployed, awaiting phone test)
-7b. Remote MCP server in this app (streamable HTTP, official SDK, authenticated, rate limited, logged)  (built; needs Supabase OAuth server enabled, see docs/MCP.md)
-8. Web push for rest-timer end, safe areas, offline + error states  (built and deployed, awaiting phone test)
+6. Chat quick-log (pure rule-based parser + confirmation card)  (built, then REMOVED from the workout screen by the owner; the parser stays for MCP)
+7. Progress charts, week 4/8/12 reviews, Plan editor, Library + form guides, CSV export, (account-deletion UI removed by the owner)  (done, tested on a phone)
+7b. Remote MCP server in this app (streamable HTTP, official SDK, authenticated, rate limited, logged)  (done, working with Claude; 24 tools, change log + undo)
+8. Web push for rest-timer end, safe areas, offline + error states  (done, tested on a phone)
 9. Optional: server-side LLM call for messy chat input
 
 ## Working rules
@@ -139,6 +139,9 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 ## Notes
 - Deployed to Vercel (project `gym-app`, team tirtha-biswas-projects) by CLI: `vercel deploy --prod`. Production URL
   https://gym-app-one-xi.vercel.app . Env vars (the two NEXT_PUBLIC_SUPABASE_* values) are set in Vercel for Production.
-  The GitHub repo (TBiswas10/gym-app) is PUBLIC and nothing has been pushed to it; ask before pushing.
+  The GitHub repo (TBiswas10/gym-app) is PUBLIC and was pushed on 2026-10-10 on the owner's instruction; secrets are never committed (.env* ignored).
 - `design/Workout Tracker.html` (11 MB bundled design export) is gitignored; `design/tokens.json` is committed.
 - Design deviation: `.screen` is fixed 390x844 in the design; the app uses `.screen.fill` (100% x 100dvh).
+
+## Backups
+`/api/backup` (Plan > Download full backup) returns everything of yours as JSON (not notification subscriptions or request logs). `/api/export` is the CSV of workouts.

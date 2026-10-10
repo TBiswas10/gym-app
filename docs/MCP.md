@@ -72,7 +72,7 @@ and lets you delete them.
 9. [ ] "Log 10 minutes on the bike, easy" and "Soreness 3, energy 4" both work and show in the app.
 10. [ ] "What should I lift next time?" calls `suggest_next_weights` and the reasons match the rule (up only when both sets hit the top of the range).
 11. [ ] "How's my progress?" and "Show my week 4 review" work.
-12. [ ] "Delete my last workout" and "Change my plan" are things Claude has no tool for. Try asking it to anyway: it should say it can't.
+12. [ ] Ask Claude to "delete my last workout": it should show a preview (dry_run) and only delete after you confirm. Then ask it to undo that with the change log and check the workout is back.
 13. [ ] In Supabase Table Editor, `mcp_requests` has a row per call; in Vercel Logs you see `{"evt":"mcp",...}` lines without any workout data.
 14. [ ] Disconnect the connector, then ask again: Claude can't reach your data.
 

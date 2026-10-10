@@ -127,3 +127,6 @@
 .search-input::placeholder{color:var(--text-3)}
 .search-input::-webkit-search-cancel-button{-webkit-appearance:none}
 .search-clear{appearance:none;background:transparent;border:0;color:var(--text-2);width:var(--size-tap);height:var(--size-tap);margin-right:calc(var(--space-2) * -1);display:flex;align-items:center;justify-content:center;border-radius:50%}
+/* Test mode bar (all tabs) */
+.test-bar{flex:none;display:flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-4);padding-top:calc(var(--safe-top) - var(--space-3));background:var(--warning-subtle);color:var(--warning);border-bottom:1px solid var(--warning);text-decoration:none;font:600 .8125rem/1.125rem var(--font-body)}
+.test-bar span{flex:1;min-width:0;color:var(--text)}

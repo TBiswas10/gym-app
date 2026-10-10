@@ -214,6 +214,7 @@ export function PlanView({ data }: { data: PlanData }) {
                   </section>
 
         <a className="btn btn-secondary btn-block" href="/api/export" download>Export data as CSV</a>
+        <a className="btn btn-secondary btn-block" href="/api/backup" download>Download full backup (JSON)</a>
         <form action={logOut}><button type="submit" className="btn btn-tertiary btn-block">Log out{data.email ? ` (${data.email})` : ""}</button></form>
         {pending && <span className="sr" role="status">Saving</span>}
       </div>
