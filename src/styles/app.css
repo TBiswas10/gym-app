@@ -15,3 +15,5 @@ input,textarea{-webkit-touch-callout:default;user-select:text}
 button,[role="button"],[role="tab"],[role="switch"],.tab,.chip,.seg,.icon-btn,.step-btn,.check-row,.day,.picker{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 input,textarea,select{font-size:16px}
 html{-webkit-text-size-adjust:100%}
+/* taste pass: no single orphaned word on the last line of body copy */
+.t-body,.t-small{text-wrap:pretty}
