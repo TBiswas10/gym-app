@@ -94,3 +94,13 @@ Delete tools carry `destructiveHint`, so Claude clients can ask you first. Still
 tokens: deleting the account, restarting the programme, switching plan type, changing the start date, reviews, and
 creating or deleting plans and days. Verified in rolled-back transactions on the live project. To take the extra
 powers away again, add back the `*_no_connector_*` restrictive policies from `20261009023323_mcp_hardening.sql`.
+
+## Preview and undo (change log)
+- Every delete and `edit_plan_day` accepts `dry_run: true`: it reports exactly what would change and changes nothing.
+  To really run, pass `confirm: true` (and `confirm_date` for `delete_workout`). Calls with neither are refused.
+- Every change Claude makes (deletes, plan edits, schedule, settings) is written to the `change_log` table with its
+  "before". Plan and settings edits made in the app are logged too.
+- `get_change_log` lists recent changes with ids; `undo_change` puts one back (once). The app has the same list at
+  Plan > Change log with an Undo button.
+- The log is append-only (the database refuses rewrites and deletes; only `undone_at` can be set).
+- Not undoable: switching plan type; a restore refuses if a new session already exists on the deleted day.

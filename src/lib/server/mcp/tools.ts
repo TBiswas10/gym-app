@@ -402,4 +402,5 @@ export const TOOL_NAMES = [
   "get_today_workout", "get_history", "log_sets", "log_cardio", "log_checkin", "get_progress", "suggest_next_weights", "get_review",
   "get_plan", "list_exercises", "get_schedule", "get_settings", "start_workout", "finish_workout", "edit_logged_sets",
   "delete_logged_sets", "delete_workout", "delete_cardio_entry", "edit_plan_day", "schedule_day", "update_settings", "set_exercise_settings",
+  "get_change_log", "undo_change",
 ] as const;

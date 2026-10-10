@@ -37,7 +37,7 @@ describe("tool list", () => {
     const c = await connect();
     const { tools } = await c.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
-    expect(tools).toHaveLength(22);
+    expect(tools).toHaveLength(24);
   });
   it("marks read tools read-only and write tools as non-destructive", async () => {
     const { tools } = await (await connect()).listTools();
@@ -76,6 +76,26 @@ describe("destructive tools refuse without an explicit confirmation", () => {
   it("edit_plan_day rejects 3 sets and an empty list", async () => {
     expect((await call("edit_plan_day", { weekday: 1, exercises: [{ exercise: "chest press", sets: 3, rep_lo: 8, rep_hi: 12 }] })).isError).toBe(true);
     expect((await call("edit_plan_day", { weekday: 1, exercises: [] })).isError).toBe(true);
+  });
+});
+
+describe("preview and undo", () => {
+  it("every delete and the plan edit can be previewed with dry_run", async () => {
+    const { tools } = await (await connect()).listTools();
+    for (const n of ["delete_logged_sets", "delete_workout", "delete_cardio_entry", "edit_plan_day"]) {
+      expect(JSON.stringify(tools.find((t) => t.name === n)!.inputSchema)).toContain("dry_run");
+    }
+  });
+  it("exposes the change log and undo, and undo only takes a real id", async () => {
+    const { tools } = await (await connect()).listTools();
+    expect(tools.find((t) => t.name === "get_change_log")!.annotations).toMatchObject({ readOnlyHint: true });
+    expect(JSON.stringify(tools.find((t) => t.name === "undo_change")!.inputSchema)).toContain("uuid");
+    expect((await call("undo_change", { id: "not-an-id" })).isError).toBe(true);
+  });
+  it("a delete with neither confirm nor dry_run changes nothing and says how to proceed", async () => {
+    const r = await call("delete_workout", { date: "2026-10-08", confirm_date: "2026-10-08" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("dry_run");
   });
 });
 

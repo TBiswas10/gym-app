@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { recordChange, undoChange } from "@/lib/server/change-log";
 
 export type Result = { ok: true } | { ok: false; error: string };
 const FRIENDLY = "Couldn’t save that. Check your connection and try again.";
@@ -25,8 +26,22 @@ export async function savePlanDay(templateId: string, weekday: number, rows: Row
     clean.push({ slug: r.slug, sets: r.sets, rep_lo: r.repLo, rep_hi: r.repHi });
   }
   const supabase = await createClient();
+  const [{ data: before }, { data: day }] = await Promise.all([
+    supabase.from("template_exercises").select("exercise_slug, sets, rep_lo, rep_hi").eq("template_id", templateId).eq("weekday", weekday).order("position"),
+    supabase.from("template_days").select("full_name").eq("template_id", templateId).eq("weekday", weekday).maybeSingle(),
+  ]);
   const { error } = await supabase.rpc("replace_day_exercises", { p_template: templateId, p_weekday: weekday, p_rows: clean });
   if (error) return { ok: false, error: FRIENDLY };
+  const prev = (before ?? []).map((b) => ({ slug: b.exercise_slug, sets: b.sets, rep_lo: b.rep_lo, rep_hi: b.rep_hi }));
+  if (JSON.stringify(prev) !== JSON.stringify(clean)) {
+    await recordChange(supabase, {
+      source: "app",
+      action: "edit_plan_day",
+      undoable: true,
+      summary: `Edited ${day?.full_name ?? "a day"} in the plan (${clean.length} ${clean.length === 1 ? "exercise" : "exercises"})`,
+      before: { kind: "edit_plan_day", template_id: templateId, weekday, rows: prev },
+    });
+  }
   revalidatePath("/", "layout");
   return { ok: true };
 }
@@ -49,8 +64,14 @@ export async function saveSettings(patch: { restAlerts?: boolean; trackBodyweigh
   if (typeof patch.trackBodyweight === "boolean") update.track_bodyweight = patch.trackBodyweight;
   if (Object.keys(update).length === 0) return { ok: false, error: FRIENDLY };
   const supabase = await createClient();
+  const { data: cur } = await supabase.from("program_state").select("rest_alerts, track_bodyweight").maybeSingle();
   const { error } = await supabase.from("program_state").update(update).not("user_id", "is", null);
   if (error) return { ok: false, error: FRIENDLY };
+  if (cur) {
+    const previous = Object.fromEntries(Object.keys(update).map((k) => [k, (cur as Record<string, unknown>)[k]]));
+    const label = Object.entries(update).map(([k, v]) => `${k.replace(/_/g, " ")} ${v ? "on" : "off"}`).join(", ");
+    await recordChange(supabase, { source: "app", action: "update_settings", undoable: true, summary: `Settings: ${label}`, before: { kind: "update_settings", previous } });
+  }
   revalidatePath("/", "layout");
   return { ok: true };
 }
@@ -92,6 +113,23 @@ export async function setDeloadWeek(week: number, on: boolean): Promise<Result> 
   else set.delete(week);
   const { error } = await supabase.from("program_state").update({ deload_weeks: [...set].sort((a, b) => a - b) }).not("user_id", "is", null);
   if (error) return { ok: false, error: FRIENDLY };
+  await recordChange(supabase, {
+    source: "app",
+    action: "update_settings",
+    undoable: true,
+    summary: `Week ${week} ${on ? "made a deload week" : "no longer a deload week"}`,
+    before: { kind: "update_settings", previous: { deload_weeks: state.deload_weeks } },
+  });
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/** Put back a change from the Change log screen. */
+export async function undoChangeAction(id: string): Promise<Result> {
+  if (!UUID.test(id)) return { ok: false, error: FRIENDLY };
+  const supabase = await createClient();
+  const r = await undoChange(supabase, id);
+  if (!r.ok) return { ok: false, error: r.error };
   revalidatePath("/", "layout");
   return { ok: true };
 }
