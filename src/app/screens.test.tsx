@@ -66,6 +66,12 @@ describe("Library", () => {
     expect(out).toContain("Chest · Machine");
     for (const g of ["All", "Back", "Shoulders", "Arms", "Legs", "Core"]) expect(out).toContain(`>${g}<`);
   });
+  it("has a search box that never zooms the page and no clear button until you type", () => {
+    const out = renderToStaticMarkup(<LibraryView items={items} />);
+    expect(out).toContain('type="search"');
+    expect(out).toContain("Search exercises, muscles, machines");
+    expect(out).not.toContain("Clear search");
+  });
 });
 
 describe("Form guide", () => {

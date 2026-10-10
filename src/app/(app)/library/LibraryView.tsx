@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ExerciseMedia } from "@/components/ExerciseMedia";
 import { Icon } from "@/components/Icon";
+import { matchesQuery } from "@/lib/library-search";
 
 export interface LibItem {
   slug: string;
@@ -23,9 +24,10 @@ const TABS = ["Setup", "How to do it", "Mistakes"];
 export function LibraryView({ items }: { items: LibItem[] }) {
   const router = useRouter();
   const [filter, setFilter] = useState("All");
+  const [query, setQuery] = useState("");
   const [open, setOpen] = useState<LibItem | null>(null);
   const [tab, setTab] = useState(0);
-  const rows = items.filter((e) => filter === "All" || e.group === filter);
+  const rows = items.filter((e) => (filter === "All" || e.group === filter) && matchesQuery(e, query));
   const list = open ? [open.setup, open.cues, open.mistakes][tab] : [];
 
   return (
@@ -34,6 +36,26 @@ export function LibraryView({ items }: { items: LibItem[] }) {
         <div className="col g1">
           <h1 className="t-title">Library</h1>
           <p className="t-body c-2">{items.length} exercises. Tap one for a quick guide.</p>
+        </div>
+        <div className="search" role="search">
+          <Icon name="search" />
+          <input
+            type="search"
+            className="search-input"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search exercises, muscles, machines"
+            aria-label="Search exercises"
+            enterKeyHint="search"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+          />
+          {query && (
+            <button type="button" className="search-clear" aria-label="Clear search" onClick={() => setQuery("")}>
+              <Icon name="x" />
+            </button>
+          )}
         </div>
         <div className="chip-row" role="tablist" aria-label="Filter by group">
           {GROUPS.map((g) => (
@@ -60,7 +82,14 @@ export function LibraryView({ items }: { items: LibItem[] }) {
             </button>
           ))}
         </div>
-        {rows.length === 0 && <div className="empty"><p className="t-body">Nothing here yet.</p></div>}
+        {rows.length === 0 && (
+          <div className="empty">
+            <p className="t-body">{query ? `No exercises match “${query.trim()}”.` : "Nothing here yet."}</p>
+            {(query || filter !== "All") && (
+              <button type="button" className="btn btn-secondary" onClick={() => { setQuery(""); setFilter("All"); }}>Clear search and filter</button>
+            )}
+          </div>
+        )}
       </div>
 
       {open && (
