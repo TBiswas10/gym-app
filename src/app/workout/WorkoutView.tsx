@@ -7,19 +7,18 @@ import { Icon } from "@/components/Icon";
 import { fmtNum } from "@/lib/format";
 import type { MachineId } from "@/lib/cardio";
 import { NumField } from "@/components/NumField";
+import { useSwipeUp } from "@/components/useSwipeUp";
 import { haptic } from "@/lib/haptics";
 import { cardioGuard, extendRest, mmss, restPercent, restRemaining, restSecondsAfter, sessionClock } from "@/lib/timers";
 import { isPB, verdict as verdictFor } from "@/lib/progression";
-import type { Entry, ParseContext } from "@/lib/parser";
 import type { Source } from "@/lib/ops";
 import {
-  addKg, adjust, adjustCardio, advance, applyEntry, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exSpec, exercises,
-  finishCardio, goTo, loadEntryIntoSteppers, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setNotes, setValue, skip, startEdit, swap,
+  addKg, adjust, adjustCardio, advance, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exSpec, exercises,
+  finishCardio, goTo, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setNotes, setValue, skip, startEdit, swap,
   moveExercise, updateSet, restoreLast, wrapUp, type ExStep, type Step, type WState,
 } from "@/lib/workout-state";
 import type { WorkoutPage } from "@/lib/server/workout-data";
 import { CardioCard } from "./CardioCard";
-import { ChatBar } from "./ChatBar";
 import { GuideSheet } from "./GuideSheet";
 import { useSync } from "./useSync";
 import { cancelRestPush, disableRestAlerts, enableRestAlerts, PUSH_MESSAGE, pushState, scheduleRestPush } from "@/lib/push-client";
@@ -48,7 +47,7 @@ const dispName = (e: ExStep): string => (e.swapped ? e.backup : e.name);
 
 export function WorkoutView({ page }: { page: WorkoutPage }) {
   const router = useRouter();
-  const { init, meta, guides, catalog, lastBySlug, lastCardio } = page;
+  const { init, meta, guides, lastCardio } = page;
   const id = meta.workoutId;
   const { pending, online, signedOut, enqueue } = useSync();
 
@@ -204,6 +203,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
 
   // ---- toast + undo
   const [toast, setToast] = useState<Toast | null>(null);
+  const toastSwipe = useSwipeUp(() => setToast(null));
   const toastLive = toast && nowMs < toast.until ? toast : null;
   const flash = (text: string, undo: Toast["undo"] = null) => setToast({ text, until: Date.now() + 5000, undo });
 
@@ -245,16 +245,19 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const guard = cardioGuard({ elapsedS: clock.elapsed, todoLifts, cardioMinutes: cardioMin, cardioDone: cardioStep.status === "done", dismissed: true || guardOff }); // cardio is first now, so there is nothing to shorten late
   const showAmber = level === "warn" && !guard.show;
   const [guideOpen, setGuideOpen] = useState(false);
-  const [chatMode, setChatMode] = useState<"idle" | "confirm" | "error">("idle");
   const [finishing, setFinishing] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [reorder, setReorder] = useState(false);
+  // Drag a lift by its handle: the row follows your finger and swaps places as it passes its neighbours.
+  const [drag, setDrag] = useState<{ slug: string; startY: number; h: number; emitted: number } | null>(null);
+  const [dragDy, setDragDy] = useState(0);
 
   const verdictInfo = ex && complete && !editing ? verdictFor(exSpec(ex), ex.sets, { setup: meta.setup, highSoreness: meta.highSoreness, hold: meta.hold }) : null;
   const pb = ex && complete && !editing && !ex.swapped ? isPB(ex.exKind, ex.last, ex.sets) : false;
 
   // A new best gets a moment of its own: before -> after, a haptic, then it clears itself.
   const [pbCard, setPbCard] = useState<{ name: string; text: string } | null>(null);
+  const pbSwipe = useSwipeUp(() => setPbCard(null));
   const shownPb = useRef<Set<string>>(new Set());
   const pbSlug = pb && ex ? ex.slug : null;
   useEffect(() => {
@@ -338,27 +341,6 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     for (let i = 0; i < 20 && loadQueue().length > 0; i++) await new Promise((r) => setTimeout(r, 200));
     router.push(`/complete?w=${id}`);
   };
-
-  const parseCtx: ParseContext = useMemo(
-    () => ({
-      catalog,
-      last: (slug) => exs.find((e) => e.slug === slug && !e.swapped)?.last ?? lastBySlug[slug] ?? null,
-      currentSlug: ex?.slug ?? null,
-      plannedSets: 2,
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [catalog, lastBySlug, ex?.slug, ws.steps],
-  );
-  const plannedFor = (slug: string) => exs.find((e) => e.slug === slug)?.planned ?? 2;
-  const onChatSave = (entry: Entry) => {
-    const planned = plannedFor(entry.slug);
-    const ids = Array.from({ length: Math.min(entry.total, planned) }, () => crypto.randomUUID());
-    run(applyEntry(ws, entry, planned, ids), { toast: `Saved to ${entry.name}.`, undoable: true, source: "chat" });
-    startRest(restSecondsAfter(2), restAlertText({ name: entry.name, setsLogged: planned, planned, kind: entry.kind, kg: entry.kg, reps: null, secs: null, nextName: nextLabel }));
-  };
-  const chatPlaceholder = ex
-    ? `Quick log: ${dispName(ex).toLowerCase()} ${ex.exKind === "timed" ? "30 sec 30 sec" : ex.exKind === "bodyweight" ? "12 12" : `${fmtNum(ex.kg)}kg ${ex.reps} ${ex.reps}`}`
-    : "Quick log: chest press 30kg 12 12";
 
   // primary button
   let primaryLabel = "";
@@ -636,7 +618,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
         <section className="col g1" aria-label="Session checklist">
           <div className="row between" style={{ margin: "var(--space-2) var(--space-1)" }}>
             <h2 className="t-eyebrow c-2">Checklist</h2>
-            <button type="button" className="link" aria-pressed={reorder} onClick={() => setReorder(!reorder)}>{reorder ? "Done" : "Change order"}</button>
+            <button type="button" className="link" aria-pressed={reorder} onClick={() => setReorder(!reorder)}>{reorder ? "Done" : "Reorder lifts"}</button>
           </div>
           {steps.map((x, i) => {
             const title = x.kind === "ex" ? dispName(x) : x.kind === "warm" ? "Warm-up" : x.kind === "cardio" ? "Cardio" : "Cool-down";
@@ -651,14 +633,61 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                 <span className="col grow"><strong className={x.status === "done" || x.status === "skipped" ? "c-2" : ""}>{title}</strong><span className="t-small c-2">{sub}</span></span>
               </button>
             );
-            if (!reorder || x.kind !== "ex") return <div key={i} className="row g2">{row}</div>;
-            const canUp = steps[i - 1]?.kind === "ex";
-            const canDown = steps[i + 1]?.kind === "ex";
+            const rowKey = x.kind === "ex" ? x.slug : x.kind;
+            if (!reorder || x.kind !== "ex") return <div key={rowKey} className="row g2">{row}</div>;
+            const dragging = drag?.slug === x.slug;
             return (
-              <div key={i} className="row g2">
+              <div
+                key={rowKey}
+                className={`row g2 ${dragging ? "is-dragging" : ""}`}
+                style={dragging ? { transform: `translateY(${dragDy - drag!.emitted * drag!.h}px)`, position: "relative", zIndex: 5 } : undefined}
+              >
                 {row}
-                <button type="button" className="icon-btn" aria-label={`Move ${title} earlier`} disabled={!canUp} onClick={() => local(moveExercise(ws, i, -1))}><Icon name="arrow-up" /></button>
-                <button type="button" className="icon-btn" aria-label={`Move ${title} later`} disabled={!canDown} onClick={() => local(moveExercise(ws, i, 1))}><Icon name="arrow-down" /></button>
+                <button
+                  type="button"
+                  className="icon-btn grip"
+                  aria-label={`Drag ${title} to change its order`}
+                  onPointerDown={(e) => {
+                    const rowEl = e.currentTarget.parentElement as HTMLElement;
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    setDrag({ slug: x.slug, startY: e.clientY, h: rowEl.offsetHeight + 4, emitted: 0 });
+                    setDragDy(0);
+                    haptic("tap");
+                  }}
+                  onPointerMove={(e) => {
+                    if (!drag || drag.slug !== x.slug) return;
+                    const dy = e.clientY - drag.startY;
+                    setDragDy(dy);
+                    const want = Math.round(dy / drag.h);
+                    if (want === drag.emitted) return;
+                    let w = liveWs.current;
+                    let emitted = drag.emitted;
+                    while (emitted !== want) {
+                      const dir = want > emitted ? 1 : -1;
+                      const at = w.steps.findIndex((t) => t.kind === "ex" && t.slug === x.slug);
+                      const next = moveExercise(w, at, dir);
+                      if (next === w) break; // a neighbour that is not a lift (cardio / cool-down)
+                      w = next;
+                      emitted += dir;
+                      haptic("tap");
+                    }
+                    if (emitted !== drag.emitted) {
+                      local(w);
+                      setDrag({ ...drag, emitted });
+                    }
+                  }}
+                  onPointerUp={() => {
+                    setDrag(null);
+                    setDragDy(0);
+                  }}
+                  onPointerCancel={() => {
+                    setDrag(null);
+                    setDragDy(0);
+                  }}
+                  style={{ touchAction: "none" }}
+                >
+                  <Icon name="grip-vertical" />
+                </button>
               </div>
             );
           })}
@@ -677,7 +706,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
       </main>
 
       {toastLive && (
-        <div className="toast toast-top" role="status">
+        <div className="toast toast-top" role="status" style={toastSwipe.style} {...toastSwipe.handlers}>
           <div className="toast-body">
             <span className="row g2"><Icon name="circle-check" />{toastLive.text}</span>
             {toastLive.undo && (
@@ -688,12 +717,12 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
         </div>
       )}
 
-      <ChatBar ctx={parseCtx} placeholder={chatPlaceholder} plannedFor={plannedFor} onSave={onChatSave} onEdit={(e) => local(loadEntryIntoSteppers(ws, e))} onModeChange={setChatMode}>
+      <footer className="bottom-bar">
         <button type="button" className={`btn btn-primary btn-cta ${finishing ? "is-loading" : ""}`} onClick={primaryAct} disabled={finishing}>{primaryLabel}</button>
-      </ChatBar>
+      </footer>
 
       {pbCard && (
-        <button type="button" className="pb-card toast-top-pos" onClick={() => setPbCard(null)} aria-live="polite">
+        <button type="button" className="pb-card toast-top-pos" style={pbSwipe.style} {...pbSwipe.handlers} onClick={() => setPbCard(null)} aria-live="polite">
           <span className="done-mini"><Icon name="trophy" /></span>
           <span className="col" style={{ alignItems: "flex-start", textAlign: "left", minWidth: 0 }}>
             <span className="t-eyebrow c-accent">New best · {pbCard.name}</span>

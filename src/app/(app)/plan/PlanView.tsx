@@ -9,14 +9,13 @@ import { estimateMinutes } from "@/lib/plan";
 import { add, estimateNote, move, rangeLabel, rangesFor, removeAt, setRange, setSets, type Row } from "@/lib/plan-edit";
 import type { PlanData } from "@/lib/server/plan-data";
 import { disableRestAlerts, enableRestAlerts, PUSH_MESSAGE } from "@/lib/push-client";
-import { deleteAccount, saveSettings, savePlanDay, setTestMode, switchPlan, type Result } from "./actions";
+import { saveSettings, savePlanDay, setTestMode, switchPlan, type Result } from "./actions";
 
-export function PlanView({ data, deleteProblem }: { data: PlanData; deleteProblem: boolean }) {
+export function PlanView({ data }: { data: PlanData }) {
   const [days, setDays] = useState(data.days);
   const [dayIdx, setDayIdx] = useState(0);
   const [open, setOpen] = useState(0);
   const [adding, setAdding] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [restAlerts, setRestAlerts] = useState(data.restAlerts);
   const [bodyweight, setBodyweight] = useState(data.trackBodyweight);
   const [testMode, setTestModeState] = useState(!!data.testMode);
@@ -117,7 +116,6 @@ export function PlanView({ data, deleteProblem }: { data: PlanData; deleteProble
         </p>
 
         {error && <div className="banner banner-danger" role="alert"><Icon name="circle-alert" /><span>{error}</span></div>}
-        {deleteProblem && <div className="banner banner-danger" role="alert"><Icon name="circle-alert" /><span>Couldn’t delete your account. Check your connection and try again.</span></div>}
 
         <div className="dayrow" style={{ gridTemplateColumns: `repeat(${days.length},minmax(0,1fr))` }}>
           {days.map((d, i) => (
@@ -216,7 +214,6 @@ export function PlanView({ data, deleteProblem }: { data: PlanData; deleteProble
 
         <a className="btn btn-secondary btn-block" href="/api/export" download>Export data as CSV</a>
         <form action={logOut}><button type="submit" className="btn btn-tertiary btn-block">Log out{data.email ? ` (${data.email})` : ""}</button></form>
-        <button type="button" className="btn btn-tertiary btn-block" style={{ color: "var(--danger)" }} onClick={() => setConfirmDelete(true)}>Delete my account</button>
         {pending && <span className="sr" role="status">Saving</span>}
       </div>
 
@@ -245,21 +242,6 @@ export function PlanView({ data, deleteProblem }: { data: PlanData; deleteProble
         </>
       )}
 
-      {confirmDelete && (
-        <>
-          <div className="scrim" onClick={() => setConfirmDelete(false)} />
-          <div className="sheet-wrap">
-            <form className="sheet" role="dialog" aria-label="Delete account" action={deleteAccount}>
-              <span className="sheet-grab" />
-              <h2 className="t-title">Delete everything?</h2>
-              <p className="t-body c-2">This deletes your login and all your workouts, plans and check-ins. It can’t be undone.</p>
-              <a className="btn btn-secondary btn-block" href="/api/export" download>Export my data first</a>
-              <button type="submit" className="btn btn-danger btn-block"><Icon name="trash" />Delete my account</button>
-              <button type="button" className="btn btn-tertiary btn-block" onClick={() => setConfirmDelete(false)}>Cancel</button>
-            </form>
-          </div>
-        </>
-      )}
     </>
   );
 }

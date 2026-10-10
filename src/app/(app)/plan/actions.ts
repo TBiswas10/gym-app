@@ -95,12 +95,3 @@ export async function setDeloadWeek(week: number, on: boolean): Promise<Result> 
   revalidatePath("/", "layout");
   return { ok: true };
 }
-
-/** Deletes your account and every row of your data (cascades from your login). */
-export async function deleteAccount() {
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("delete_my_account");
-  if (error) redirect("/plan?problem=delete");
-  await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
-  redirect("/login?deleted=1");
-}

@@ -5,8 +5,7 @@ import { PlanView } from "./PlanView";
 
 export const dynamic = "force-dynamic";
 
-export default async function PlanPage({ searchParams }: { searchParams: Promise<{ problem?: string }> }) {
-  const { problem } = await searchParams;
+export default async function PlanPage() {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
   const uid = auth?.claims?.sub;
@@ -26,5 +25,5 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
     );
   }
   if (!data) redirect("/install");
-  return <PlanView key={data.planType} data={data} deleteProblem={problem === "delete"} />;
+  return <PlanView key={data.planType} data={data} />;
 }

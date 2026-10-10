@@ -38,7 +38,7 @@ machine stacks 2.5 or 5 kg); increments editable per exercise. Soreness 4-5 for 
 Deload suggestion around week 7 (half the sets). Check-in "Add a set" was dropped: all exercises stay at 2 sets.
 
 ## Database (supabase/migrations + supabase/seed.sql)
-- Global, read-only: `exercises` (17, with form guides and progression steps). Templates: `program_templates`,
+- Global, read-only: `exercises` (44, with form guides and progression steps). Templates: `program_templates`,
   `template_days`, `template_exercises` hold built-ins (`user_id is null`) and the user's own editable copy
   (made by `start_program()` / `clone_template()`).
 - User-owned (RLS `user_id = auth.uid()`): `program_state` (+ view `program_state_view` with derived `current_week`),
@@ -109,6 +109,7 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 - Test mode (Plan > Test mode, `program_state.test_mode`, `workouts.is_test`, migration `test_mode`): Today shows a card to start ANY template day (`/workout?test=<weekday>`) and preview week 4/8/12 check-ins; test sessions are flagged and `setTestMode(false)` deletes them (checkins first, since their workout_id is set null on delete).
 - Finish: `/complete` opens as ONE huge tick (`.done-tick`, "Workout complete", stats, PBs, warm line) with Continue to the check-in; Today shows a "Workout complete" tick on done days. A skipped day (schedule override) can still be started ("Do it now") and shows a tick once done (`buildStrip` ignores the skip when the origin is completed); in a workout, finishing a skipped lift turns it into a tick (`logSet`). Lifts can be reordered from the checklist (`moveExercise`, "Change order").
 - UI pass (rings + hero numbers): Today has weekly Activity-style rings (`Rings`, `ringFraction`: sessions / sets / cardio minutes in accent / info / success) and a Resume bar while a session is open (`ResumeBar`). Workout: hero numbers (`.num-hero`) you can scrub by dragging up/down (`NumField` + `scrubSteps`, haptic tick per step), bigger rest ring that pulses in the last 5 s, a "New best" card with before -> after on a PB, horizontal swipe on the card to move between lifts. Tab bar has one sliding indicator (`.tab-ind`). First launch shows a 4-card gesture tour (`GestureTour`, `wt.tourSeen`). Not built: sound, drag-sheet physics, shared-element transitions.
+- Round of requested changes: the quick-log box (ChatBar) and its confirm card are REMOVED from the workout screen (the pure `parser.ts` stays; MCP uses it). The account-deletion UI and `deleteAccount` action are removed (the DB function stays, still refused for connectors). Library now has 44 exercises (27 added by `scripts/more-exercises.py` -> `supabase/seed-more-exercises.sql`, photos in `public/exercises`); "Seated row" is named "Low seated row"; the Seated leg curl was swapped for the Dumbbell Romanian deadlift in all plans and sorted last (it is kept because 2 logged sets reference it). Checklist: "Reorder lifts" = drag by the grip handle. In-app banners and the new-best card dismiss by swiping up (`useSwipeUp`). Progress's first card has an exercise picker sheet instead of a long chip row.
 - Only `--dur-*` / `--ease-*` tokens; no new colours (so no translucent bars). No animation library added.
 
 ## Build order (stop after each step for testing)

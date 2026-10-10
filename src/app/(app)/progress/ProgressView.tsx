@@ -11,6 +11,7 @@ const CELL_CLASS = { done: "wk-done", now: "wk-now", check: "wk-check", todo: ""
 
 export function ProgressView({ data }: { data: ProgressData }) {
   const [sel, setSel] = useState(0);
+  const [picking, setPicking] = useState(false);
   const chip = data.chips[sel];
   const unit = chip?.unit ?? "kg";
   const fmt = (v: number) => `${fmtNum(v)} ${unit}`;
@@ -27,11 +28,13 @@ export function ProgressView({ data }: { data: ProgressData }) {
         <section className="card" aria-label="Strength">
           {chip ? (
             <>
-              <div className="chip-row" role="tablist" aria-label="Exercise">
-                {data.chips.map((c, i) => (
-                  <button key={c.slug} type="button" className="chip" role="tab" aria-selected={i === sel} onClick={() => setSel(i)}>{c.name}</button>
-                ))}
-              </div>
+              <button type="button" className="picker" aria-haspopup="dialog" onClick={() => setPicking(true)}>
+                <span className="col" style={{ alignItems: "flex-start", minWidth: 0 }}>
+                  <span className="t-caption c-2">EXERCISE</span>
+                  <strong className="t-heading" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{chip.name}</strong>
+                </span>
+                <span className="c-2"><Icon name="chevron-down" /></span>
+              </button>
               <div className="row between" style={{ alignItems: "flex-end" }}>
                 <span className="num-m">{fmt(chip.values[chip.values.length - 1])}</span>
                 {chip.values.length > 1 && <span className="tag tag-accent">{delta >= 0 ? "+" : "−"}{fmtNum(Math.abs(delta))} {unit} overall</span>}
@@ -159,6 +162,36 @@ export function ProgressView({ data }: { data: ProgressData }) {
           </div>
         </section>
       </div>
+      {picking && (
+        <>
+          <div className="scrim anim-fade" onClick={() => setPicking(false)} />
+          <div className="sheet-wrap">
+            <div className="sheet" role="dialog" aria-label="Choose an exercise" style={{ maxHeight: 640, overflowY: "auto" }}>
+              <span className="sheet-grab" />
+              <div className="row between">
+                <h2 className="t-title">Choose an exercise</h2>
+                <button type="button" className="icon-btn" aria-label="Close" onClick={() => setPicking(false)}><Icon name="x" /></button>
+              </div>
+              <div className="col g1">
+                {data.chips.map((c, i) => (
+                  <button
+                    key={c.slug}
+                    type="button"
+                    className={`list-row pick-row ${i === sel ? "is-on" : ""}`}
+                    onClick={() => {
+                      setSel(i);
+                      setPicking(false);
+                    }}
+                  >
+                    <span className="t-body" style={{ fontWeight: 600 }}>{c.name}</span>
+                    <span className="t-small c-2 tnum">{fmtNum(c.values[c.values.length - 1])} {c.unit}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }
