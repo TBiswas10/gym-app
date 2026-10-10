@@ -110,3 +110,13 @@
 .collapse>div{overflow:hidden;min-height:0}
 .collapse.is-open{grid-template-rows:1fr;opacity:1;visibility:visible;transition:grid-template-rows var(--dur-base) var(--ease-out),opacity var(--dur-base) var(--ease-out),visibility 0s}
 @media (prefers-reduced-motion:reduce){.collapse,.collapse.is-open{transition:none}}
+/* Launch splash: continues the iPhone launch image (dark screen, lime tile), then fades away */
+.splash{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-3);pointer-events:none;transition:opacity 300ms var(--ease-out)}
+.splash.is-fading{opacity:0}
+.splash-tile{width:calc(var(--space-12) * 2);height:calc(var(--space-12) * 2);border-radius:var(--radius-lg);background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;animation:splash-in 420ms var(--ease-out) both}
+.splash-tile .ic{width:var(--space-12);height:var(--space-12)}
+.splash-name{font:800 1.75rem/2rem var(--font-display);font-stretch:112%;letter-spacing:-0.01em;color:var(--text);animation:splash-text 420ms var(--ease-out) 120ms both}
+.splash-tag{font:500 .9375rem/1.25rem var(--font-body);color:var(--text-2);animation:splash-text 420ms var(--ease-out) 220ms both}
+@keyframes splash-in{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+@keyframes splash-text{from{transform:translateY(var(--space-2));opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.splash-tile,.splash-name,.splash-tag{animation:none}}
