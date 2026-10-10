@@ -22,7 +22,7 @@ export function useSwipeUp(onDismiss: () => void, distance = 28) {
     const dy = e.clientY - s.y;
     const fast = dy < -8 && e.timeStamp - s.t < 250;
     if (dy <= -distance || fast) {
-      s.el.style.transition = "transform 160ms var(--ease-in), opacity 160ms var(--ease-in)";
+      s.el.style.transition = "transform 160ms var(--ease-out), opacity 160ms var(--ease-out)";
       s.el.style.transform = "translateY(-120%)";
       s.el.style.opacity = "0";
       window.setTimeout(onDismiss, 150);

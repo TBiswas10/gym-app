@@ -221,9 +221,9 @@ a.card{text-decoration:none;color:inherit}
 @keyframes glow{0%{box-shadow:0 0 0 0 rgba(198,244,50,.5)}100%{box-shadow:0 0 0 28px rgba(198,244,50,0)}}
 a,button,[role="tab"],input,select,textarea{touch-action:manipulation}
 .anim-fade{animation:fade var(--dur-base) var(--ease-out) both}
-.sheet-wrap.anim-out{animation:fall var(--dur-base) var(--ease-in) both}
+.sheet-wrap.anim-out{animation:fall var(--dur-base) var(--ease-out) both}
 .anim-in{animation:rise var(--dur-base) var(--ease-out) both}
-.anim-out{animation:fall var(--dur-base) var(--ease-in) both}
+.anim-out{animation:fall var(--dur-base) var(--ease-out) both}
 .anim-pop{animation:pop var(--dur-celebrate) var(--ease-out) both}
 .anim-glow{animation:glow 900ms var(--ease-out) both}
 .confetti{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none}
