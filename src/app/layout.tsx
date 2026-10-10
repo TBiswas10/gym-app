@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black",
     title: "Workout",
-    startupImage: SPLASH_SIZES.map((s) => ({ url: `/splash/${splashKey(s)}`, media: splashMedia(s) })),
+    startupImage: SPLASH_SIZES.map((s) => ({ url: `/splash/${splashKey(s)}.png`, media: splashMedia(s) })),
   },
   icons: { apple: "/icons/180", icon: "/icons/192" },
   formatDetection: { telephone: false },
