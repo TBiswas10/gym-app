@@ -84,9 +84,13 @@
 .rest-ring.is-final{animation:rest-pulse 1s var(--ease-out) infinite}
 @keyframes rest-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 @media (prefers-reduced-motion:reduce){.rest-ring.is-final{animation:none}}
-/* New best card */
-.pb-card{position:absolute;left:var(--space-4);right:var(--space-4);top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:var(--space-2);text-align:center;padding:var(--space-6) var(--space-4);border-radius:var(--radius-lg);background:var(--raised);border:1px solid var(--accent);box-shadow:var(--shadow-pop)}
+/* In-app banners (set logged, swapped, new best) sit at the top, clear of the Log button */
+.toast-top{top:calc(var(--safe-top) - var(--space-3));bottom:auto;animation:drop var(--dur-base) var(--ease-out) both}
+.toast-top-pos{top:calc(var(--safe-top) - var(--space-3))}
+.pb-card{position:absolute;left:var(--space-4);right:var(--space-4);z-index:30;display:flex;flex-direction:row;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);background:var(--raised);border:1px solid var(--accent);box-shadow:var(--shadow-pop);color:var(--text);animation:drop var(--dur-base) var(--ease-out) both}
 .pb-card .done-mini{width:var(--space-12);height:var(--space-12)}
+@keyframes drop{from{transform:translateY(calc(var(--space-4) * -1));opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.toast-top,.pb-card{animation:fade 120ms linear both}}
 /* Tab bar: one indicator that slides to the chosen tab */
 .tabbar{position:relative}
 .tab[aria-current="page"]::before{display:none}

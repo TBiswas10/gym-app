@@ -360,10 +360,6 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     ? `Quick log: ${dispName(ex).toLowerCase()} ${ex.exKind === "timed" ? "30 sec 30 sec" : ex.exKind === "bodyweight" ? "12 12" : `${fmtNum(ex.kg)}kg ${ex.reps} ${ex.reps}`}`
     : "Quick log: chest press 30kg 12 12";
 
-  const lastSuggestion = ex && !ex.swapped && ex.last && ex.exKind === "weight" && ex.last.kg != null && ex.last.reps.length >= 2
-    ? `${dispName(ex).toLowerCase()} ${fmtNum(ex.last.kg)}kg ${ex.last.reps[0]} ${ex.last.reps[1]}`
-    : null;
-
   // primary button
   let primaryLabel = "";
   let primaryAct: () => void = () => {};
@@ -681,7 +677,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
       </main>
 
       {toastLive && (
-        <div className="toast" role="status" style={chatMode === "idle" ? { bottom: 184 } : { top: 120 }}>
+        <div className="toast toast-top" role="status">
           <div className="toast-body">
             <span className="row g2"><Icon name="circle-check" />{toastLive.text}</span>
             {toastLive.undo && (
@@ -692,16 +688,17 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
         </div>
       )}
 
-      <ChatBar ctx={parseCtx} placeholder={chatPlaceholder} plannedFor={plannedFor} onSave={onChatSave} onEdit={(e) => local(loadEntryIntoSteppers(ws, e))} onModeChange={setChatMode} suggestion={lastSuggestion}>
+      <ChatBar ctx={parseCtx} placeholder={chatPlaceholder} plannedFor={plannedFor} onSave={onChatSave} onEdit={(e) => local(loadEntryIntoSteppers(ws, e))} onModeChange={setChatMode}>
         <button type="button" className={`btn btn-primary btn-cta ${finishing ? "is-loading" : ""}`} onClick={primaryAct} disabled={finishing}>{primaryLabel}</button>
       </ChatBar>
 
       {pbCard && (
-        <button type="button" className="pb-card anim-pop" onClick={() => setPbCard(null)} aria-live="polite">
+        <button type="button" className="pb-card toast-top-pos" onClick={() => setPbCard(null)} aria-live="polite">
           <span className="done-mini"><Icon name="trophy" /></span>
-          <span className="t-eyebrow c-accent">New best</span>
-          <strong className="t-title">{pbCard.name}</strong>
-          <span className="t-heading tnum">{pbCard.text}</span>
+          <span className="col" style={{ alignItems: "flex-start", textAlign: "left", minWidth: 0 }}>
+            <span className="t-eyebrow c-accent">New best · {pbCard.name}</span>
+            <strong className="t-heading tnum">{pbCard.text}</strong>
+          </span>
         </button>
       )}
 
