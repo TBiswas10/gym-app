@@ -9,9 +9,9 @@ describe("session length", () => {
     expect(liftMinutes([...w(5), "timed"])).toBe(28);
   });
 
-  it("adds the 7 min warm-up and the cardio block", () => {
-    expect(estimateMinutes(w(5), 10)).toBe(42); // Monday Push
-    expect(estimateMinutes([...w(5), "timed"], 15)).toBe(50); // Saturday: exactly the cap
+  it("is the lifts plus the cardio block (cardio is the warm-up)", () => {
+    expect(estimateMinutes(w(5), 10)).toBe(35); // Monday Push
+    expect(estimateMinutes([...w(5), "timed"], 15)).toBe(43); // Saturday
   });
 
   it("keeps every built-in session at or under 50 min", () => {

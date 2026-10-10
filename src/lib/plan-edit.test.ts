@@ -36,7 +36,7 @@ describe("plan editing", () => {
     expect(rangeLabel(20, 40, "timed")).toBe("20–40 s");
   });
   it("warns when a session is over 50 minutes, with a fix hint", () => {
-    expect(estimateNote(47)).toEqual({ over: false, text: "About 47 min with the 7 min warm-up. Cap is 50." });
+    expect(estimateNote(47)).toEqual({ over: false, text: "About 47 min with cardio first. Cap is 50." });
     expect(estimateNote(53)).toEqual({ over: true, text: "About 53 min. Over 50. Remove a set or an exercise." });
     expect(estimateNote(50).over).toBe(false);
   });

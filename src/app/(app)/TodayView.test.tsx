@@ -42,7 +42,7 @@ describe("Today screen", () => {
     expect(out).toContain("Today · Thursday");
     expect(out).toContain("Upper (light)");
     expect(out).toContain("6 exercises · 2 sets each");
-    expect(out).toContain("~47"); // 7 warm-up + 30 lifts + 10 cardio
+    expect(out).toContain("~40"); // 30 lifts + 10 cardio (cardio is the warm-up)
     expect(out).toContain("Start workout");
     expect(out).toContain("Go light today");
     expect(out).toContain("Cardio · Bike or treadmill");

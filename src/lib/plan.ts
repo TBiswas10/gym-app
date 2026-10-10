@@ -1,8 +1,7 @@
-// Session length and display helpers. Plan facts: 7 min warm-up, sessions capped at 45-50 min.
-// Estimate rule (design build notes): 7 min warm-up, 5 min per exercise (3 for plank) and the cardio block.
+// Session length and display helpers. Sessions are capped at 45-50 min. Cardio comes first and IS the warm-up.
+// Estimate rule: 5 min per exercise (3 for plank) plus the cardio block.
 // The optional cool-down does not count.
 
-export const WARMUP_MIN = 7;
 export const CAP_MIN = 50;
 export const LIGHT_FACTOR = 0.8; // "Go light": weights about 20% lighter, same reps
 const LIGHT_LIFT_TIME = 0.85; // lifts take a little less time on a light day
@@ -15,7 +14,7 @@ export function liftMinutes(kinds: ExerciseKind[], light = false): number {
 }
 
 export function estimateMinutes(kinds: ExerciseKind[], cardioMinutes: number, light = false): number {
-  return WARMUP_MIN + liftMinutes(kinds, light) + cardioMinutes;
+  return liftMinutes(kinds, light) + cardioMinutes;
 }
 
 export const overCap = (minutes: number): boolean => minutes > CAP_MIN;

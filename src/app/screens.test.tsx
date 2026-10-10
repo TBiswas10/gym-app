@@ -91,7 +91,7 @@ describe("Plan", () => {
   };
   it("renders the editor and settings", () => {
     const out = renderToStaticMarkup(<PlanView data={data} deleteProblem={false} />);
-    for (const t of ["5-day split", "3-day full body", "Mon to Thu and Sat. Fri and Sun are rest days.", "Push · 1 exercises", "About 22 min with the 7 min warm-up. Cap is 50.", "Chest press", "2 sets × 8–12 reps", "Cardio · Bike or cross-trainer", "Add exercise", "Notify me when rest ends", "Bodyweight tracking", "Export data as CSV", "Log out (me@example.com)", "Delete my account"]) expect(out).toContain(t);
+    for (const t of ["5-day split", "3-day full body", "Mon to Thu and Sat. Fri and Sun are rest days.", "Push · 1 exercises", "About 15 min with cardio first. Cap is 50.", "Chest press", "2 sets × 8–12 reps", "Cardio · Bike or cross-trainer", "Add exercise", "Notify me when rest ends", "Bodyweight tracking", "Export data as CSV", "Log out (me@example.com)", "Delete my account"]) expect(out).toContain(t);
   });
   it("shows the 3-day wording and a delete problem", () => {
     const out = renderToStaticMarkup(<PlanView data={{ ...data, planType: "3day" }} deleteProblem />);

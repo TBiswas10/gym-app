@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { formatLongDate, longDay, weekdayOf } from "@/lib/dates";
-import { countLine, estimateMinutes, formatTarget, liftMinutes, WARMUP_MIN } from "@/lib/plan";
+import { countLine, estimateMinutes, formatTarget, liftMinutes } from "@/lib/plan";
 import type { StripDay } from "@/lib/schedule";
 import type { PlanDay, TodayData } from "@/lib/server/today-data";
 import { chooseMissed, setLight, toggleRestLog, undoMissed, type ActionResult } from "./actions";
@@ -324,14 +324,12 @@ export function TodayView({ data }: { data: TodayData }) {
               </div>
             </div>
             <div className="bar-split" aria-hidden="true">
-              <i style={{ flex: `${WARMUP_MIN} 1 0`, background: "var(--border-strong)" }} />
-              <i style={{ flex: `${lifts} 1 0`, background: "var(--accent)" }} />
               <i style={{ flex: `${cardio} 1 0`, background: "var(--info)" }} />
+              <i style={{ flex: `${lifts} 1 0`, background: "var(--accent)" }} />
             </div>
             <div className="plan-legend t-caption c-2">
-              <span><i style={{ background: "var(--border-strong)" }} />Warm-up {WARMUP_MIN}</span>
+              <span><i style={{ background: "var(--info)" }} />Cardio warm-up {cardio}</span>
               <span><i style={{ background: "var(--accent)" }} />Lifts {lifts}</span>
-              <span><i style={{ background: "var(--info)" }} />Cardio {cardio}</span>
             </div>
             <ol className="list" style={{ margin: 0, padding: 0, listStyle: "none" }}>
               {plan.exercises.map((e) => (

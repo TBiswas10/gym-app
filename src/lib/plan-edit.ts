@@ -42,11 +42,11 @@ export const setSets = (rows: Row[], i: number, sets: number): Row[] =>
 
 export const setRange = (rows: Row[], i: number, lo: number, hi: number): Row[] => rows.map((r, k) => (k === i ? { ...r, repLo: lo, repHi: hi } : r));
 
-/** "About N min with the 7 min warm-up. Cap is 50." or the red version with a fix hint. */
+/** "About N min with cardio first. Cap is 50." or the red version with a fix hint. */
 export function estimateNote(minutes: number): { over: boolean; text: string } {
   return overCap(minutes)
     ? { over: true, text: `About ${minutes} min. Over ${CAP_MIN}. Remove a set or an exercise.` }
-    : { over: false, text: `About ${minutes} min with the 7 min warm-up. Cap is ${CAP_MIN}.` };
+    : { over: false, text: `About ${minutes} min with cardio first. Cap is ${CAP_MIN}.` };
 }
 
 /** Light days and deloads run on half the sets, so the editor shows the planned (full) count. */

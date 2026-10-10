@@ -114,7 +114,9 @@ export interface WorkoutInit {
 }
 
 export function buildState(init: WorkoutInit): WState {
-  const steps: Step[] = [{ kind: "warm", status: init.exercises.some((e) => e.logged.length) ? "done" : "todo" }];
+  // Cardio is the warm-up, so it comes first. The lifts follow, then the optional cool-down.
+  const c = init.cardio;
+  const steps: Step[] = [{ kind: "cardio", status: c.logged ? "done" : "todo" }];
 
   for (const e of init.exercises) {
     const spec: Spec = { kind: e.kind, repLo: e.repLo, repHi: e.repHi, step: e.step, increment: e.increment };
@@ -132,12 +134,10 @@ export function buildState(init: WorkoutInit): WState {
     });
   }
 
-  const c = init.cardio;
   const params = {} as Record<MachineId, Params>;
   for (const m of MACHINES) {
     params[m.id] = initialParams(m.id, { last: c.logged?.kind === m.id ? c.logged.params : c.lastParams[m.id] ?? null, plannedMinutes: m.id === c.machine ? c.plannedMinutes : null });
   }
-  steps.push({ kind: "cardio", status: c.logged ? "done" : "todo" });
   steps.push({ kind: "cool", status: "todo" });
 
   const state: WState = {
@@ -270,10 +270,10 @@ export function skip(s: WState): WState {
   return { ...next, cur: nextIndex(next.steps, s.cur), editIdx: -1 };
 }
 
-/** "Skip to cardio" at 50:00: everything before cardio that is still to do is skipped. */
+/** "Wrap up" at 50:00: every lift still to do is skipped and you land on the cool-down. */
 export function wrapUp(s: WState): WState {
-  const ci = cardioIndex(s);
-  return { ...s, steps: s.steps.map((x, i) => (i < ci && x.status === "todo" ? ({ ...x, status: "skipped" } as Step) : x)), cur: ci, editIdx: -1 };
+  const last = s.steps.length - 1;
+  return { ...s, steps: s.steps.map((x, i) => (i < last && x.kind === "ex" && x.status === "todo" ? ({ ...x, status: "skipped" } as Step) : x)), cur: last, editIdx: -1 };
 }
 
 /** Machine busy? Swap to the backup exercise (starts with no history, no sets); swapping back undoes it. */

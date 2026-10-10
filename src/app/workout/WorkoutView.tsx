@@ -242,11 +242,12 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const todoLifts = exs.filter((e) => e.status === "todo").length;
   const cardioMin = ws.cardio.params[ws.cardio.machine].min ?? 10;
   const [guardOff, setGuardOff] = useState(false);
-  const guard = cardioGuard({ elapsedS: clock.elapsed, todoLifts, cardioMinutes: cardioMin, cardioDone: cardioStep.status === "done", dismissed: guardOff });
+  const guard = cardioGuard({ elapsedS: clock.elapsed, todoLifts, cardioMinutes: cardioMin, cardioDone: cardioStep.status === "done", dismissed: true || guardOff }); // cardio is first now, so there is nothing to shorten late
   const showAmber = level === "warn" && !guard.show;
   const [guideOpen, setGuideOpen] = useState(false);
   const [chatMode, setChatMode] = useState<"idle" | "confirm" | "error">("idle");
   const [finishing, setFinishing] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
 
   const verdictInfo = ex && complete && !editing ? verdictFor(exSpec(ex), ex.sets, { setup: meta.setup, highSoreness: meta.highSoreness, hold: meta.hold }) : null;
   const pb = ex && complete && !editing && !ex.swapped ? isPB(ex.exKind, ex.last, ex.sets) : false;
@@ -322,15 +323,15 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     <div className="screen fill">
       <header className="head" style={{ paddingBottom: "var(--space-3)" }}>
         <div className="topbar" style={{ alignItems: "center" }}>
-          <Link className="icon-btn" href="/" aria-label="Leave workout"><Icon name="x" /></Link>
+          <button type="button" className="icon-btn" aria-label="Pause or end workout" onClick={() => setLeaveOpen(true)}><Icon name="x" /></button>
           <div className="col" style={{ alignItems: "center" }}>
             <span className="t-eyebrow c-2" style={{ fontSize: ".75rem" }}>{meta.sessionName}</span>
             <span className={`timer ${level === "warn" ? "warn" : level === "over" ? "over" : ""}`} role="timer" aria-label="Elapsed time">{clock.label}</span>
           </div>
           <div className="col" style={{ width: 64, alignItems: "flex-end" }}>
-            <span className="t-caption c-2">{s.kind === "ex" ? "Lift" : s.kind === "warm" ? "Start" : s.kind === "cardio" ? "Cardio" : "Last bit"}</span>
+            <span className="t-caption c-2">{s.kind === "ex" ? "Lift" : s.kind === "warm" ? "Start" : s.kind === "cardio" ? "Warm-up" : "Last bit"}</span>
             <span className="t-body bold tnum">
-              {s.kind === "ex" ? `${exNo} of ${exs.length}` : s.kind === "warm" ? "Warm-up" : s.kind === "cardio" ? `${cardioMin} min` : "Cool-down"}
+              {s.kind === "ex" ? `${exNo} of ${exs.length}` : s.kind === "warm" ? "Warm-up" : s.kind === "cardio" ? `Cardio ${cardioMin} min` : "Cool-down"}
             </span>
           </div>
         </div>
@@ -364,8 +365,8 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
           <div className="banner banner-danger anim-in" role="alert" style={{ alignItems: "center" }}>
             <Icon name="triangle-alert" size={16} />
             <span className="grow"><b>50 min.</b> Time to wrap up.</span>
-            {ws.cur < cardioIdx ? (
-              <button type="button" className="btn btn-danger" onClick={() => run(wrapUp(ws))}>Skip to cardio</button>
+            {todoLifts > 0 && s.kind !== "cool" ? (
+              <button type="button" className="btn btn-danger" onClick={() => run(wrapUp(ws))}>Wrap up</button>
             ) : (
               <button type="button" className="btn btn-danger" onClick={onFinish}>Finish up</button>
             )}
@@ -626,6 +627,22 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
       <ChatBar ctx={parseCtx} placeholder={chatPlaceholder} plannedFor={plannedFor} onSave={onChatSave} onEdit={(e) => local(loadEntryIntoSteppers(ws, e))} onModeChange={setChatMode} suggestion={lastSuggestion}>
         <button type="button" className={`btn btn-primary btn-cta ${finishing ? "is-loading" : ""}`} onClick={primaryAct} disabled={finishing}>{primaryLabel}</button>
       </ChatBar>
+
+      {leaveOpen && (
+        <>
+          <div className="scrim anim-fade" onClick={() => setLeaveOpen(false)} />
+          <div className="sheet-wrap">
+            <div className="sheet" role="dialog" aria-label="Pause or end workout">
+              <span className="sheet-grab" />
+              <h2 className="t-title">Workout in progress</h2>
+              <p className="t-body c-2">{clock.label} in · {exs.reduce((n, e) => n + e.sets.length, 0)} sets logged. Your sets are saved either way.</p>
+              <button type="button" className="btn btn-primary btn-block" onClick={() => setLeaveOpen(false)}>Resume workout</button>
+              <button type="button" className={`btn btn-danger btn-block ${finishing ? "is-loading" : ""}`} disabled={finishing} onClick={onFinish}>End workout and check in</button>
+              <Link className="btn btn-tertiary btn-block" href="/">Leave for now, resume later</Link>
+            </div>
+          </div>
+        </>
+      )}
 
       {guideOpen && ex && guides[ex.slug] && <GuideSheet guide={guides[ex.slug]} slug={ex.slug} onClose={() => setGuideOpen(false)} />}
       <span className="sr" aria-live="polite">{online ? "" : "Offline"}</span>

@@ -172,7 +172,7 @@ export function PlanView({ data, deleteProblem }: { data: PlanData; deleteProble
             <span className="round round-subtle"><Icon name="timer" /></span>
             <span className="col"><strong className="t-body">Cardio · {day.cardioName}</strong><span className="t-small c-2">{day.cardioLabel} · talk-test pace</span></span>
           </div>
-          <p className="t-small c-2">Every session starts with a 7 min warm-up and can end with an optional 2 to 3 min cool-down.</p>
+          <p className="t-small c-2">Every session starts with cardio, which is your warm-up, and can end with an optional 2 to 3 min cool-down.</p>
           <button type="button" className="btn btn-secondary btn-block" disabled={rows.length >= 8 || available.length === 0} onClick={() => setAdding(true)}>Add exercise</button>
         </section>
 
