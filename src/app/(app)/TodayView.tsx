@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
+import { ResumeBar } from "@/components/ResumeBar";
+import { Rings } from "@/components/Rings";
 import { formatLongDate, longDay, weekdayOf } from "@/lib/dates";
 import { countLine, estimateMinutes, formatTarget, liftMinutes } from "@/lib/plan";
 import type { StripDay } from "@/lib/schedule";
@@ -133,6 +135,8 @@ export function TodayView({ data }: { data: TodayData }) {
             <span>{error}</span>
           </div>
         )}
+
+        {data.inProgress && <ResumeBar dayName={data.inProgress.dayName} startedAt={data.inProgress.startedAt} />}
 
         {data.testMode && (
           <section className="card card-warning" aria-label="Test mode">
@@ -486,20 +490,18 @@ export function TodayView({ data }: { data: TodayData }) {
             </div>
             <span className="t-small c-2">{data.totalDone === 0 ? "Your first one is today." : "Since week 1."}</span>
           </div>
-          <Link className="card" href="/progress">
-            <span className="t-small c-2">This week</span>
-            <div className="row baseline g2">
-              <span className="num-m">{data.weekDone}/{data.weekPlan}</span>
-              <span className="t-small c-2">sessions</span>
+          <Link className="card" href="/progress" style={{ gridColumn: "1 / -1" }} aria-label="This week, open progress">
+            <div className="row between baseline">
+              <span className="t-small c-2">This week</span>
+              <span className="t-small c-2">{data.toGo.length ? `${joinNames(data.toGo)} to go` : "All done this week"}</span>
             </div>
-            <div className="row g1" aria-hidden="true">
-              {Array.from({ length: data.weekPlan }, (_, i) => (
-                <i key={i} className={`streak-dot ${i < data.weekDone ? "on" : ""}`} />
-              ))}
-            </div>
-            <span className="t-small c-2">
-              {data.weekSets > 0 ? `${data.weekSets} sets` : data.toGo.length ? `${joinNames(data.toGo)} to go.` : "All done this week."}
-            </span>
+            <Rings
+              values={[
+                { label: "Sessions", done: data.weekDone, planned: data.weekPlan, color: "var(--accent)" },
+                { label: "Sets", done: data.weekSets, planned: data.weekSetsPlan ?? 0, color: "var(--info)" },
+                { label: "Cardio", done: data.weekCardioMin ?? 0, planned: data.weekCardioPlan ?? 0, unit: " min", color: "var(--success)" },
+              ]}
+            />
           </Link>
         </section>
       </div>

@@ -46,6 +46,10 @@ export interface TodayData {
   checkIn: number | null; // a week 4/8/12 check-in that is ready
   deloadSuggested: boolean; // weeks 6-8, none taken yet
   inDeload: boolean; // this week is a deload week (half the sets)
+  weekCardioMin?: number; // machine cardio minutes logged this week
+  weekCardioPlan?: number; // cardio minutes planned this week
+  weekSetsPlan?: number; // sets planned this week
+  inProgress?: { id: string; dayName: string; startedAt: string } | null;
   testMode?: boolean; // owner is trying the app: any day can be started; test sessions are wiped when it ends
 }
 
@@ -80,15 +84,17 @@ export async function loadToday(supabase: ServerClient, uid: string, now = new D
   const dates = weekDates(today);
   const [mon, sun] = [dates[0], dates[6]];
 
-  const [workoutsRes, overridesRes, restRes, settingsRes, soreRes, reviewsRes] = await Promise.all([
+  const [workoutsRes, overridesRes, restRes, settingsRes, soreRes, reviewsRes, cardioWeekRes, activeRes] = await Promise.all([
     supabase.from("workouts").select("id, planned_date").eq("status", "completed"),
     supabase.from("schedule_overrides").select("planned_date, action, moved_to_date, created_at").gte("planned_date", mon).lte("planned_date", sun),
     supabase.from("cardio_entries").select("kind, logged_on").in("kind", ["walk", "stretch"]).gte("logged_on", mon).lte("logged_on", sun),
     supabase.from("user_exercise_settings").select("exercise_slug").not("start_weight_kg", "is", null),
     supabase.from("checkins").select("soreness").not("soreness", "is", null).order("created_at", { ascending: false }).limit(3),
     supabase.from("reviews").select("week").not("applied_at", "is", null),
+    supabase.from("cardio_entries").select("minutes").not("kind", "in", "(walk,stretch)").gte("logged_on", mon).lte("logged_on", sun),
+    supabase.from("workouts").select("id, day_name, started_at").eq("status", "in_progress").maybeSingle(),
   ]);
-  for (const r of [workoutsRes, overridesRes, restRes, settingsRes, soreRes, reviewsRes]) if (r.error) throw r.error;
+  for (const r of [workoutsRes, overridesRes, restRes, settingsRes, soreRes, reviewsRes, cardioWeekRes, activeRes]) if (r.error) throw r.error;
 
   const withWeight = new Set((settingsRes.data ?? []).map((s) => s.exercise_slug));
 
@@ -149,6 +155,10 @@ export async function loadToday(supabase: ServerClient, uid: string, now = new D
     today,
     startDate: state.start_date,
     week,
+    weekCardioMin: (cardioWeekRes.data ?? []).reduce((n, c) => n + (c.minutes ?? 0), 0),
+    weekCardioPlan: Object.values(days).reduce((n, d) => n + d.cardioMinutes, 0),
+    weekSetsPlan: Object.values(days).reduce((n, d) => n + d.exercises.reduce((m, e) => m + e.sets, 0), 0),
+    inProgress: activeRes.data ? { id: activeRes.data.id, dayName: activeRes.data.day_name, startedAt: activeRes.data.started_at } : null,
     testMode: !!state.test_mode,
     complete: programmeComplete(state.start_date, today),
     setup: isSetupWeek(week),

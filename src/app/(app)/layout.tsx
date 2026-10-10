@@ -1,3 +1,4 @@
+import { GestureTour } from "@/components/GestureTour";
 import { OnlineBanner } from "@/components/OnlineBanner";
 import { SwipeTabs } from "@/components/SwipeTabs";
 import { TabBar } from "@/components/TabBar";
@@ -9,6 +10,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <OnlineBanner />
       <SwipeTabs>{children}</SwipeTabs>
       <TabBar />
+      <GestureTour />
     </div>
   );
 }

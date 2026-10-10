@@ -253,6 +253,61 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const verdictInfo = ex && complete && !editing ? verdictFor(exSpec(ex), ex.sets, { setup: meta.setup, highSoreness: meta.highSoreness, hold: meta.hold }) : null;
   const pb = ex && complete && !editing && !ex.swapped ? isPB(ex.exKind, ex.last, ex.sets) : false;
 
+  // A new best gets a moment of its own: before -> after, a haptic, then it clears itself.
+  const [pbCard, setPbCard] = useState<{ name: string; text: string } | null>(null);
+  const shownPb = useRef<Set<string>>(new Set());
+  const pbSlug = pb && ex ? ex.slug : null;
+  useEffect(() => {
+    if (!pbSlug || !ex || shownPb.current.has(pbSlug)) return;
+    shownPb.current.add(pbSlug);
+    const v = ex.sets[ex.sets.length - 1];
+    const now = ex.exKind === "timed" ? `${v?.secs} s` : ex.exKind === "bodyweight" && !v?.kg ? `BW × ${v?.reps}` : `${fmtNum(v?.kg ?? 0)} kg × ${v?.reps}`;
+    setPbCard({ name: dispName(ex), text: ex.last ? `${lastLabel(ex)}  →  ${now}` : now });
+    haptic("success");
+    const t = window.setTimeout(() => setPbCard(null), 2800);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pbSlug]);
+
+  // Swipe sideways on the card (not on a control) to go to the next or previous lift.
+  const mainRef = useRef<HTMLElement>(null);
+  const liveWs = useRef(ws);
+  liveWs.current = ws;
+  const localRef = useRef(local);
+  localRef.current = local;
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    let sx = 0, sy = 0, ok = false;
+    const start = (e: TouchEvent) => {
+      const t = e.touches[0];
+      sx = t.clientX;
+      sy = t.clientY;
+      ok = e.touches.length === 1 && !(e.target as Element).closest("input, textarea, select, button, a, [data-no-swipe]");
+    };
+    const end = (e: TouchEvent) => {
+      if (!ok) return;
+      ok = false;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - sx;
+      const dy = t.clientY - sy;
+      if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+      const w = liveWs.current;
+      const lifts = w.steps.map((x, i) => (x.kind === "ex" ? i : -1)).filter((i) => i >= 0);
+      const target = dx < 0 ? lifts.find((i) => i > w.cur) : [...lifts].reverse().find((i) => i < w.cur);
+      if (target !== undefined) {
+        haptic("tap");
+        localRef.current(goTo(w, target));
+      }
+    };
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchend", end, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", start);
+      el.removeEventListener("touchend", end);
+    };
+  }, []);
+
   const nextLabel = next ? (next.kind === "ex" ? dispName(next) : next.kind === "cardio" ? "Cardio" : next.kind === "cool" ? "Cool-down" : "Warm-up") : null;
   const nextSub = (n: Step): string =>
     n.kind === "ex"
@@ -377,7 +432,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
         {resting && rest && (
           <div className="col g2 anim-in">
             <div className="row g3">
-              <div className="rest-ring" role="progressbar" aria-label="Rest remaining" aria-valuenow={restLeft} aria-valuemin={0} aria-valuemax={rest.total}>
+              <div className={`rest-ring ${restLeft <= 5 ? "is-final" : ""}`} role="progressbar" aria-label="Rest remaining" aria-valuenow={restLeft} aria-valuemin={0} aria-valuemax={rest.total}>
                 <svg viewBox="0 0 72 72" aria-hidden="true">
                   <circle className="rest-ring-track" cx="36" cy="36" r="31" />
                   <circle className="rest-ring-fill" cx="36" cy="36" r="31" style={{ strokeDashoffset: `${(1 - Math.min(1, restLeft / Math.max(1, rest.total))) * 194.8}` }} />
@@ -402,7 +457,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
         )}
       </header>
 
-      <main className="scroll under-bar" style={{ paddingTop: "var(--space-1)" }}>
+      <main ref={mainRef} className="scroll under-bar" style={{ paddingTop: "var(--space-1)" }}>
         {!online && pending > 0 && (
           <div className="banner banner-warning" role="status">
             <Icon name="triangle-alert" />
@@ -478,14 +533,14 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                     <div className="stepper">
                       <span className="t-caption c-2" style={{ width: 40 }}>KG</span>
                       <button type="button" className="step-btn" aria-label="Decrease weight" onClick={() => local(adjust(ws, "kg", -1))}><Icon name="minus" /></button>
-                      <NumField label="Weight in kilograms" decimal value={ex.kg} shown={ex.exKind === "bodyweight" && !ex.kg ? "BW" : fmtNum(ex.kg)} onCommit={(v) => local(setValue(ws, "kg", v))} />
+                      <NumField label="Weight in kilograms" decimal hero onScrub={(d) => local(adjust(ws, "kg", d))} value={ex.kg} shown={ex.exKind === "bodyweight" && !ex.kg ? "BW" : fmtNum(ex.kg)} onCommit={(v) => local(setValue(ws, "kg", v))} />
                       <button type="button" className="step-btn" aria-label="Increase weight" onClick={() => local(adjust(ws, "kg", 1))}><Icon name="plus" /></button>
                     </div>
                     <hr className="divider" />
                     <div className="stepper">
                       <span className="t-caption c-2" style={{ width: 40 }}>REPS</span>
                       <button type="button" className="step-btn" aria-label="One fewer rep" onClick={() => local(adjust(ws, "reps", -1))}><Icon name="minus" /></button>
-                      <NumField label="Reps" value={ex.reps} onCommit={(v) => local(setValue(ws, "reps", v))} />
+                      <NumField label="Reps" hero onScrub={(d) => local(adjust(ws, "reps", d))} value={ex.reps} onCommit={(v) => local(setValue(ws, "reps", v))} />
                       <button type="button" className="step-btn" aria-label="One more rep" onClick={() => local(adjust(ws, "reps", 1))}><Icon name="plus" /></button>
                     </div>
                   </>
@@ -494,7 +549,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                   <div className="stepper">
                     <span className="t-caption c-2" style={{ width: 40 }}>SEC</span>
                     <button type="button" className="step-btn" aria-label="Five seconds less" onClick={() => local(adjust(ws, "secs", -1))}><Icon name="minus" /></button>
-                    <NumField label="Seconds" value={ex.secs} onCommit={(v) => local(setValue(ws, "secs", v))} />
+                    <NumField label="Seconds" hero onScrub={(d) => local(adjust(ws, "secs", d))} value={ex.secs} onCommit={(v) => local(setValue(ws, "secs", v))} />
                     <button type="button" className="step-btn" aria-label="Five seconds more" onClick={() => local(adjust(ws, "secs", 1))}><Icon name="plus" /></button>
                   </div>
                 )}
@@ -640,6 +695,15 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
       <ChatBar ctx={parseCtx} placeholder={chatPlaceholder} plannedFor={plannedFor} onSave={onChatSave} onEdit={(e) => local(loadEntryIntoSteppers(ws, e))} onModeChange={setChatMode} suggestion={lastSuggestion}>
         <button type="button" className={`btn btn-primary btn-cta ${finishing ? "is-loading" : ""}`} onClick={primaryAct} disabled={finishing}>{primaryLabel}</button>
       </ChatBar>
+
+      {pbCard && (
+        <button type="button" className="pb-card anim-pop" onClick={() => setPbCard(null)} aria-live="polite">
+          <span className="done-mini"><Icon name="trophy" /></span>
+          <span className="t-eyebrow c-accent">New best</span>
+          <strong className="t-title">{pbCard.name}</strong>
+          <span className="t-heading tnum">{pbCard.text}</span>
+        </button>
+      )}
 
       {leaveOpen && (
         <>

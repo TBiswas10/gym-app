@@ -50,8 +50,10 @@ describe("Today screen", () => {
     expect(out).toContain("Move to a free day");
     expect(out).toContain("Friday and Sunday are free");
     expect(out).not.toContain("Setup mode");
-    expect(out).toContain("20 sets");
-    expect(out).toContain("2/5");
+    expect(out).toContain("Sets");
+    expect(out).toContain("This week");
+    expect(out).toContain("Sessions");
+    expect(out).toContain("Sessions 2 of 5");
   });
 
   it("renders the first-run state (week 1, setup mode)", () => {
@@ -59,7 +61,7 @@ describe("Today screen", () => {
     expect(out).toContain("Welcome. Let’s find your weights.");
     expect(out).toContain("Setup mode · weeks 1 and 2");
     expect(out).toContain("Your first one is today.");
-    expect(out).toContain("Thursday and Saturday to go.");
+    expect(out).toContain("Thursday and Saturday to go");
     expect(out).not.toContain("Missed workout");
     expect(out).not.toContain("didn’t happen");
   });

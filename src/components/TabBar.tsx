@@ -18,7 +18,8 @@ export function TabBar() {
   }, [router]);
   const active = tapped ?? TABS[Math.max(tabIndex(path), 0)].href;
   return (
-    <nav className="tabbar" aria-label="Main">
+    <nav className="tabbar" aria-label="Main" style={{ "--i": Math.max(0, TABS.findIndex((t) => t.href === active)) } as React.CSSProperties}>
+      <span className="tab-ind" aria-hidden="true" />
       {TABS.map((t) => (
         <Link key={t.href} className="tab" href={t.href} prefetch aria-current={t.href === active ? "page" : undefined} onPointerDown={() => setTapped(t.href)}>
           <Icon name={t.icon} />
