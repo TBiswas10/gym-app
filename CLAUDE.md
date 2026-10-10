@@ -79,9 +79,9 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 - `/mcp` (stateless streamable HTTP, `@modelcontextprotocol/sdk`, zod). Auth = Supabase OAuth 2.1 access tokens (must carry
   `client_id`); `/.well-known/oauth-protected-resource` points clients at Supabase Auth; `/oauth/consent` is the approval page.
 - The server acts AS the user (token-based client, RLS applies). No service-role key anywhere.
-- Migration `mcp_hardening`: connector tokens cannot delete, change plan/settings/reviews or call account/plan functions
+- Migration `mcp_hardening` (partly relaxed later by `mcp_more_power`): connector tokens cannot delete, change plan/settings/reviews or call account/plan functions
   (RESTRICTIVE policies on `auth.jwt() ->> 'client_id'`); `mcp_requests` = log + rate-limit counts.
-- 15 tools now (added get_plan, list_exercises, get_schedule, get_settings, start_workout, finish_workout, edit_logged_sets). A wider-power migration (delete / plan edit / settings / schedule) is written in `supabase/pending/mcp_more_power.sql` and deliberately NOT applied.
+- 15 tools now (added get_plan, list_exercises, get_schedule, get_settings, start_workout, finish_workout, edit_logged_sets). Then (owner said "Unlock those powers", migration `mcp_more_power`): delete_logged_sets / delete_workout / delete_cardio_entry (confirm flags), edit_plan_day, schedule_day, update_settings, set_exercise_settings = 22 tools. Connectors can now delete logged data and edit plan/settings/schedule; they still cannot touch the account, restart the programme, switch plan type or change start_date (trigger `program_state_connector_guard`).
 - Root `src/app/loading.tsx` is the dark launch shell (same tile as the launch image) so the HTML flushes immediately on open.
 - Read tools never write. Write tools (`log_sets`, `log_cardio`, `log_checkin`) are narrow, validated, replace-not-delete.
 

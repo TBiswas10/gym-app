@@ -77,7 +77,20 @@ and lets you delete them.
 14. [ ] Disconnect the connector, then ask again: Claude can't reach your data.
 
 
-## More power (not applied yet)
-Deleting logged data, editing the plan, changing settings and rescheduling days would need the connector's database
-limits widened. That change is written but NOT applied: `supabase/pending/mcp_more_power.sql`. It was blocked by a security
-check and needs an explicit yes from the owner. Account deletion and restarting the programme stay refused either way.
+## More power (applied 2026-10-10, migration `mcp_more_power`)
+On the owner's explicit instruction the connector can now also change things. Added tools:
+
+| Tool | What it does | Safeguard |
+|---|---|---|
+| `delete_logged_sets` | Remove one exercise's sets from a session | `confirm: true`; lists what was removed |
+| `delete_workout` | Remove a whole session with its sets, cardio and check-in | `confirm: true` AND the date repeated (`confirm_date`) |
+| `delete_cardio_entry` | Remove one cardio / walk / stretch entry | `confirm: true` |
+| `edit_plan_day` | Replace one training day's exercises (1-2 sets, rep range, max 8) | shows before and after |
+| `schedule_day` | Skip, light, move or clear a session this week | this week only |
+| `update_settings` | Rest alerts, bodyweight tracking, deload weeks | only the fields given |
+| `set_exercise_settings` | One exercise's weight jump, start weight, machine notes | only the fields given |
+
+Delete tools carry `destructiveHint`, so Claude clients can ask you first. Still refused by the database for connector
+tokens: deleting the account, restarting the programme, switching plan type, changing the start date, reviews, and
+creating or deleting plans and days. Verified in rolled-back transactions on the live project. To take the extra
+powers away again, add back the `*_no_connector_*` restrictive policies from `20261009023323_mcp_hardening.sql`.

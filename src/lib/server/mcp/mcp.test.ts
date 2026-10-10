@@ -37,7 +37,7 @@ describe("tool list", () => {
     const c = await connect();
     const { tools } = await c.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
-    expect(tools).toHaveLength(15);
+    expect(tools).toHaveLength(22);
   });
   it("marks read tools read-only and write tools as non-destructive", async () => {
     const { tools } = await (await connect()).listTools();
@@ -46,16 +46,36 @@ describe("tool list", () => {
     for (const n of ["get_plan", "list_exercises", "get_schedule", "get_settings"]) expect(by[n]).toMatchObject({ readOnlyHint: true, destructiveHint: false });
     for (const n of ["log_sets", "log_cardio", "log_checkin", "start_workout", "finish_workout", "edit_logged_sets"]) expect(by[n]).toMatchObject({ readOnlyHint: false, destructiveHint: false });
   });
-  it("has no tool that deletes or touches the account, and the plan/settings tools are read-only", async () => {
+  it("has no tool for the account or restarting the programme, and every delete is marked destructive", async () => {
     const { tools } = await (await connect()).listTools();
-    expect(tools.some((t) => /delete|remove|account/i.test(t.name))).toBe(false);
-    for (const t of tools.filter((x) => /plan|settings/i.test(x.name))) expect(t.annotations).toMatchObject({ readOnlyHint: true });
+    expect(tools.some((t) => /account|restart|reset|program_state|switch_plan/i.test(t.name))).toBe(false);
+    for (const t of tools.filter((x) => /^delete_/.test(x.name))) {
+      expect(t.annotations).toMatchObject({ destructiveHint: true, readOnlyHint: false });
+      expect(JSON.stringify(t.inputSchema)).toContain("confirm");
+    }
   });
   it("describes log_sets with bounded inputs", async () => {
     const { tools } = await (await connect()).listTools();
     const schema = JSON.stringify(tools.find((t) => t.name === "log_sets")!.inputSchema);
     expect(schema).toContain('"maxItems":2');
     expect(schema).toContain('"maximum":400');
+  });
+});
+
+describe("destructive tools refuse without an explicit confirmation", () => {
+  it("delete_workout needs confirm: true and a matching confirm_date", async () => {
+    const noConfirm = await call("delete_workout", { date: "2026-10-08", confirm_date: "2026-10-08" });
+    expect(noConfirm.isError).toBe(true);
+    const falseConfirm = await call("delete_workout", { date: "2026-10-08", confirm_date: "2026-10-08", confirm: false });
+    expect(falseConfirm.isError).toBe(true);
+  });
+  it("delete_logged_sets and delete_cardio_entry need confirm: true", async () => {
+    expect((await call("delete_logged_sets", { exercise: "chest press" })).isError).toBe(true);
+    expect((await call("delete_cardio_entry", { date: "2026-10-08", machine: "bike" })).isError).toBe(true);
+  });
+  it("edit_plan_day rejects 3 sets and an empty list", async () => {
+    expect((await call("edit_plan_day", { weekday: 1, exercises: [{ exercise: "chest press", sets: 3, rep_lo: 8, rep_hi: 12 }] })).isError).toBe(true);
+    expect((await call("edit_plan_day", { weekday: 1, exercises: [] })).isError).toBe(true);
   });
 });
 

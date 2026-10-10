@@ -1,11 +1,9 @@
--- NOT APPLIED. Proposed by the owner ("give the connector more power") but blocked by the security check, so it needs
--- an explicit yes before anyone runs it. It would let the Claude connector, which today can only read and add/correct
+-- APPLIED 2026-10-10 on the owner's explicit instruction ("Unlock those powers"). Lets the Claude connector, which today can only read and add/correct
 -- data, also: delete logged sets / workouts / cardio / check-ins, edit the plan's exercises, change per-exercise
 -- settings and the weekly schedule, and change alert / bodyweight / deload settings.
 -- Still refused for connectors: deleting the account, restarting the programme, switching plan type, reviews,
 -- creating or deleting plans / days, and changing program_state's start_date / plan_type (trigger below).
 --
--- To apply: review it, then run as a normal migration (Supabase MCP apply_migration or the SQL editor).
 
 do $$
 declare t text;
@@ -33,4 +31,27 @@ end $$;
 create trigger program_state_connector_guard before update on public.program_state
   for each row execute function public.program_state_connector_guard();
 
--- replace_day_exercises (see 20261009023323_mcp_hardening.sql) must also drop its client_id check for plan editing.
+create or replace function public.replace_day_exercises(p_template uuid, p_weekday smallint, p_rows jsonb) returns void
+language plpgsql set search_path = '' as $$
+declare
+  r jsonb;
+  i int := 0;
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  if not exists (select 1 from public.program_templates where id = p_template and user_id = auth.uid()) then
+    raise exception 'not your plan';
+  end if;
+  if not exists (select 1 from public.template_days where template_id = p_template and weekday = p_weekday) then
+    raise exception 'unknown day';
+  end if;
+  if jsonb_typeof(p_rows) <> 'array' or jsonb_array_length(p_rows) > 8 then
+    raise exception 'bad exercise list';
+  end if;
+
+  delete from public.template_exercises where template_id = p_template and weekday = p_weekday;
+  for r in select * from jsonb_array_elements(p_rows) loop
+    i := i + 1;
+    insert into public.template_exercises (template_id, weekday, position, exercise_slug, sets, rep_lo, rep_hi)
+    values (p_template, p_weekday, i, r->>'slug', (r->>'sets')::smallint, (r->>'rep_lo')::smallint, (r->>'rep_hi')::smallint);
+  end loop;
+end $$;
