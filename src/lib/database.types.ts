@@ -42,9 +42,9 @@ export type Database = {
         Relationships: [];
       };
       program_state: {
-        Row: { created_at: string; deload_weeks: number[]; plan_type: string; rest_alerts: boolean; start_date: string; track_bodyweight: boolean; updated_at: string; user_id: string };
-        Insert: { created_at?: string; deload_weeks?: number[]; plan_type: string; rest_alerts?: boolean; start_date: string; track_bodyweight?: boolean; updated_at?: string; user_id?: string };
-        Update: { created_at?: string; deload_weeks?: number[]; plan_type?: string; rest_alerts?: boolean; start_date?: string; track_bodyweight?: boolean; updated_at?: string; user_id?: string };
+        Row: { created_at: string; deload_weeks: number[]; plan_type: string; rest_alerts: boolean; start_date: string; test_mode: boolean; track_bodyweight: boolean; updated_at: string; user_id: string };
+        Insert: { created_at?: string; deload_weeks?: number[]; plan_type: string; rest_alerts?: boolean; start_date: string; test_mode?: boolean; track_bodyweight?: boolean; updated_at?: string; user_id?: string };
+        Update: { created_at?: string; deload_weeks?: number[]; plan_type?: string; rest_alerts?: boolean; start_date?: string; test_mode?: boolean; track_bodyweight?: boolean; updated_at?: string; user_id?: string };
         Relationships: [];
       };
       program_templates: {
@@ -96,9 +96,9 @@ export type Database = {
         Relationships: [{ foreignKeyName: "user_exercise_settings_exercise_slug_fkey"; columns: ["exercise_slug"]; isOneToOne: false; referencedRelation: "exercises"; referencedColumns: ["slug"] }];
       };
       workouts: {
-        Row: { created_at: string; day_name: string; ended_at: string | null; id: string; is_light: boolean; notes: string | null; plan_type: string; planned_date: string; skipped_exercises: string[]; started_at: string; status: string; user_id: string; week: number; weekday: number };
-        Insert: { created_at?: string; day_name: string; ended_at?: string | null; id?: string; is_light?: boolean; notes?: string | null; plan_type: string; planned_date: string; skipped_exercises?: string[]; started_at?: string; status?: string; user_id?: string; week: number; weekday: number };
-        Update: { created_at?: string; day_name?: string; ended_at?: string | null; id?: string; is_light?: boolean; notes?: string | null; plan_type?: string; planned_date?: string; skipped_exercises?: string[]; started_at?: string; status?: string; user_id?: string; week?: number; weekday?: number };
+        Row: { created_at: string; day_name: string; ended_at: string | null; id: string; is_light: boolean; is_test: boolean; notes: string | null; plan_type: string; planned_date: string; skipped_exercises: string[]; started_at: string; status: string; user_id: string; week: number; weekday: number };
+        Insert: { created_at?: string; day_name: string; ended_at?: string | null; id?: string; is_light?: boolean; is_test?: boolean; notes?: string | null; plan_type: string; planned_date: string; skipped_exercises?: string[]; started_at?: string; status?: string; user_id?: string; week: number; weekday: number };
+        Update: { created_at?: string; day_name?: string; ended_at?: string | null; id?: string; is_light?: boolean; is_test?: boolean; notes?: string | null; plan_type?: string; planned_date?: string; skipped_exercises?: string[]; started_at?: string; status?: string; user_id?: string; week?: number; weekday?: number };
         Relationships: [];
       };
     };

@@ -111,7 +111,27 @@ export async function startSession(
   return error || !created ? null : created;
 }
 
-export async function loadWorkout(supabase: ServerClient, uid: string, dateParam: string | null, now = new Date()): Promise<Loaded> {
+/** Test mode only: start any template day today, flagged so it can be wiped. Returns null unless test mode is on. */
+export async function startTestSession(
+  supabase: ServerClient,
+  ctx: { planType: "5day" | "3day"; templateId: string; week: number; today: string },
+  weekday: number,
+): Promise<WorkoutRow | null> {
+  if (!Number.isInteger(weekday) || weekday < 1 || weekday > 7) return null;
+  const [{ data: ps }, { data: day }] = await Promise.all([
+    supabase.from("program_state").select("test_mode").maybeSingle(),
+    supabase.from("template_days").select("weekday, full_name").eq("template_id", ctx.templateId).eq("weekday", weekday).maybeSingle(),
+  ]);
+  if (!ps?.test_mode || !day) return null;
+  const { data: created, error } = await supabase
+    .from("workouts")
+    .insert({ planned_date: ctx.today, week: Math.min(12, Math.max(1, ctx.week)), plan_type: ctx.planType, weekday, day_name: day.full_name, is_test: true })
+    .select("*")
+    .single();
+  return error || !created ? null : created;
+}
+
+export async function loadWorkout(supabase: ServerClient, uid: string, dateParam: string | null, now = new Date(), testWeekday: number | null = null): Promise<Loaded> {
   const today = sydneyDate(now);
 
   const { data: state } = await supabase.from("program_state_view").select("start_date, plan_type, current_week, deload_weeks, rest_alerts").maybeSingle();
@@ -126,8 +146,12 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
   if (!tpl) return { redirect: "/" };
 
   if (!workout) {
-    if (!dateParam) return { redirect: "/" };
-    workout = await startSession(supabase, { startDate: state.start_date, planType, templateId: tpl.id, week, today }, dateParam);
+    if (testWeekday !== null) {
+      workout = await startTestSession(supabase, { planType, templateId: tpl.id, week, today }, testWeekday);
+    } else {
+      if (!dateParam) return { redirect: "/" };
+      workout = await startSession(supabase, { startDate: state.start_date, planType, templateId: tpl.id, week, today }, dateParam);
+    }
     if (!workout) return { redirect: "/" };
   }
   const w = workout!;

@@ -10,7 +10,7 @@ Single-user iPhone PWA (installed from Safari to the Home Screen). Built from th
 
 ## Plan facts (do not change)
 Mon Push, Tue Pull, Wed Legs + Core, Thu Upper (light), Sat Lower + Core + Cardio, Fri and Sun rest.
-All exercises are 2 sets. 7 min warm-up. Sessions capped at 45-50 min. Two plans: 5-day split and 3-day full body.
+All exercises are 2 sets. Cardio comes FIRST and is the warm-up (owner decision, replaces the old separate 7 min warm-up). Sessions capped at 45-50 min. Two plans: 5-day split and 3-day full body.
 12-week programme: weeks 1-2 find your weight, weeks 3-12 build. Check-ins at weeks 4, 8, 12.
 
 ## Design token rule
@@ -103,6 +103,8 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 - Workout extras: rest ring with ±15 s (`extendRest`), haptics via a hidden `switch` checkbox (`haptics.ts`, Safari 17.4+, silent no-op elsewhere), Wake Lock keeps the screen on, stall banner (`stallCheck`: same weight 3 sessions, never both sets at top; advice only, rule unchanged). Progress has a Consistency card (`consistency()`). Library/guides show two swapping exercise photos (`ExerciseMedia`, files in `public/exercises`). Push failures now return the real code from `/api/push/test` and log `push-failed`.
 - Set entry: tap the number to type it (`NumField`, number pad), chips "Same as last time" and "+increment" (`restoreLast`, `addKg`, `setValue`); quick log offers a one-tap "Same as last: lat pulldown 35kg 10 10". Today shrinks the setup note to one line after the first view (`wt.setupSeen`). Progress has Records (`records()`); finish screen shows one warm line (`encouragement()`). Hosting region is `icn1` (next to the Supabase DB in Seoul) via `vercel.json`; launch screens are served at `/splash/<w>x<h>` (iOS shows white without them).
 - Pull to refresh (SwipeTabs): a circle drops in as you pull at the top of a tab, turns lime and taps (haptic) at the threshold (`PULL_THRESHOLD` = 90 px), spins while `router.refresh()` runs in a transition, then the page eases back. Verified on a real iPhone: MCP connector works, push alerts work, number pad / swipes / keyboard lift work.
+- Session order is cardio (warm-up) -> lifts -> optional cool-down. Estimate = lifts + cardio (`estimateMinutes`). The workout X opens a sheet: Resume / End workout and check in / Leave for now. There is no separate find-weight step: Start goes straight to `/workout`; setup weeks only hold weights and the sets count (the `/find-weight` route still exists but is not linked).
+- Test mode (Plan > Test mode, `program_state.test_mode`, `workouts.is_test`, migration `test_mode`): Today shows a card to start ANY template day (`/workout?test=<weekday>`) and preview week 4/8/12 check-ins; test sessions are flagged and `setTestMode(false)` deletes them (checkins first, since their workout_id is set null on delete).
 - Only `--dur-*` / `--ease-*` tokens; no new colours (so no translucent bars). No animation library added.
 
 ## Build order (stop after each step for testing)

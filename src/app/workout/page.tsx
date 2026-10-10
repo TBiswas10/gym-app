@@ -5,8 +5,8 @@ import { WorkoutView } from "./WorkoutView";
 
 export const dynamic = "force-dynamic";
 
-export default async function WorkoutPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
-  const { date } = await searchParams;
+export default async function WorkoutPage({ searchParams }: { searchParams: Promise<{ date?: string; test?: string }> }) {
+  const { date, test } = await searchParams;
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
   const uid = auth?.claims?.sub;
@@ -14,7 +14,8 @@ export default async function WorkoutPage({ searchParams }: { searchParams: Prom
 
   let loaded;
   try {
-    loaded = await loadWorkout(supabase, uid, date ?? null);
+    const tw = test && /^[1-7]$/.test(test) ? Number(test) : null;
+    loaded = await loadWorkout(supabase, uid, date ?? null, new Date(), tw);
   } catch {
     return (
       <div className="screen fill">

@@ -64,16 +64,30 @@ describe("Today screen", () => {
     expect(out).not.toContain("didn’t happen");
   });
 
-  it("shows 'Find weight' for exercises without a starting weight during setup", () => {
+  it("starts the workout directly in setup weeks: no separate find-weight step", () => {
     const d = make({ today: "2026-10-08", start: "2026-10-08" });
     d.days[4] = { ...d.days[4], exercises: d.days[4].exercises.map((e) => ({ ...e, hasStartWeight: false })) };
-    expect(html(d)).toContain("Find weight");
+    const out = html(d);
+    expect(out).not.toContain("Find weight");
+    expect(out).not.toContain("/find-weight");
+    expect(out).toContain("/workout?date=");
   });
 
   it("never asks to find a weight for planks or bodyweight moves", () => {
     const d = make({ today: "2026-10-08", start: "2026-10-08" });
     d.days[4] = { ...d.days[4], exercises: d.days[4].exercises.map((e) => ({ ...e, kind: "timed" as const, hasStartWeight: false })) };
     expect(html(d)).not.toContain("Find weight");
+  });
+
+  it("shows the test-mode card with every day and an exit, only when test mode is on", () => {
+    const d = make({ today: "2026-10-08", start: "2026-09-21" });
+    expect(html(d)).not.toContain("Test mode");
+    const on = html({ ...d, testMode: true });
+    expect(on).toContain("Test mode");
+    expect(on).toContain("/workout?test=1");
+    expect(on).toContain("/workout?test=6");
+    expect(on).toContain("Exit test mode");
+    expect(on).toContain("/review?week=4");
   });
 
   it("renders a rest day with walk and stretch", () => {

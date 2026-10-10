@@ -25,13 +25,14 @@ export interface PlanData {
   library: { slug: string; name: string; group: string; kind: ExerciseKind; repLo: number; repHi: number }[];
   restAlerts: boolean;
   trackBodyweight: boolean;
+  testMode?: boolean;
   email: string;
 }
 
 const kindOf = (k: string): ExerciseKind => (k === "timed" || k === "bodyweight" ? k : "weight");
 
 export async function loadPlan(supabase: ServerClient, uid: string, email: string): Promise<PlanData | null> {
-  const { data: state } = await supabase.from("program_state").select("plan_type, rest_alerts, track_bodyweight").maybeSingle();
+  const { data: state } = await supabase.from("program_state").select("plan_type, rest_alerts, track_bodyweight, test_mode").maybeSingle();
   if (!state) return null;
   const planType = state.plan_type as "5day" | "3day";
 
@@ -62,6 +63,6 @@ export async function loadPlan(supabase: ServerClient, uid: string, email: strin
   return {
     planType, templateId: tpl.id, days,
     library: (libRes.data ?? []).map((e) => ({ slug: e.slug, name: e.name, group: e.muscle_group, kind: kindOf(e.kind), repLo: e.rep_lo, repHi: e.rep_hi })),
-    restAlerts: state.rest_alerts, trackBodyweight: state.track_bodyweight, email,
+    restAlerts: state.rest_alerts, trackBodyweight: state.track_bodyweight, testMode: !!state.test_mode, email,
   };
 }

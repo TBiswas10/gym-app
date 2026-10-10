@@ -55,6 +55,32 @@ export async function saveSettings(patch: { restAlerts?: boolean; trackBodyweigh
   return { ok: true };
 }
 
+/**
+ * Test mode on: any day's session can be started from Today and is flagged as a test.
+ * Test mode off: every test session (with its sets, cardio and check-ins) is deleted, so nothing leaks into your history.
+ */
+export async function setTestMode(on: boolean): Promise<Result & { removed?: number }> {
+  const supabase = await createClient();
+  let removed = 0;
+  if (!on) {
+    const { data: tests, error: e1 } = await supabase.from("workouts").select("id").eq("is_test", true);
+    if (e1) return { ok: false, error: FRIENDLY };
+    const ids = (tests ?? []).map((t) => t.id);
+    if (ids.length) {
+      // Check-ins keep their row when a workout goes (workout_id is set to null), so remove them first.
+      const c = await supabase.from("checkins").delete().in("workout_id", ids);
+      if (c.error) return { ok: false, error: FRIENDLY };
+      const w = await supabase.from("workouts").delete().in("id", ids);
+      if (w.error) return { ok: false, error: FRIENDLY };
+      removed = ids.length;
+    }
+  }
+  const { error } = await supabase.from("program_state").update({ test_mode: on }).not("user_id", "is", null);
+  if (error) return { ok: false, error: FRIENDLY };
+  revalidatePath("/", "layout");
+  return { ok: true, removed };
+}
+
 /** Make a programme week a deload week (half the sets) or take it back. */
 export async function setDeloadWeek(week: number, on: boolean): Promise<Result> {
   if (!Number.isInteger(week) || week < 1 || week > 12) return { ok: false, error: FRIENDLY };

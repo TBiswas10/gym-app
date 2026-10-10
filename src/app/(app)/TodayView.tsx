@@ -8,7 +8,7 @@ import { countLine, estimateMinutes, formatTarget, liftMinutes } from "@/lib/pla
 import type { StripDay } from "@/lib/schedule";
 import type { PlanDay, TodayData } from "@/lib/server/today-data";
 import { chooseMissed, setLight, toggleRestLog, undoMissed, type ActionResult } from "./actions";
-import { setDeloadWeek } from "./plan/actions";
+import { setDeloadWeek, setTestMode } from "./plan/actions";
 
 const joinNames = (names: string[]): string =>
   names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
@@ -27,6 +27,7 @@ export function TodayView({ data }: { data: TodayData }) {
   const todayIdx = Math.max(0, strip.findIndex((d) => d.date === today));
   const [sel, setSel] = useState(todayIdx);
   const [moving, setMoving] = useState(false);
+  const [confirmExit, setConfirmExit] = useState(false);
   // The setup note is long. After you've seen it once, it shrinks to a single line so the workout sits higher.
   const [compactSetup, setCompactSetup] = useState(false);
   useEffect(() => {
@@ -75,8 +76,8 @@ export function TodayView({ data }: { data: TodayData }) {
     d.status === "today" ? `Today · ${longName}` : d.status === "done" ? `${longName} · Done` : d.status === "missed" ? `${longName} · Missed` : longName;
   const startable = !!plan && (d.status === "today" || d.status === "next" || d.status === "light");
   // In weeks 1-2 an exercise with no starting weight goes through "Find your weight" first.
-  const needsWeights = data.setup && !!plan && plan.exercises.some((e) => e.kind === "weight" && !e.hasStartWeight);
-  const startHref = needsWeights ? `/find-weight?date=${d.sessionOrigin}` : `/workout?date=${d.sessionOrigin}`;
+  // No separate setup step: weeks 1 and 2 find their weights inside the workout itself, and those sets count.
+  const startHref = `/workout?date=${d.sessionOrigin}`;
   const startLabel = light ? "Start light workout" : d.status === "today" ? "Start workout" : `Start ${longName}’s workout`;
   const showLightToggle = !!plan && d.status !== "missed" && d.status !== "done";
 
@@ -133,11 +134,45 @@ export function TodayView({ data }: { data: TodayData }) {
           </div>
         )}
 
+        {data.testMode && (
+          <section className="card card-warning" aria-label="Test mode">
+            <div className="col g1">
+              <span className="t-eyebrow c-warning row g2"><Icon name="triangle-alert" size={16} />Test mode</span>
+              <p className="t-small">Start any day to try every screen. Sessions you do here are deleted when you exit.</p>
+            </div>
+            <div className="chip-row-tight">
+              {Object.values(data.days).map((p) => (
+                <Link key={p.weekday} className="chip" prefetch={false} href={`/workout?test=${p.weekday}`}>{p.shortName}</Link>
+              ))}
+            </div>
+            <div className="chip-row-tight">
+              {[4, 8, 12].map((w) => (
+                <Link key={w} className="chip" href={`/review?week=${w}`}>Week {w} check-in</Link>
+              ))}
+              <Link className="chip" href="/offline">Offline screen</Link>
+            </div>
+            {!confirmExit ? (
+              <button type="button" className="btn btn-secondary btn-block" onClick={() => setConfirmExit(true)}>Exit test mode</button>
+            ) : (
+              <div className="grid2">
+                <button type="button" className="btn btn-secondary" onClick={() => setConfirmExit(false)}>Stay in test mode</button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  disabled={pending}
+                  onClick={() => startTransition(async () => { await setTestMode(false); })}
+                >
+                  Delete test sessions and exit
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+
         {data.setup && compactSetup && (
-          <Link className="card card-accent" href="/find-weight" style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", minHeight: "var(--size-tap)", padding: "var(--space-2) var(--space-4)", textDecoration: "none", color: "var(--text)" }}>
-            <span className="t-eyebrow c-accent">Setup mode · weeks 1 and 2</span>
-            <span className="link" style={{ whiteSpace: "nowrap" }}>How it works <Icon name="chevron-right" size={20} /></span>
-          </Link>
+          <div className="card card-accent" style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", minHeight: "var(--size-tap)", padding: "var(--space-2) var(--space-4)", textDecoration: "none", color: "var(--text)" }}>
+            <span className="t-eyebrow c-accent">Weeks 1 and 2 · find your weights</span>
+          </div>
         )}
         {data.setup && !compactSetup && (
           <section className="card card-accent">
@@ -148,13 +183,10 @@ export function TodayView({ data }: { data: TodayData }) {
               <div className="col g1 grow">
                 <span className="t-eyebrow c-accent">Setup mode · weeks 1 and 2</span>
                 <p className="t-small">
-                  For each exercise, pick a weight you can lift cleanly for about 10 reps, with 1 or 2 left in the tank. No pressure to progress yet.
+                  Find your weights as you train. For each exercise, pick a weight you can lift cleanly for about 10 reps, with 1 or 2 left in the tank. Every set you log counts. No pressure to progress yet.
                 </p>
               </div>
             </div>
-            <Link className="link" href="/find-weight">
-              See how it works <Icon name="chevron-right" size={20} />
-            </Link>
           </section>
         )}
 
@@ -336,7 +368,7 @@ export function TodayView({ data }: { data: TodayData }) {
                 <li key={e.slug} className="list-row" style={{ minHeight: "var(--size-tap)" }}>
                   <span className="t-body" style={{ fontWeight: 600 }}>{e.name}</span>
                   <span className="t-small c-2" style={{ whiteSpace: "nowrap" }}>
-                    {data.setup && e.kind === "weight" && !e.hasStartWeight ? "Find weight" : formatTarget(e.sets, e.repLo, e.repHi, e.kind)}
+                    {formatTarget(e.sets, e.repLo, e.repHi, e.kind)}
                   </span>
                 </li>
               ))}

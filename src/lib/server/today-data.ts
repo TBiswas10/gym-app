@@ -46,6 +46,7 @@ export interface TodayData {
   checkIn: number | null; // a week 4/8/12 check-in that is ready
   deloadSuggested: boolean; // weeks 6-8, none taken yet
   inDeload: boolean; // this week is a deload week (half the sets)
+  testMode?: boolean; // owner is trying the app: any day can be started; test sessions are wiped when it ends
 }
 
 const KINDS: ExerciseKind[] = ["weight", "timed", "bodyweight"];
@@ -54,7 +55,7 @@ const KINDS: ExerciseKind[] = ["weight", "timed", "bodyweight"];
 export async function loadToday(supabase: ServerClient, uid: string, now = new Date()): Promise<TodayData | null> {
   const today = sydneyDate(now);
 
-  const { data: state } = await supabase.from("program_state").select("start_date, plan_type, deload_weeks").maybeSingle();
+  const { data: state } = await supabase.from("program_state").select("start_date, plan_type, deload_weeks, test_mode").maybeSingle();
   if (!state) return null;
   const planType = state.plan_type as "5day" | "3day";
 
@@ -148,6 +149,7 @@ export async function loadToday(supabase: ServerClient, uid: string, now = new D
     today,
     startDate: state.start_date,
     week,
+    testMode: !!state.test_mode,
     complete: programmeComplete(state.start_date, today),
     setup: isSetupWeek(week),
     planType,

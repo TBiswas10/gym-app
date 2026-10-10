@@ -448,7 +448,6 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                 <Icon name="info" />
                 <span className="col">
                   <span>{ex.swapped ? "No history for this one. Start light and use the steppers." : "First time on this one. Pick a weight you can lift 10 times with 1 or 2 left."}</span>
-                  {!ex.swapped && ex.exKind === "weight" && <Link className="link" href={`/find-weight?slug=${ex.slug}`}>Find my weight <Icon name="chevron-right" size={20} /></Link>}
                 </span>
               </div>
             )}

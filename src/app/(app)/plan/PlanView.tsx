@@ -9,7 +9,7 @@ import { estimateMinutes } from "@/lib/plan";
 import { add, estimateNote, move, rangeLabel, rangesFor, removeAt, setRange, setSets, type Row } from "@/lib/plan-edit";
 import type { PlanData } from "@/lib/server/plan-data";
 import { disableRestAlerts, enableRestAlerts, PUSH_MESSAGE } from "@/lib/push-client";
-import { deleteAccount, saveSettings, savePlanDay, switchPlan, type Result } from "./actions";
+import { deleteAccount, saveSettings, savePlanDay, setTestMode, switchPlan, type Result } from "./actions";
 
 export function PlanView({ data, deleteProblem }: { data: PlanData; deleteProblem: boolean }) {
   const [days, setDays] = useState(data.days);
@@ -19,6 +19,7 @@ export function PlanView({ data, deleteProblem }: { data: PlanData; deleteProble
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [restAlerts, setRestAlerts] = useState(data.restAlerts);
   const [bodyweight, setBodyweight] = useState(data.trackBodyweight);
+  const [testMode, setTestModeState] = useState(!!data.testMode);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -73,6 +74,14 @@ export function PlanView({ data, deleteProblem }: { data: PlanData; deleteProble
         setRestAlerts(false);
         setError(r.error);
       }
+    });
+  };
+
+  const flipTestMode = (on: boolean) => {
+    setTestModeState(on);
+    startTransition(async () => {
+      const r = await setTestMode(on);
+      if (!r.ok) setTestModeState(!on);
     });
   };
 
@@ -197,10 +206,13 @@ export function PlanView({ data, deleteProblem }: { data: PlanData; deleteProble
             <span className="col"><span className="t-body" style={{ fontWeight: 600 }}>Bodyweight tracking</span><span className="t-small c-2">Log your weight once a week</span></span>
             <button type="button" className="switch" role="switch" aria-checked={bodyweight} aria-label="Bodyweight tracking" onClick={() => toggle("trackBodyweight", !bodyweight)}><span className="switch-track"><span className="switch-knob"><Icon name="check" /></span></span></button>
           </div>
+          <div className="switch-row list-row">
+            <span className="col"><span className="t-body" style={{ fontWeight: 600 }}>Test mode</span><span className="t-small c-2">{testMode ? "On. Turning it off deletes your test sessions." : "Start any day to try every screen. Test sessions are deleted afterwards."}</span></span>
+            <button type="button" className="switch" role="switch" aria-checked={testMode} aria-label="Test mode" disabled={pending} onClick={() => flipTestMode(!testMode)}><span className="switch-track"><span className="switch-knob"><Icon name="check" /></span></span></button>
+          </div>
           <Link className="list-row row-link" href="/notifications"><span className="col"><span className="t-body" style={{ fontWeight: 600 }}>Notification permission</span><span className="t-small c-2">Why we ask, and how to allow it</span></span><span className="c-2"><Icon name="chevron-right" /></span></Link>
           <Link className="list-row row-link" href="/install"><span className="col"><span className="t-body" style={{ fontWeight: 600 }}>Add to Home Screen guide</span><span className="t-small c-2">Install it like an app on iPhone</span></span><span className="c-2"><Icon name="chevron-right" /></span></Link>
-          <Link className="list-row row-link" href="/find-weight?all=1"><span className="col"><span className="t-body" style={{ fontWeight: 600 }}>Find your weight</span><span className="t-small c-2">Re-run setup for any exercise</span></span><span className="c-2"><Icon name="chevron-right" /></span></Link>
-        </section>
+                  </section>
 
         <a className="btn btn-secondary btn-block" href="/api/export" download>Export data as CSV</a>
         <form action={logOut}><button type="submit" className="btn btn-tertiary btn-block">Log out{data.email ? ` (${data.email})` : ""}</button></form>
