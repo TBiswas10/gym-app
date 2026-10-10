@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  addKg, adjust, adjustCardio, advance, applyEntry, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exercises,
+  addKg, moveExercise, adjust, adjustCardio, advance, applyEntry, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exercises,
   finishCardio, goTo, logSet, nextIndex, sameAsLast, setFeel, setNotes, skip, startEdit, setValue, swap, totalSets, updateSet, restoreLast, wrapUp,
   type ExStep, type InitExercise, type WState, type WorkoutInit,
 } from "./workout-state";
@@ -269,5 +269,33 @@ describe("typing numbers, +jump and last time", () => {
     const e = currentStep(restoreLast(s)) as ExStep;
     expect(e.kg).toBe(e.last?.kg);
     expect(e.reps).toBe(e.last?.reps[0]);
+  });
+});
+
+describe("reordering and finishing a skipped lift", () => {
+  it("moves a lift earlier or later without touching cardio or the cool-down", () => {
+    const s = fresh();
+    const names = (x: WState) => x.steps.map((t) => (t.kind === "ex" ? t.slug : t.kind));
+    const before = names(s);
+    const moved = moveExercise(s, 2, -1);
+    expect(names(moved)[1]).toBe(before[2]);
+    expect(names(moved)[2]).toBe(before[1]);
+    expect(names(moved)[0]).toBe("cardio");
+    expect(names(moveExercise(s, 1, -1))).toEqual(before); // cardio is not a lift: no move
+    expect(names(moveExercise(s, s.steps.length - 2, 1))).toEqual(before); // cool-down is last
+  });
+  it("keeps the current step current after a move", () => {
+    const s = goTo(fresh(), 2);
+    const cur = currentStep(s);
+    expect(currentStep(moveExercise(s, 2, -1))).toBe(cur);
+  });
+  it("a skipped lift that is finished later shows done, not skipped", () => {
+    let s = start();
+    s = skip(s); // skip the first lift
+    const skippedSlug = (s.steps[1] as ExStep).slug;
+    expect(s.steps[1].status).toBe("skipped");
+    s = goTo(s, 1);
+    s = logSet(logSet(s, "x1"), "x2");
+    expect(s.steps.find((t) => t.kind === "ex" && t.slug === skippedSlug)?.status).toBe("done");
   });
 });

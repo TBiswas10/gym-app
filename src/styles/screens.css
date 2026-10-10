@@ -58,3 +58,10 @@
 .ptr.is-spinning{color:var(--accent);border-color:var(--accent)}
 .ptr.is-spinning svg{animation:spin .8s linear infinite}
 @media (prefers-reduced-motion:reduce){.ptr.is-spinning svg{animation:none}}
+/* Workout complete: the whole screen is one tick */
+.done-stage{align-items:center;justify-content:center;text-align:center;gap:var(--space-4)}
+.done-tick-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:calc(var(--space-12) * 4);height:calc(var(--space-12) * 4)}
+.done-tick{position:relative;width:100%;height:100%;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center}
+.done-tick .ic{width:calc(var(--space-12) * 2);height:calc(var(--space-12) * 2);stroke-width:3}
+.done-mini{width:var(--space-12);height:var(--space-12);border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;flex:none}
+.done-mini .ic{width:var(--space-6);height:var(--space-6);stroke-width:3}

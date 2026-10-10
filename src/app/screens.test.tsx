@@ -123,12 +123,26 @@ describe("Review", () => {
 
 describe("Session complete", () => {
   const data = { name: "Upper (light)", line: "2 of 5 sessions this week. 3 to go.", sets: 12, time: "46:12", pbs: [{ name: "Chest press", text: "30 kg × 12" }], cardio: "10 min on the bike", soreness: 2, energy: 4, notes: "", trackBodyweight: true, bodyweight: "" };
-  it("renders the celebration, stats and check-in", () => {
+  it("opens with one big tick, then the check-in", () => {
     const out = renderToStaticMarkup(<CompleteView workoutId="w" data={data} problem={false} />);
-    for (const t of ["Nice work.", "Upper (light) · 12 sets done", "46:12", "NEW PBS", "Chest press", "Cardio: 10 min on the bike", "How do you feel?", "2 · A little", "4 · Good", "Bodyweight (kg)", "Save and finish"]) expect(out).toContain(t);
+    expect(out).toContain("Workout complete");
+    expect(out).toContain("done-tick");
+    expect(out).toContain("Continue");
+    expect(out).not.toContain("How do you feel?");
+  });
+  it("goes straight to the check-in when saving failed", () => {
+    expect(renderToStaticMarkup(<CompleteView workoutId="w" data={data} problem />)).toContain("How do you feel?");
+  });
+  it("shows the stats, bests and cardio on the tick screen", () => {
+    const out = renderToStaticMarkup(<CompleteView workoutId="w" data={data} problem={false} />);
+    for (const t of ["Upper (light) · 12 sets · 46:12", "Chest press", "30 kg × 12", "Cardio: 10 min on the bike", "2 of 5 sessions this week. 3 to go."]) expect(out).toContain(t);
+  });
+  it("renders the check-in", () => {
+    const out = renderToStaticMarkup(<CompleteView workoutId="w" data={data} problem={false} initialStage="checkin" />);
+    for (const t of ["How do you feel?", "2 · A little", "4 · Good", "Bodyweight (kg)", "Save and finish"]) expect(out).toContain(t);
   });
   it("hides bodyweight unless tracking is on, and shows a save problem", () => {
-    expect(renderToStaticMarkup(<CompleteView workoutId="w" data={{ ...data, trackBodyweight: false }} problem={false} />)).not.toContain("Bodyweight (kg)");
+    expect(renderToStaticMarkup(<CompleteView workoutId="w" data={{ ...data, trackBodyweight: false }} problem={false} initialStage="checkin" />)).not.toContain("Bodyweight (kg)");
     expect(renderToStaticMarkup(<CompleteView workoutId="w" data={data} problem />)).toContain("Couldn’t save that");
   });
 });

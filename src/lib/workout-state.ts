@@ -126,7 +126,7 @@ export function buildState(init: WorkoutInit): WState {
     steps.push({
       kind: "ex", slug: e.slug, name: e.name, backup: e.backup, exKind: e.kind, range: [e.repLo, e.repHi], planned: e.sets,
       step: e.step, increment: e.increment, last: e.last, stall: swapped ? null : e.stall ?? null, sets: e.logged,
-      status: init.skipped.includes(e.slug) ? "skipped" : e.logged.length >= e.sets ? "done" : "todo",
+      status: e.logged.length >= e.sets ? "done" : init.skipped.includes(e.slug) ? "skipped" : "todo",
       swapped, notes: e.notes, light: pre.light && !swapped,
       kg: lastSet ? (lastSet.kg ?? 0) : pre.kg,
       reps: lastSet ? (lastSet.reps ?? pre.reps) : pre.reps,
@@ -216,7 +216,10 @@ export function restoreLast(s: WState): WState {
 export function logSet(s: WState, id: string): WState {
   const e = currentStep(s);
   if (!isEx(e) || e.sets.length >= e.planned) return s;
-  return replaceStep(s, s.cur, { sets: [...e.sets, stepperToSet(e, id)] });
+  const sets = [...e.sets, stepperToSet(e, id)];
+  // Going back to a skipped exercise and logging it: it is no longer skipped, and a finished one shows a tick.
+  const status = sets.length >= e.planned ? "done" : e.status === "skipped" ? "todo" : e.status;
+  return replaceStep(s, s.cur, { sets, status });
 }
 
 export function startEdit(s: WState, index: number): WState {
@@ -268,6 +271,22 @@ export function goTo(s: WState, i: number): WState {
 export function skip(s: WState): WState {
   const next = replaceStep(s, s.cur, { status: "skipped" });
   return { ...next, cur: nextIndex(next.steps, s.cur), editIdx: -1 };
+}
+
+/**
+ * Do a lift sooner or later: swap it with the neighbouring lift. Cardio stays first and the cool-down last.
+ * The current step stays the current step wherever it lands.
+ */
+export function moveExercise(s: WState, i: number, dir: -1 | 1): WState {
+  const j = i + dir;
+  const a = s.steps[i];
+  const b = s.steps[j];
+  if (!a || !b || a.kind !== "ex" || b.kind !== "ex") return s;
+  const steps = [...s.steps];
+  steps[i] = b;
+  steps[j] = a;
+  const cur = s.cur === i ? j : s.cur === j ? i : s.cur;
+  return { ...s, steps, cur, editIdx: s.editIdx };
 }
 
 /** "Wrap up" at 50:00: every lift still to do is skipped and you land on the cool-down. */

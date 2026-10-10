@@ -15,7 +15,7 @@ import type { Source } from "@/lib/ops";
 import {
   addKg, adjust, adjustCardio, advance, applyEntry, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exSpec, exercises,
   finishCardio, goTo, loadEntryIntoSteppers, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setNotes, setValue, skip, startEdit, swap,
-  updateSet, restoreLast, wrapUp, type ExStep, type Step, type WState,
+  moveExercise, updateSet, restoreLast, wrapUp, type ExStep, type Step, type WState,
 } from "@/lib/workout-state";
 import type { WorkoutPage } from "@/lib/server/workout-data";
 import { CardioCard } from "./CardioCard";
@@ -248,6 +248,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const [chatMode, setChatMode] = useState<"idle" | "confirm" | "error">("idle");
   const [finishing, setFinishing] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [reorder, setReorder] = useState(false);
 
   const verdictInfo = ex && complete && !editing ? verdictFor(exSpec(ex), ex.sets, { setup: meta.setup, highSoreness: meta.highSoreness, hold: meta.hold }) : null;
   const pb = ex && complete && !editing && !ex.swapped ? isPB(ex.exKind, ex.last, ex.sets) : false;
@@ -582,7 +583,10 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
         )}
 
         <section className="col g1" aria-label="Session checklist">
-          <h2 className="t-eyebrow c-2" style={{ margin: "var(--space-2) var(--space-1)" }}>Checklist</h2>
+          <div className="row between" style={{ margin: "var(--space-2) var(--space-1)" }}>
+            <h2 className="t-eyebrow c-2">Checklist</h2>
+            <button type="button" className="link" aria-pressed={reorder} onClick={() => setReorder(!reorder)}>{reorder ? "Done" : "Change order"}</button>
+          </div>
           {steps.map((x, i) => {
             const title = x.kind === "ex" ? dispName(x) : x.kind === "warm" ? "Warm-up" : x.kind === "cardio" ? "Cardio" : "Cool-down";
             const sub =
@@ -590,11 +594,21 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                 ? x.sets.length ? x.sets.map((v) => (x.exKind === "timed" ? `${v.secs} s` : `${x.exKind === "bodyweight" && !v.kg ? "BW" : fmtNum(v.kg ?? 0)}×${v.reps}`)).join(", ") : x.status === "skipped" ? "Skipped" : `${x.planned} × ${targetLabel(x)}`
                 : x.status === "skipped" ? "Skipped" : x.kind === "warm" ? "7 min" : x.kind === "cardio" ? `${meta.cardioLabel}` : "2–3 min · optional";
             const dotCls = x.status === "done" ? "dot-done" : i === ws.cur ? "dot-today" : x.status === "skipped" ? "dot-rest" : "";
-            return (
-              <button key={i} type="button" className={`check-row ${i === ws.cur ? "cur" : ""}`} onClick={() => local(goTo(ws, i))}>
+            const row = (
+              <button type="button" className={`check-row ${i === ws.cur ? "cur" : ""}`} style={{ flex: 1, minWidth: 0 }} onClick={() => local(goTo(ws, i))}>
                 <span className={`dot ${dotCls}`}>{x.status === "done" && <Icon name="check" size={16} />}{x.status === "skipped" && <Icon name="skip-forward" size={16} />}</span>
                 <span className="col grow"><strong className={x.status === "done" || x.status === "skipped" ? "c-2" : ""}>{title}</strong><span className="t-small c-2">{sub}</span></span>
               </button>
+            );
+            if (!reorder || x.kind !== "ex") return <div key={i} className="row g2">{row}</div>;
+            const canUp = steps[i - 1]?.kind === "ex";
+            const canDown = steps[i + 1]?.kind === "ex";
+            return (
+              <div key={i} className="row g2">
+                {row}
+                <button type="button" className="icon-btn" aria-label={`Move ${title} earlier`} disabled={!canUp} onClick={() => local(moveExercise(ws, i, -1))}><Icon name="arrow-up" /></button>
+                <button type="button" className="icon-btn" aria-label={`Move ${title} later`} disabled={!canDown} onClick={() => local(moveExercise(ws, i, 1))}><Icon name="arrow-down" /></button>
+              </div>
             );
           })}
           {ws.extras.length > 0 && (

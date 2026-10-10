@@ -102,7 +102,8 @@ export async function startSession(
     supabase.from("schedule_overrides").select("planned_date, action, moved_to_date, created_at").eq("planned_date", date).maybeSingle(),
     supabase.from("workouts").select("id").eq("status", "completed").eq("planned_date", date).limit(1),
   ]);
-  if (!day || !dates.includes(date) || date < ctx.startDate || done?.length || ovr?.action === "skipped" || ovr?.action === "moved") return null;
+  // A skipped day can still be done later (it then shows a tick); a moved one is done from its new slot.
+  if (!day || !dates.includes(date) || date < ctx.startDate || done?.length || ovr?.action === "moved") return null;
   const { data: created, error } = await supabase
     .from("workouts")
     .insert({ planned_date: date, week: ctx.week, plan_type: ctx.planType, weekday, day_name: day.full_name, is_light: ovr?.action === "light" })

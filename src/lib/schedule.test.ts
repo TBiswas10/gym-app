@@ -50,6 +50,16 @@ describe("skipping, moving and going light", () => {
     expect(strip[1].status).toBe("skipped");
   });
 
+  it("a skipped day that is done later shows a tick, not a skip", () => {
+    const strip = buildStrip({ ...base, completed: new Set([MON, TUE]), overrides: [ovr({ action: "skipped" })] });
+    expect(strip[1]).toMatchObject({ status: "done", sessionOrigin: TUE });
+  });
+
+  it("a skipped day that is still not done can be started from its own date", () => {
+    const strip = buildStrip({ ...base, overrides: [ovr({ action: "skipped" })] });
+    expect(strip[1]).toMatchObject({ status: "skipped", skippedOrigin: TUE });
+  });
+
   it("moves a session to a free day and keeps its content", () => {
     const strip = buildStrip({ ...base, overrides: [ovr({ action: "moved", movedToDate: FRI })] });
     expect(strip[1].status).toBe("skipped"); // Tuesday is empty now

@@ -344,6 +344,15 @@ export function TodayView({ data }: { data: TodayData }) {
         {/* selected day: workout */}
         {plan && (
           <section className="card">
+            {d.status === "done" && (
+              <div className="row g3" style={{ alignItems: "center" }} role="status">
+                <span className="done-mini"><Icon name="check" /></span>
+                <span className="col">
+                  <strong className="t-heading">Workout complete</strong>
+                  <span className="t-small c-2">{plan.fullName} is done.</span>
+                </span>
+              </div>
+            )}
             <div className="row between g2">
               <span className="t-eyebrow c-accent">{when}</span>
               <span className="t-small c-2">{countLine(plan.exercises.length)}</span>
@@ -442,8 +451,20 @@ export function TodayView({ data }: { data: TodayData }) {
             )}
             {d.status === "skipped" && (
               <>
-                <h2 className="t-title">No session</h2>
-                <p className="t-body c-2">This one was skipped or moved to another day. Nothing to do here.</p>
+                {d.skippedOrigin ? (
+                  <>
+                    <h2 className="t-title">Skipped</h2>
+                    <p className="t-body c-2">You skipped this one, but you can still do it. It will show a tick when it’s done.</p>
+                    <Link className="btn btn-secondary btn-block" href={`/workout?date=${d.skippedOrigin}`} prefetch={false}>
+                      <Icon name="play" />Do it now
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="t-title">No session</h2>
+                    <p className="t-body c-2">This one was moved to another day. Nothing to do here.</p>
+                  </>
+                )}
               </>
             )}
             {d.status === "pre" && (

@@ -25,6 +25,8 @@ export interface StripDay {
   sessionOrigin: string | null;
   movedIn: boolean;
   light: boolean;
+  /** On a day whose session was skipped (and not done since): that session's origin date, so it can still be done. */
+  skippedOrigin?: string | null;
 }
 
 export interface StripInput {
@@ -45,11 +47,14 @@ export function buildStrip({ today, startDate, liftWeekdays, completed, override
   // Slot each session onto a date.
   const slotOf = new Map<string, string>(); // slot date -> origin date
   const awayOrigins = new Set<string>(); // origins that were moved off their own date or skipped
+  const skippedOrigins = new Set<string>(); // the skipped ones that are still not done
   for (const origin of dates) {
     if (!lifts.has(weekdayOf(origin)) || origin < startDate) continue;
     const o = byOrigin.get(origin);
-    if (o?.action === "skipped") {
+    // A skipped session that was done afterwards is simply done: it keeps its day and shows a tick.
+    if (o?.action === "skipped" && !completed.has(origin)) {
       awayOrigins.add(origin);
+      skippedOrigins.add(origin);
       continue;
     }
     if (o?.action === "moved" && o.movedToDate && dates.includes(o.movedToDate)) {
@@ -68,7 +73,7 @@ export function buildStrip({ today, startDate, liftWeekdays, completed, override
     const origin = slotOf.get(date);
     if (!origin) {
       // Nothing sits here: a rest day, or the origin of a skipped / moved-away session.
-      return { ...base, status: awayOrigins.has(date) ? ("skipped" as const) : ("rest" as const), sessionOrigin: null };
+      return { ...base, status: awayOrigins.has(date) ? ("skipped" as const) : ("rest" as const), sessionOrigin: null, skippedOrigin: skippedOrigins.has(date) ? date : null };
     }
 
     const o = byOrigin.get(origin);
