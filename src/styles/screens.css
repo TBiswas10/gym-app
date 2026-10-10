@@ -85,16 +85,17 @@
 @keyframes rest-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 @media (prefers-reduced-motion:reduce){.rest-ring.is-final{animation:none}}
 /* In-app banners (set logged, swapped, new best) sit at the top, clear of the Log button */
-.toast-top{top:calc(var(--safe-top) - var(--space-3));bottom:auto;animation:drop var(--dur-base) var(--ease-out) both}
+.toast-top{top:calc(var(--safe-top) - var(--space-3));bottom:auto;animation:none;transform:none;opacity:1;transition:transform var(--dur-base) var(--ease-out),opacity var(--dur-base) var(--ease-out)}
+@starting-style{.toast-top,.pb-card{transform:translateY(calc(var(--space-4) * -1));opacity:0}}
 .toast-top-pos{top:calc(var(--safe-top) - var(--space-3))}
-.pb-card{position:absolute;left:var(--space-4);right:var(--space-4);z-index:30;display:flex;flex-direction:row;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);background:var(--raised);border:1px solid var(--accent);box-shadow:var(--shadow-pop);color:var(--text);animation:drop var(--dur-base) var(--ease-out) both}
+.pb-card{position:absolute;left:var(--space-4);right:var(--space-4);z-index:30;display:flex;flex-direction:row;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);background:var(--raised);border:1px solid var(--accent);box-shadow:var(--shadow-pop);color:var(--text);transition:transform var(--dur-base) var(--ease-out),opacity var(--dur-base) var(--ease-out)}
 .pb-card .done-mini{width:var(--space-12);height:var(--space-12)}
 @keyframes drop{from{transform:translateY(calc(var(--space-4) * -1));opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.toast-top,.pb-card{animation:fade 120ms linear both}}
 /* Tab bar: one indicator that slides to the chosen tab */
 .tabbar{position:relative}
 .tab[aria-current="page"]::before{display:none}
-.tab-ind{position:absolute;top:0;left:calc(var(--space-2) + (100% - var(--space-4)) / 4 * var(--i,0));width:calc((100% - var(--space-4)) / 4);display:flex;justify-content:center;transition:left var(--dur-base) var(--ease-out);pointer-events:none}
+.tab-ind{position:absolute;top:0;left:var(--space-2);width:calc((100% - var(--space-4)) / 4);display:flex;justify-content:center;transform:translateX(calc(var(--i,0) * 100%));transition:transform var(--dur-base) var(--ease-out);pointer-events:none}
 .tab-ind::before{content:"";width:24px;height:3px;border-radius:2px;background:var(--accent)}
 /* Progress: exercise picker button and list; dragged checklist row */
 .picker{appearance:none;width:100%;display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);min-height:var(--size-control);padding:var(--space-2) var(--space-4);border-radius:var(--radius-sm);background:var(--raised);border:1px solid var(--border-strong);color:var(--text);text-align:left}
@@ -103,3 +104,9 @@
 .pick-row.is-on{background:var(--accent-subtle)}
 .is-dragging{box-shadow:var(--shadow-pop);border-radius:var(--radius-md);background:var(--raised)}
 .grip{cursor:grab}
+
+/* Plan editor accordion: opens by easing rows 0fr -> 1fr (the height-auto technique), not by snapping */
+.collapse{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows 150ms var(--ease-out),opacity 150ms var(--ease-out),visibility 0s linear 150ms}
+.collapse>div{overflow:hidden;min-height:0}
+.collapse.is-open{grid-template-rows:1fr;opacity:1;visibility:visible;transition:grid-template-rows var(--dur-base) var(--ease-out),opacity var(--dur-base) var(--ease-out),visibility 0s}
+@media (prefers-reduced-motion:reduce){.collapse,.collapse.is-open{transition:none}}

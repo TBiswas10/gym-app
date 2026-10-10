@@ -713,7 +713,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
               <button type="button" className="btn" aria-label="Undo last change" onClick={doUndo}><Icon name="undo" />Undo</button>
             )}
           </div>
-          <span className="toast-time" style={{ width: `${Math.max(0, Math.min(100, Math.round((toastLive.until - nowMs) / 50)))}%` }} />
+          <span className="toast-time" style={{ transform: `scaleX(${Math.max(0, Math.min(100, Math.round((toastLive.until - nowMs) / 50))) / 100})` }} />
         </div>
       )}
 

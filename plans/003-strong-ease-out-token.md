@@ -1,6 +1,6 @@
 # 003 — Use the strong ease-out as the shared curve (needs owner approval)
 
-- **Status**: TODO (blocked: changes a design-handoff token, owner must approve)
+- **Status**: DONE (applied)
 - **Commit**: 09e3f69
 - **Severity**: LOW
 - **Category**: Easing & duration

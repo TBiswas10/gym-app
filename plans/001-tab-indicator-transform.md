@@ -1,6 +1,6 @@
 # 001 — Animate the tab indicator with transform, not left
 
-- **Status**: TODO
+- **Status**: DONE (applied)
 - **Commit**: 09e3f69
 - **Severity**: MEDIUM
 - **Category**: Performance

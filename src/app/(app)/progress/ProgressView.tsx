@@ -67,7 +67,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
             {data.thisWeek.groups.map(([name, n]) => (
               <div key={name} className="row g3">
                 <span className="t-small" style={{ width: 84, fontWeight: 600 }}>{name}</span>
-                <div className="bar" style={{ flex: 1 }}><i style={{ width: `${Math.min(100, Math.round((n / 10) * 100))}%` }} /></div>
+                <div className="bar" style={{ flex: 1 }}><i style={{ transform: `scaleX(${Math.min(100, Math.round((n / 10) * 100)) / 100})` }} /></div>
                 <span className="t-small" style={{ width: 56, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{n} sets</span>
               </div>
             ))}

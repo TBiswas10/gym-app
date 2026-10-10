@@ -145,8 +145,8 @@ export function PlanView({ data }: { data: PlanData }) {
                   </span>
                   <span className="c-2" style={{ transform: isOpen ? "rotate(180deg)" : "none" }}><Icon name="chevron-right" /></span>
                 </button>
-                {isOpen && (
-                  <div className="col g4 anim-in" style={{ padding: "0 var(--space-4) var(--space-4)" }}>
+                <div className={`collapse ${isOpen ? "is-open" : ""}`} aria-hidden={!isOpen} inert={!isOpen}>
+                  <div className="col g4" style={{ padding: "0 var(--space-4) var(--space-4)" }}>
                     <div className="row between">
                       <span className="t-body" style={{ fontWeight: 700 }}>Sets</span>
                       <div className="row g3">
@@ -170,7 +170,7 @@ export function PlanView({ data }: { data: PlanData }) {
                     </div>
                     <Link className="link" href={`/library/${r.slug}`}>Weight jump and form guide <Icon name="chevron-right" size={20} /></Link>
                   </div>
-                )}
+                </div>
               </div>
             );
           })}

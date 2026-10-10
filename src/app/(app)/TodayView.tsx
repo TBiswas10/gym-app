@@ -347,7 +347,7 @@ export function TodayView({ data }: { data: TodayData }) {
 
         {/* selected day: workout */}
         {plan && (
-          <section className="card">
+          <section key={d.date} className="card anim-in">
             {d.status === "done" && (
               <div className="row g3" style={{ alignItems: "center" }} role="status">
                 <span className="done-mini"><Icon name="check" /></span>

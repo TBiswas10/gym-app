@@ -1,6 +1,6 @@
 # 002 — Animate progress and countdown bars with scaleX
 
-- **Status**: TODO
+- **Status**: DONE (applied)
 - **Commit**: 09e3f69
 - **Severity**: LOW
 - **Category**: Performance

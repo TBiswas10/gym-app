@@ -41,7 +41,7 @@
   --dur-press: 120ms;
   --dur-base: 200ms;
   --dur-celebrate: 400ms;
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.45);
   --safe-top: max(59px, env(safe-area-inset-top));
