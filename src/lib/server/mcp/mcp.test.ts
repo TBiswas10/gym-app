@@ -33,21 +33,23 @@ const call = async (name: string, args: Record<string, unknown>) => {
 };
 
 describe("tool list", () => {
-  it("exposes exactly the eight tools", async () => {
+  it("exposes exactly the listed tools", async () => {
     const c = await connect();
     const { tools } = await c.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
-    expect(tools).toHaveLength(8);
+    expect(tools).toHaveLength(15);
   });
   it("marks read tools read-only and write tools as non-destructive", async () => {
     const { tools } = await (await connect()).listTools();
     const by = Object.fromEntries(tools.map((t) => [t.name, t.annotations]));
     for (const n of ["get_today_workout", "get_history", "get_progress", "suggest_next_weights", "get_review"]) expect(by[n]).toMatchObject({ readOnlyHint: true, destructiveHint: false });
-    for (const n of ["log_sets", "log_cardio", "log_checkin"]) expect(by[n]).toMatchObject({ readOnlyHint: false, destructiveHint: false });
+    for (const n of ["get_plan", "list_exercises", "get_schedule", "get_settings"]) expect(by[n]).toMatchObject({ readOnlyHint: true, destructiveHint: false });
+    for (const n of ["log_sets", "log_cardio", "log_checkin", "start_workout", "finish_workout", "edit_logged_sets"]) expect(by[n]).toMatchObject({ readOnlyHint: false, destructiveHint: false });
   });
-  it("has no tool that deletes, edits the plan, or touches the account", async () => {
+  it("has no tool that deletes or touches the account, and the plan/settings tools are read-only", async () => {
     const { tools } = await (await connect()).listTools();
-    expect(tools.some((t) => /delete|remove|plan|account|settings/i.test(t.name))).toBe(false);
+    expect(tools.some((t) => /delete|remove|account/i.test(t.name))).toBe(false);
+    for (const t of tools.filter((x) => /plan|settings/i.test(x.name))) expect(t.annotations).toMatchObject({ readOnlyHint: true });
   });
   it("describes log_sets with bounded inputs", async () => {
     const { tools } = await (await connect()).listTools();

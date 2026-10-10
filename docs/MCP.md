@@ -28,6 +28,13 @@ Lets Claude read and write your workout data. The server lives inside this app a
 | `get_progress` | Week, this week's totals and PBs, strength trend, soreness/energy trend, next check-in |
 | `suggest_next_weights` | Next weights by the progression rule, with the reason |
 | `get_review` | The week 4/8/12 check-in numbers and recommendation |
+| `get_plan` | Your plan: each day's exercises (sets, reps) and cardio |
+| `list_exercises` | The exercise library: slug, type, rep range, weight step and jump |
+| `get_schedule` | This week's strip: done / today / missed / skipped, and what can still be done |
+| `get_settings` | Alerts, bodyweight tracking, deload weeks, per-exercise jumps and notes |
+| `start_workout` | Start today's session, or a skipped day from this week (by date) |
+| `finish_workout` | Mark the session in progress as completed |
+| `edit_logged_sets` | Correct set 1 / set 2 of one exercise in the session on a date (replaces, never removes) |
 
 ## One-time setup in Supabase (dashboard)
 1. **Authentication > URL Configuration:** Site URL = `https://gym-app-one-xi.vercel.app` (your Vercel address).
@@ -68,3 +75,9 @@ and lets you delete them.
 12. [ ] "Delete my last workout" and "Change my plan" are things Claude has no tool for. Try asking it to anyway: it should say it can't.
 13. [ ] In Supabase Table Editor, `mcp_requests` has a row per call; in Vercel Logs you see `{"evt":"mcp",...}` lines without any workout data.
 14. [ ] Disconnect the connector, then ask again: Claude can't reach your data.
+
+
+## More power (not applied yet)
+Deleting logged data, editing the plan, changing settings and rescheduling days would need the connector's database
+limits widened. That change is written but NOT applied: `supabase/pending/mcp_more_power.sql`. It was blocked by a security
+check and needs an explicit yes from the owner. Account deletion and restarting the programme stay refused either way.

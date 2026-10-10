@@ -81,6 +81,8 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 - The server acts AS the user (token-based client, RLS applies). No service-role key anywhere.
 - Migration `mcp_hardening`: connector tokens cannot delete, change plan/settings/reviews or call account/plan functions
   (RESTRICTIVE policies on `auth.jwt() ->> 'client_id'`); `mcp_requests` = log + rate-limit counts.
+- 15 tools now (added get_plan, list_exercises, get_schedule, get_settings, start_workout, finish_workout, edit_logged_sets). A wider-power migration (delete / plan edit / settings / schedule) is written in `supabase/pending/mcp_more_power.sql` and deliberately NOT applied.
+- Root `src/app/loading.tsx` is the dark launch shell (same tile as the launch image) so the HTML flushes immediately on open.
 - Read tools never write. Write tools (`log_sets`, `log_cardio`, `log_checkin`) are narrow, validated, replace-not-delete.
 
 ## Push, offline and errors (step 8)

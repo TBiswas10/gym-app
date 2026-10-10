@@ -16,6 +16,7 @@ import { loadReview } from "../review-data";
 import { loadToday } from "../today-data";
 import { startSession } from "../workout-data";
 import { loadCx, reasonText, suggestionFor, type Cx } from "./context";
+import { registerMoreTools } from "./more-tools";
 import { errorResult, json, lastTimeLine, nextLine, setLine, textResult } from "./format";
 
 export interface McpContext {
@@ -41,6 +42,7 @@ async function activeWorkout(supabase: ServerClient) {
 
 export function registerTools(server: McpServer, ctx: McpContext): void {
   const { supabase, uid } = ctx;
+  registerMoreTools(server, { supabase, uid });
 
   // ------------------------------------------------------------------ get_today_workout
   server.registerTool(
@@ -394,4 +396,7 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
   );
 }
 
-export const TOOL_NAMES = ["get_today_workout", "get_history", "log_sets", "log_cardio", "log_checkin", "get_progress", "suggest_next_weights", "get_review"] as const;
+export const TOOL_NAMES = [
+  "get_today_workout", "get_history", "log_sets", "log_cardio", "log_checkin", "get_progress", "suggest_next_weights", "get_review",
+  "get_plan", "list_exercises", "get_schedule", "get_settings", "start_workout", "finish_workout", "edit_logged_sets",
+] as const;
