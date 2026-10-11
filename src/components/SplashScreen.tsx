@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { Icon } from "./Icon";
 
 const KEY = "wt.splashSeen";
-const HOLD_MS = 900;
+const HOLD_MS = 450;
 const FADE_MS = 300;
 
 // A short brand moment when the app is opened (once per launch, never on in-app navigation). It continues the iPhone
-// launch image: same dark screen, same lime tile. It never blocks taps and gets out of the way after under a second.
+// launch image: same dark screen, same lime tile. It never blocks taps and gets out of the way after about half a second.
 export function SplashScreen() {
   const [phase, setPhase] = useState<"show" | "fade" | "gone">("show");
 
@@ -20,7 +20,8 @@ export function SplashScreen() {
     } catch {
       /* storage blocked: show it once per page load */
     }
-    if (seen) {
+    // Opened from a rest alert (straight into a workout): no brand moment, you are mid-session.
+    if (seen || window.location.pathname.startsWith("/workout")) {
       setPhase("gone");
       return;
     }

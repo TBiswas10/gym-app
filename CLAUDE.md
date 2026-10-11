@@ -115,6 +115,7 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 - Library search (`library-search.ts`, `.search`): every typed word must start a word in the name, group, kit or muscles; "db", "bb", "rdl" shorthands; combines with the group chips; has a clear button and a no-match state.
 - Change log (migration `change_log`, `src/lib/server/change-log.ts`): every Claude edit/delete and in-app plan/settings edit is recorded with its "before" and can be undone (`undo_change` tool or Plan > Change log). Deletes, `edit_plan_day` and `swap_plan_exercise` take `dry_run` and need `confirm`. `log_sets` takes `swapped_to` (a session swap; sets keep their swap when corrected). The workout info button shows the swapped-in exercise (`backupGuides`). 25 MCP tools.
 - Only `--dur-*` / `--ease-*` tokens; no new colours (so no translucent bars). No animation library added.
+- Design pass 2 (owner approved): bottom sheets use `--ease-drawer` (cubic-bezier(0.32, 0.72, 0, 1)) and slide the full height (`sheet-up` 280 ms / `sheet-down` 220 ms); the splash holds 0.45 s and is skipped when the app opens straight into `/workout` (rest alert); the done tick draws its check (`draw-check`); the unused `glow` animation was removed.
 
 ## Build order (stop after each step for testing)
 1. Setup, PWA manifest + icons, Supabase login, tokens in Tailwind  (done, tested)
