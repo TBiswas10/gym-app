@@ -1,4 +1,5 @@
 import { fmtNum } from "../../format";
+import { isMachine, machineById, type MachineId } from "../../cardio";
 import type { ExerciseKind } from "../../plan";
 import type { LastTime, Suggestion } from "../../progression";
 
@@ -18,6 +19,24 @@ export function lastTimeLine(kind: ExerciseKind, last: LastTime | null): string 
   if (!last) return null;
   if (kind === "timed") return last.secs.map((v) => `${v} s`).join(", ");
   return last.reps.map((r) => `${last.kg ? `${fmtNum(last.kg)} kg` : "bodyweight"} × ${r}`).join(", ");
+}
+
+/** Machine numbers with their names and units, e.g. { Resistance: "5 level", Cadence: "70 rpm" }. Time is left out (it is `minutes`). */
+export function cardioSettings(kind: string, params: unknown): Record<string, string> {
+  if (!isMachine(kind) || !params || typeof params !== "object") return {};
+  const out: Record<string, string> = {};
+  for (const p of machineById(kind as MachineId).params) {
+    if (p.k === "min") continue;
+    const v = (params as Record<string, unknown>)[p.k];
+    if (typeof v === "number") out[p.label] = `${fmtNum(v)} ${p.unit.split(",")[0]}`.trim();
+  }
+  return out;
+}
+
+/** "10 min bike · Resistance 5 level, Cadence 70 rpm (moderate)" */
+export function cardioLine(c: { kind: string; minutes: number; feel?: string | null; params?: unknown }): string {
+  const s = Object.entries(cardioSettings(c.kind, c.params)).map(([k, v]) => `${k} ${v}`).join(", ");
+  return `${c.minutes} min ${c.kind}${s ? ` · ${s}` : ""}${c.feel ? ` (${c.feel})` : ""}`;
 }
 
 /** What to do next time, in one line. */

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ServerClient } from "../../supabase/server";
-import { addDays, longDay, weekdayOf } from "../../dates";
+import { addDays, longDay, weekDates, weekdayOf } from "../../dates";
 import { fmtNum } from "../../format";
 import { findExercises } from "../../parser";
 import { estimateMinutes, formatTarget } from "../../plan";
@@ -18,7 +18,7 @@ import { startSession } from "../workout-data";
 import { loadCx, reasonText, suggestionFor, type Cx } from "./context";
 import { registerMoreTools } from "./more-tools";
 import { registerPowerTools } from "./power-tools";
-import { errorResult, json, lastTimeLine, nextLine, setLine, textResult } from "./format";
+import { cardioLine, cardioSettings, errorResult, json, lastTimeLine, nextLine, setLine, textResult } from "./format";
 
 export interface McpContext {
   supabase: ServerClient;
@@ -61,6 +61,7 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
       const d = t.strip.find((x) => x.date === t.today)!;
       const plan = d.sessionOrigin ? t.days[weekdayOf(d.sessionOrigin)] : null;
       const active = await activeWorkout(supabase);
+      const { data: lastC } = await supabase.from("cardio_entries").select("kind, minutes, feel, params, logged_on").not("kind", "in", "(walk,stretch)").order("logged_at", { ascending: false }).limit(1).maybeSingle();
 
       const session = plan && {
         name: plan.fullName + (d.movedIn ? " (moved)" : ""),
@@ -71,7 +72,7 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
           const s = suggestionFor(cx, e.slug, [e.repLo, e.repHi]);
           return { exercise: e.name, slug: e.slug, target: formatTarget(e.sets, e.repLo, e.repHi, e.kind), last_time: lastTimeLine(e.kind, s.last), next: nextLine(e.kind, s.suggestion) };
         }),
-        cardio: { plan: plan.cardioName, length: plan.cardioLabel },
+        cardio: { plan: plan.cardioName, length: plan.cardioLabel, last_time: lastC ? `${cardioLine(lastC)} on ${lastC.logged_on}` : null },
       };
       const notes: string[] = [];
       if (t.setup) notes.push("Setup weeks 1-2: find your weights; no weight increases yet.");
@@ -117,14 +118,14 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
       if (!ids.length) return textResult(`No workouts in the last ${days} days.`);
       const [sets, cardio, checkins] = await Promise.all([
         supabase.from("sets").select("workout_id, exercise_slug, set_number, variant, weight_kg, reps, seconds").in("workout_id", ids).order("set_number"),
-        supabase.from("cardio_entries").select("workout_id, kind, minutes, feel").in("workout_id", ids),
+        supabase.from("cardio_entries").select("workout_id, kind, minutes, feel, params").in("workout_id", ids),
         supabase.from("checkins").select("workout_id, soreness, energy, notes, bodyweight_kg").in("workout_id", ids),
       ]);
       const out = (workouts ?? []).map((w) => {
         const mine = (sets.data ?? []).filter((s) => s.workout_id === w.id && (!only || s.exercise_slug === only));
         const bySlug = new Map<string, typeof mine>();
         for (const s of mine) bySlug.set(s.exercise_slug, [...(bySlug.get(s.exercise_slug) ?? []), s]);
-        const c = cardio.data?.find((x) => x.workout_id === w.id);
+        const cs = (cardio.data ?? []).filter((x) => x.workout_id === w.id);
         const k = checkins.data?.find((x) => x.workout_id === w.id);
         return {
           date: w.planned_date, session: w.day_name, status: w.status, week: w.week, light: w.is_light || undefined,
@@ -132,7 +133,7 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
             const info = cx.exercises.get(slug)!;
             return { exercise: info.name, swapped_to: rows[0].variant ?? undefined, sets: rows.map((r) => setLine(info.kind, r)) };
           }),
-          cardio: only ? undefined : c ? `${c.minutes} min ${c.kind}${c.feel ? ` (${c.feel})` : ""}` : undefined,
+          cardio: only || !cs.length ? undefined : cs.map(cardioLine).join("; "),
           checkin: only ? undefined : k ? { soreness: k.soreness, energy: k.energy, bodyweight_kg: k.bodyweight_kg, notes: k.notes } : undefined,
         };
       });
@@ -233,6 +234,65 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
       }
       if (!variant && isPB(info.kind, cx.lastBySlug[info.slug] ?? null, all)) lines.push("That’s a personal best versus last time.");
       return textResult(lines.join("\n"));
+    },
+  );
+
+  // ------------------------------------------------------------------ get_cardio
+  server.registerTool(
+    "get_cardio",
+    {
+      title: "Cardio history and totals",
+      description: "Cardio entries (machine, minutes, the numbers you set on it, how it felt, which session) with a per-machine summary and minutes per week. Includes rest-day walks and stretches. Optionally filter to one machine. Read-only.",
+      inputSchema: {
+        days: z.number().int().min(1).max(180).default(30).describe("How many days back (default 30)"),
+        machine: z.enum(["bike", "treadmill", "stair", "rower", "xtrainer", "walk", "stretch"]).optional(),
+      },
+      annotations: READ,
+    },
+    async ({ days, machine }) => {
+      const cx = await needCx(ctx);
+      if (!cx) return errorResult(NO_PROGRAM);
+      const since = addDays(cx.today, -days);
+      let q = supabase.from("cardio_entries").select("kind, minutes, feel, params, logged_on, workout_id").gte("logged_on", since).order("logged_on", { ascending: false }).order("logged_at", { ascending: false }).limit(200);
+      if (machine) q = q.eq("kind", machine);
+      const { data, error } = await q;
+      if (error) return errorResult(FRIENDLY);
+      const rows = data ?? [];
+      if (!rows.length) return textResult(`No ${machine ?? "cardio"} entries in the last ${days} days.`);
+
+      const wids = [...new Set(rows.map((r) => r.workout_id).filter((x): x is string => !!x))];
+      const names = new Map<string, string>();
+      if (wids.length) {
+        const { data: ws } = await supabase.from("workouts").select("id, day_name").in("id", wids);
+        for (const w of ws ?? []) names.set(w.id, w.day_name);
+      }
+
+      const byMachine = new Map<string, typeof rows>();
+      for (const r of rows) byMachine.set(r.kind, [...(byMachine.get(r.kind) ?? []), r]);
+      const summary = [...byMachine].map(([kind, rs]) => ({
+        machine: kind,
+        sessions: rs.length,
+        total_minutes: rs.reduce((a, r) => a + r.minutes, 0),
+        average_minutes: Math.round(rs.reduce((a, r) => a + r.minutes, 0) / rs.length),
+        longest_minutes: Math.max(...rs.map((r) => r.minutes)),
+        latest: { date: rs[0].logged_on, minutes: rs[0].minutes, feel: rs[0].feel ?? undefined, settings: cardioSettings(kind, rs[0].params) },
+      }));
+
+      const weeks = new Map<string, number>();
+      for (const r of rows) {
+        const monday = weekDates(r.logged_on)[0];
+        weeks.set(monday, (weeks.get(monday) ?? 0) + r.minutes);
+      }
+      return textResult(json({
+        days,
+        entries: rows.map((r) => ({
+          date: r.logged_on, machine: r.kind, minutes: r.minutes, feel: r.feel ?? undefined,
+          settings: cardioSettings(r.kind, r.params),
+          session: r.workout_id ? names.get(r.workout_id) ?? "workout" : "outside a workout (rest day)",
+        })),
+        by_machine: summary,
+        minutes_per_week: [...weeks].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(([week_starting, minutes]) => ({ week_starting, minutes })),
+      }));
     },
   );
 
@@ -412,7 +472,7 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
 }
 
 export const TOOL_NAMES = [
-  "get_today_workout", "get_history", "log_sets", "log_cardio", "log_checkin", "get_progress", "suggest_next_weights", "get_review",
+  "get_today_workout", "get_history", "get_cardio", "log_sets", "log_cardio", "log_checkin", "get_progress", "suggest_next_weights", "get_review",
   "get_plan", "list_exercises", "get_schedule", "get_settings", "start_workout", "finish_workout", "edit_logged_sets",
   "delete_logged_sets", "delete_workout", "delete_cardio_entry", "edit_plan_day", "swap_plan_exercise", "schedule_day", "update_settings", "set_exercise_settings",
   "get_change_log", "undo_change",

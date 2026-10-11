@@ -37,12 +37,12 @@ describe("tool list", () => {
     const c = await connect();
     const { tools } = await c.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
-    expect(tools).toHaveLength(25);
+    expect(tools).toHaveLength(26);
   });
   it("marks read tools read-only and write tools as non-destructive", async () => {
     const { tools } = await (await connect()).listTools();
     const by = Object.fromEntries(tools.map((t) => [t.name, t.annotations]));
-    for (const n of ["get_today_workout", "get_history", "get_progress", "suggest_next_weights", "get_review"]) expect(by[n]).toMatchObject({ readOnlyHint: true, destructiveHint: false });
+    for (const n of ["get_today_workout", "get_history", "get_cardio", "get_progress", "suggest_next_weights", "get_review"]) expect(by[n]).toMatchObject({ readOnlyHint: true, destructiveHint: false });
     for (const n of ["get_plan", "list_exercises", "get_schedule", "get_settings"]) expect(by[n]).toMatchObject({ readOnlyHint: true, destructiveHint: false });
     for (const n of ["log_sets", "log_cardio", "log_checkin", "start_workout", "finish_workout", "edit_logged_sets"]) expect(by[n]).toMatchObject({ readOnlyHint: false, destructiveHint: false });
   });
