@@ -1,11 +1,13 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import type { Json } from "../../database.types";
 import type { ServerClient } from "../../supabase/server";
 import { longDay, sydneyDate, weekDates, weekdayOf } from "../../dates";
+import { cleanParams, defaultMachine, isMachine, machineById, type MachineId } from "../../cardio";
 import { findExercises } from "../../parser";
 import { listChanges, recordChange, snapshotWorkout, undoChange } from "../change-log";
 import { loadCx } from "./context";
-import { errorResult, json, setLine, textResult } from "./format";
+import { cardioLine, errorResult, json, setLine, textResult } from "./format";
 
 // The connector's stronger tools. They exist because the owner asked for them. Safeguards that stay on:
 //  - every delete and plan edit can be previewed first (`dry_run: true`) and needs `confirm: true` to run;
@@ -210,6 +212,114 @@ export function registerPowerTools(server: McpServer, { supabase, uid }: Ctx): v
         after: { rows },
       });
       return textResult([`Updated.`, ...report, UNDO_NOTE].join("\n"));
+    },
+  );
+
+  // ---------------------------------------------------------------- edit_logged_cardio
+  server.registerTool(
+    "edit_logged_cardio",
+    {
+      title: "Correct a logged cardio entry",
+      description:
+        "Fix ONE cardio entry you already logged (found by its date and machine): its minutes, the machine numbers, how it felt, or move it to another date (only for entries outside a workout, such as a rest-day walk, and not into the future). Only the fields you give change. Use dry_run: true to preview. Needs confirm: true. Recorded in the change log and can be undone with undo_change.",
+      inputSchema: {
+        date: DATE.describe("The entry's current date"),
+        machine: z.enum(["bike", "treadmill", "stair", "rower", "xtrainer", "walk", "stretch"]),
+        minutes: z.number().int().min(1).max(180).optional(),
+        settings: z.record(z.string(), z.number().min(0).max(1000)).optional().describe("Machine numbers to change, same keys as log_cardio (res, rpm / speed, incline / level / damper, spm)"),
+        feel: z.enum(["easy", "moderate", "hard"]).optional(),
+        move_to_date: DATE.optional().describe("Move the entry to this date (rest-day entries only)"),
+        ...PREVIEW,
+      },
+      annotations: CHANGE,
+    },
+    async ({ date, machine, minutes, settings, feel, move_to_date, dry_run, confirm }) => {
+      if (!dry_run && confirm !== true) return errorResult(NEEDS_CONFIRM);
+      if (minutes === undefined && settings === undefined && feel === undefined && move_to_date === undefined) return errorResult("Nothing to change: give minutes, settings, feel or move_to_date.");
+      const { data: rows } = await supabase.from("cardio_entries").select("*").eq("kind", machine).eq("logged_on", date).order("logged_at", { ascending: false });
+      const e = rows?.[0];
+      if (!e) return errorResult(`There’s no ${machine} entry on ${date}.`);
+      if (move_to_date !== undefined) {
+        if (e.workout_id) return errorResult("That entry belongs to a workout, so it stays on that session’s date. Only rest-day entries can be moved.");
+        if (move_to_date > sydneyDate()) return errorResult("move_to_date can’t be in the future.");
+      }
+
+      let params = (e.params ?? {}) as Record<string, number>;
+      const newMinutes = minutes ?? e.minutes;
+      if (settings !== undefined || minutes !== undefined) {
+        if (isMachine(machine)) {
+          const allowed = new Set(machineById(machine as MachineId).params.map((p) => p.k));
+          const bad = Object.keys(settings ?? {}).filter((k) => !allowed.has(k) && k !== "min");
+          if (bad.length) return errorResult(`${machine} settings can only use: ${[...allowed].join(", ")}. Not: ${bad.join(", ")}.`);
+          params = cleanParams(machine as MachineId, { ...params, ...(settings ?? {}), min: newMinutes });
+        } else if (settings !== undefined) {
+          return errorResult(`${machine} has no machine numbers. Change minutes or feel instead.`);
+        }
+      }
+      const patch = { minutes: newMinutes, params, feel: feel ?? e.feel, logged_on: move_to_date ?? e.logged_on };
+      const was = `${cardioLine({ kind: e.kind, minutes: e.minutes, feel: e.feel, params: e.params })} on ${e.logged_on}`;
+      const now = `${cardioLine({ kind: e.kind, minutes: patch.minutes, feel: patch.feel, params })} on ${patch.logged_on}`;
+      if (dry_run) return textResult(["Preview:", `Before: ${was}`, `After:  ${now}`, "Nothing was changed."].join("\n"));
+
+      const { error } = await supabase.from("cardio_entries").update(patch).eq("id", e.id);
+      if (error) return errorResult(error.code === "23505" ? `There’s already a ${machine} entry on ${patch.logged_on}, so I left this one as it was.` : FRIENDLY);
+      await recordChange(supabase, {
+        source: "claude", action: "edit_cardio", undoable: true,
+        summary: `Corrected cardio: ${was} → ${now}`,
+        before: { kind: "edit_cardio", id: e.id, previous: { minutes: e.minutes, params: e.params, feel: e.feel, logged_on: e.logged_on } },
+        after: patch as unknown as Json,
+      });
+      return textResult([`Corrected.`, `Before: ${was}`, `After:  ${now}`, UNDO_NOTE].join("\n"));
+    },
+  );
+
+  // ---------------------------------------------------------------- edit_plan_cardio
+  server.registerTool(
+    "edit_plan_cardio",
+    {
+      title: "Edit a day's cardio in the plan",
+      description:
+        "Change the cardio of one training day (1 = Monday ... 7 = Sunday): the machine text (it must name a machine: bike, treadmill, stair, rower or cross-trainer; the first one named is what the app starts on), the label shown, and/or the planned minutes (5-60). Only the fields you give change; if you give minutes and no label the label becomes '<minutes> min'. Use dry_run: true to preview. Needs confirm: true. Past workouts are not changed. Recorded in the change log and can be undone with undo_change.",
+      inputSchema: {
+        weekday: z.number().int().min(1).max(7),
+        cardio: z.string().min(2).max(60).optional().describe("e.g. 'Rower or bike'"),
+        label: z.string().min(1).max(30).optional().describe("e.g. '10 min' or '8-10 min'"),
+        minutes: z.number().int().min(5).max(60).optional(),
+        ...PREVIEW,
+      },
+      annotations: CHANGE,
+    },
+    async ({ weekday, cardio, label, minutes, dry_run, confirm }) => {
+      if (!dry_run && confirm !== true) return errorResult(NEEDS_CONFIRM);
+      if (cardio === undefined && label === undefined && minutes === undefined) return errorResult("Nothing to change: give cardio, label or minutes.");
+      if (cardio !== undefined && !/(bike|treadmill|stair|rower|cross-trainer)/i.test(cardio)) {
+        return errorResult("The cardio text needs to name a machine (bike, treadmill, stair, rower or cross-trainer) so the app knows what to start on.");
+      }
+      const cx = await loadCx(supabase);
+      if (!cx) return errorResult(NO_PROGRAM);
+      const { data: tpl } = await supabase.from("program_templates").select("id").eq("user_id", uid).eq("plan_type", cx.state.planType).maybeSingle();
+      if (!tpl) return errorResult(NO_PROGRAM);
+      const { data: day } = await supabase.from("template_days").select("full_name, cardio_name, cardio_label, cardio_minutes").eq("template_id", tpl.id).eq("weekday", weekday).maybeSingle();
+      if (!day) return errorResult(`${longDay(weekday)} isn’t a training day in your plan, so it has no cardio to edit.`);
+
+      const next = {
+        cardio_name: cardio?.trim() ?? day.cardio_name,
+        cardio_minutes: minutes ?? day.cardio_minutes,
+        cardio_label: label?.trim() ?? (minutes !== undefined ? `${minutes} min` : day.cardio_label),
+      };
+      const line = (c: { cardio_name: string; cardio_label: string; cardio_minutes: number }) => `${c.cardio_name} (${c.cardio_label}, ${c.cardio_minutes} min planned)`;
+      const report = [`${longDay(weekday)} (${day.full_name})`, `Before: ${line(day)}`, `After:  ${line(next)}`];
+      if (dry_run) return textResult(["Preview:", ...report, "Nothing was changed."].join("\n"));
+
+      const { error } = await supabase.from("template_days").update(next).eq("template_id", tpl.id).eq("weekday", weekday);
+      if (error) return errorResult(FRIENDLY);
+      await recordChange(supabase, {
+        source: "claude", action: "edit_plan_cardio", undoable: true,
+        summary: `${longDay(weekday)} cardio: ${line(day)} → ${line(next)}`,
+        before: { kind: "edit_plan_cardio", template_id: tpl.id, weekday, previous: { cardio_name: day.cardio_name, cardio_label: day.cardio_label, cardio_minutes: day.cardio_minutes } },
+        after: next,
+      });
+      return textResult(["Updated.", ...report, `The app starts on ${machineById(defaultMachine(next.cardio_name)).name}. ${UNDO_NOTE}`].join("\n"));
     },
   );
 

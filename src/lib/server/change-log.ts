@@ -11,7 +11,9 @@ export type ChangeKind =
   | "edit_plan_day"
   | "schedule_day"
   | "update_settings"
-  | "exercise_settings";
+  | "exercise_settings"
+  | "edit_cardio"
+  | "edit_plan_cardio";
 
 export interface ChangeRow {
   id: string;
@@ -124,6 +126,14 @@ export async function undoChange(supabase: ServerClient, id: string): Promise<Un
       } else {
         failed = (await supabase.from("user_exercise_settings").delete().eq("exercise_slug", b.exercise_slug)).error !== null;
       }
+      break;
+    }
+    case "edit_cardio": {
+      failed = (await supabase.from("cardio_entries").update(b.previous).eq("id", b.id)).error !== null;
+      break;
+    }
+    case "edit_plan_cardio": {
+      failed = (await supabase.from("template_days").update(b.previous).eq("template_id", b.template_id).eq("weekday", b.weekday)).error !== null;
       break;
     }
     default:

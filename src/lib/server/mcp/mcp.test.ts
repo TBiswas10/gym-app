@@ -37,12 +37,12 @@ describe("tool list", () => {
     const c = await connect();
     const { tools } = await c.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
-    expect(tools).toHaveLength(26);
+    expect(tools).toHaveLength(31);
   });
   it("marks read tools read-only and write tools as non-destructive", async () => {
     const { tools } = await (await connect()).listTools();
     const by = Object.fromEntries(tools.map((t) => [t.name, t.annotations]));
-    for (const n of ["get_today_workout", "get_history", "get_cardio", "get_progress", "suggest_next_weights", "get_review"]) expect(by[n]).toMatchObject({ readOnlyHint: true, destructiveHint: false });
+    for (const n of ["get_today_workout", "get_history", "get_cardio", "get_week_summary", "get_records", "get_bodyweight", "get_progress", "suggest_next_weights", "get_review"]) expect(by[n]).toMatchObject({ readOnlyHint: true, destructiveHint: false });
     for (const n of ["get_plan", "list_exercises", "get_schedule", "get_settings"]) expect(by[n]).toMatchObject({ readOnlyHint: true, destructiveHint: false });
     for (const n of ["log_sets", "log_cardio", "log_checkin", "start_workout", "finish_workout", "edit_logged_sets"]) expect(by[n]).toMatchObject({ readOnlyHint: false, destructiveHint: false });
   });
@@ -81,6 +81,15 @@ describe("destructive tools refuse without an explicit confirmation", () => {
   it("set_exercise_settings takes a backup (the Swap button substitute)", async () => {
     const { tools } = await (await connect()).listTools();
     expect(JSON.stringify(tools.find((t) => t.name === "set_exercise_settings")!.inputSchema)).toContain("backup");
+  });
+  it("cardio edits need confirm: true and can be previewed", async () => {
+    expect((await call("edit_logged_cardio", { date: "2026-10-08", machine: "bike", minutes: 12 })).isError).toBe(true);
+    expect((await call("edit_plan_cardio", { weekday: 1, minutes: 12 })).isError).toBe(true);
+    const { tools } = await (await connect()).listTools();
+    for (const n of ["edit_logged_cardio", "edit_plan_cardio"]) expect(JSON.stringify(tools.find((t) => t.name === n)!.inputSchema)).toContain("dry_run");
+  });
+  it("the plan's cardio text must name a machine", async () => {
+    expect((await call("edit_plan_cardio", { weekday: 1, cardio: "Easy jog", confirm: true })).isError).toBe(true);
   });
   it("log_sets takes swapped_to", async () => {
     const { tools } = await (await connect()).listTools();
