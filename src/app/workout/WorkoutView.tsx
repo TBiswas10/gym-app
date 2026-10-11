@@ -17,7 +17,7 @@ import {
   finishCardio, goTo, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setNotes, setValue, skip, startEdit, swap,
   moveExercise, updateSet, restoreLast, wrapUp, type ExStep, type Step, type WState,
 } from "@/lib/workout-state";
-import type { WorkoutPage } from "@/lib/server/workout-data";
+import type { Guide, WorkoutPage } from "@/lib/server/workout-data";
 import { CardioCard } from "./CardioCard";
 import { GuideSheet } from "./GuideSheet";
 import { useSync } from "./useSync";
@@ -747,7 +747,22 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
         </>
       )}
 
-      {guideOpen && ex && guides[ex.slug] && <GuideSheet guide={guides[ex.slug]} slug={ex.slug} onClose={() => setGuideOpen(false)} />}
+      {guideOpen && ex && guides[ex.slug] && (() => {
+        // After a swap the info button shows the exercise you are actually doing (its library guide if there is one).
+        const base = guides[ex.slug];
+        const sw = ex.swapped ? page.backupGuides?.[ex.slug] ?? null : null;
+        if (!ex.swapped) return <GuideSheet guide={base} slug={ex.slug} onClose={() => setGuideOpen(false)} />;
+        if (sw) return <GuideSheet guide={sw.guide} slug={sw.slug} onClose={() => setGuideOpen(false)} />;
+        const plain: Guide = {
+          name: ex.backup,
+          group: base.group,
+          muscles: base.muscles,
+          setup: [`There is no saved guide for ${ex.backup} yet.`],
+          cues: [`It stands in for ${ex.name}, so aim for the same muscles: ${base.muscles.join(", ")}.`],
+          mistakes: ["Starting too heavy on a new movement. Go light and use the steppers."],
+        };
+        return <GuideSheet guide={plain} slug={ex.slug} bare onClose={() => setGuideOpen(false)} />;
+      })()}
       <span className="sr" aria-live="polite">{online ? "" : "Offline"}</span>
     </div>
   );

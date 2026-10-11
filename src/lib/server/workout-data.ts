@@ -35,6 +35,8 @@ export interface WorkoutPage {
     hold: boolean;
   };
   guides: Record<string, Guide>;
+  /** Per plan slug: the guide of its backup exercise when the library has one (null = no guide for it). */
+  backupGuides?: Record<string, { slug: string; guide: Guide } | null>;
   catalog: CatalogItem[];
   lastBySlug: Record<string, LastTime>;
   lastCardio: Partial<Record<MachineId, { params: Params; min: number }>>;
@@ -169,7 +171,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
     supabase.from("cardio_entries").select("id, kind, params, feel").eq("workout_id", w.id).limit(1),
     supabase.from("cardio_entries").select("kind, params, minutes").not("kind", "in", "(walk,stretch)").order("logged_at", { ascending: false }).limit(40),
     supabase.from("checkins").select("soreness").not("soreness", "is", null).order("created_at", { ascending: false }).limit(3),
-    supabase.from("exercises").select("slug, name, kind").order("sort_order"),
+    supabase.from("exercises").select("slug, name, kind, muscle_group, muscles, setup, cues, mistakes").order("sort_order"),
   ]);
   for (const r of [daysRes, exRes, recentRes, settingsRes, mySetsRes, cardioRes, cardioHistRes, soreRes, catalogRes]) if (r.error) throw r.error;
   const day = daysRes.data;
@@ -217,6 +219,17 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
     };
   });
 
+  // The info button follows a swap: match each plan exercise's backup name to a library exercise and send its guide.
+  const byName = new Map((catalogRes.data ?? []).map((c) => [c.name.trim().toLowerCase(), c]));
+  const backupGuides: Record<string, { slug: string; guide: Guide } | null> = {};
+  for (const e of exRes.data ?? []) {
+    const backup = (e.exercises as unknown as { backup_name: string | null }).backup_name;
+    const hit = backup ? byName.get(backup.trim().toLowerCase()) : undefined;
+    backupGuides[e.exercise_slug] = hit
+      ? { slug: hit.slug, guide: { name: hit.name, group: hit.muscle_group, muscles: hit.muscles, setup: hit.setup, cues: hit.cues, mistakes: hit.mistakes } }
+      : null;
+  }
+
   // Exercises logged by chat that are not in today's plan.
   const planSlugs = new Set(exercises.map((e) => e.slug));
   const catalog: CatalogItem[] = (catalogRes.data ?? []).map((c) => ({ slug: c.slug, name: c.name, kind: asKind(c.kind), aliases: c.slug === "glute" ? ["hip thrust machine"] : undefined }));
@@ -262,7 +275,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
         workoutId: w.id, sessionName: w.day_name, startedAt: w.started_at, cardioName: day.cardio_name, cardioLabel: day.cardio_label,
         week, deload, restAlerts: state.rest_alerts ?? true, light, setup, highSoreness: sore, hold: reviewHold,
       },
-      guides, catalog, lastBySlug, lastCardio,
+      guides, backupGuides, catalog, lastBySlug, lastCardio,
     },
   };
 }

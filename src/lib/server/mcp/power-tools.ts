@@ -213,6 +213,86 @@ export function registerPowerTools(server: McpServer, { supabase, uid }: Ctx): v
     },
   );
 
+  // ---------------------------------------------------------------- swap_plan_exercise
+  server.registerTool(
+    "swap_plan_exercise",
+    {
+      title: "Swap one exercise in the plan",
+      description:
+        "Replace ONE exercise with another in your plan, keeping its place, its sets and (unless you give rep_lo/rep_hi) the new exercise's usual rep range. Give weekday when the exercise is on more than one day; use with: 'backup' to use the exercise's built-in backup. Use dry_run: true to preview. Needs confirm: true. Past workouts are not changed. Recorded in the change log and can be undone with undo_change. (To swap just for today's session, log the sets with log_sets and swapped_to.)",
+      inputSchema: {
+        exercise: z.string().min(2).max(60).describe("The exercise currently in the plan"),
+        with: z.string().min(2).max(60).describe("The exercise to put in its place (any library exercise), or 'backup'"),
+        weekday: z.number().int().min(1).max(7).optional().describe("1 = Monday ... 7 = Sunday"),
+        rep_lo: z.number().int().min(1).max(100).optional(),
+        rep_hi: z.number().int().min(1).max(100).optional(),
+        ...PREVIEW,
+      },
+      annotations: CHANGE,
+    },
+    async ({ exercise, with: withName, weekday, rep_lo, rep_hi, dry_run, confirm }) => {
+      if (!dry_run && confirm !== true) return errorResult(NEEDS_CONFIRM);
+      const cx = await loadCx(supabase);
+      if (!cx) return errorResult(NO_PROGRAM);
+      const pick = (name: string) => {
+        const m = findExercises(name, cx.catalog);
+        return m.length === 1 ? { ok: true as const, slug: m[0].slug } : { ok: false as const, error: m.length === 0 ? `I don’t know an exercise called “${name}”.` : `“${name}” could be ${m.map((x) => x.name).join(" or ")}. Which one?` };
+      };
+      const out = pick(exercise);
+      if (!out.ok) return errorResult(out.error);
+
+      let inSlug: string;
+      if (withName.trim().toLowerCase() === "backup") {
+        const { data: ex } = await supabase.from("exercises").select("backup_name").eq("slug", out.slug).maybeSingle();
+        if (!ex?.backup_name) return errorResult(`${cx.exercises.get(out.slug)?.name} has no built-in backup. Name the exercise to swap in.`);
+        const b = pick(ex.backup_name);
+        if (!b.ok) return errorResult(`Its backup is “${ex.backup_name}”, which isn’t in the library as an exercise, so I can’t put it in the plan. Name another exercise to swap in.`);
+        inSlug = b.slug;
+      } else {
+        const i = pick(withName);
+        if (!i.ok) return errorResult(i.error);
+        inSlug = i.slug;
+      }
+      if (inSlug === out.slug) return errorResult("That’s the same exercise. Nothing to swap.");
+
+      const { data: tpl } = await supabase.from("program_templates").select("id").eq("user_id", uid).eq("plan_type", cx.state.planType).maybeSingle();
+      if (!tpl) return errorResult(NO_PROGRAM);
+      const { data: where } = await supabase.from("template_exercises").select("weekday").eq("template_id", tpl.id).eq("exercise_slug", out.slug).order("weekday");
+      const days = (where ?? []).map((r) => r.weekday);
+      const outName = cx.exercises.get(out.slug)!.name;
+      const inInfo = cx.exercises.get(inSlug)!;
+      if (!days.length) return errorResult(`${outName} isn’t in your plan, so there’s nothing to swap.`);
+      let day = weekday;
+      if (day === undefined) {
+        if (days.length > 1) return errorResult(`${outName} is on ${days.map(longDay).join(" and ")}. Which weekday should I change? (Give weekday, 1 = Monday.)`);
+        day = days[0];
+      } else if (!days.includes(day)) {
+        return errorResult(`${outName} isn’t on ${longDay(day)}. It’s on ${days.map(longDay).join(" and ")}.`);
+      }
+
+      const { data: rows } = await supabase.from("template_exercises").select("exercise_slug, sets, rep_lo, rep_hi").eq("template_id", tpl.id).eq("weekday", day).order("position");
+      const before = rows ?? [];
+      if (before.some((r) => r.exercise_slug === inSlug)) return errorResult(`${inInfo.name} is already on ${longDay(day)}. Swap it for something else, or use edit_plan_day.`);
+      const lo = rep_lo ?? inInfo.repLo;
+      const hi = rep_hi ?? inInfo.repHi;
+      if (hi < lo) return errorResult("rep_hi must be at least rep_lo.");
+      const after = before.map((r) => (r.exercise_slug === out.slug ? { slug: inSlug, sets: r.sets, rep_lo: lo, rep_hi: hi } : { slug: r.exercise_slug, sets: r.sets, rep_lo: r.rep_lo, rep_hi: r.rep_hi }));
+      const old = before.find((r) => r.exercise_slug === out.slug)!;
+      const report = `${longDay(day)}: ${outName} (${old.sets} × ${old.rep_lo}-${old.rep_hi}) → ${inInfo.name} (${old.sets} × ${lo}-${hi})`;
+      if (dry_run) return textResult(["Preview:", report, "Nothing was changed.", `Note: ${inInfo.name} starts with its own history, so its first session shows “First time”.`].join("\n"));
+
+      const { error } = await supabase.rpc("replace_day_exercises", { p_template: tpl.id, p_weekday: day, p_rows: after });
+      if (error) return errorResult(FRIENDLY);
+      await recordChange(supabase, {
+        source: "claude", action: "edit_plan_day", undoable: true,
+        summary: `Swapped ${outName} for ${inInfo.name} on ${longDay(day)}`,
+        before: { kind: "edit_plan_day", template_id: tpl.id, weekday: day, rows: before.map((r) => ({ slug: r.exercise_slug, sets: r.sets, rep_lo: r.rep_lo, rep_hi: r.rep_hi })) },
+        after: { rows: after },
+      });
+      return textResult([`Swapped. ${report}`, UNDO_NOTE].join("\n"));
+    },
+  );
+
   // ---------------------------------------------------------------- schedule_day
   server.registerTool(
     "schedule_day",

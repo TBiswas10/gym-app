@@ -113,7 +113,7 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 - Animation audit applied (docs/animation-audit.md, plans/): tab indicator and bars animate transforms (not left/width); `--ease-out` is now cubic-bezier(0.23, 1, 0.32, 1) (owner approved); plan accordion eases open (`.collapse`); Today's day card eases in on day change; banners/new-best enter with `@starting-style` transitions.
 - Launch splash (`SplashScreen`, root layout): dark screen + lime tile + name + tagline, held 0.9 s then fades 0.3 s, once per launch (`sessionStorage wt.splashSeen`), never blocks taps; continues the iOS launch image so opening reads as one picture.
 - Library search (`library-search.ts`, `.search`): every typed word must start a word in the name, group, kit or muscles; "db", "bb", "rdl" shorthands; combines with the group chips; has a clear button and a no-match state.
-- Change log (migration `change_log`, `src/lib/server/change-log.ts`): every Claude edit/delete and in-app plan/settings edit is recorded with its "before" and can be undone (`undo_change` tool or Plan > Change log). Deletes and `edit_plan_day` take `dry_run` and need `confirm`. 24 MCP tools.
+- Change log (migration `change_log`, `src/lib/server/change-log.ts`): every Claude edit/delete and in-app plan/settings edit is recorded with its "before" and can be undone (`undo_change` tool or Plan > Change log). Deletes, `edit_plan_day` and `swap_plan_exercise` take `dry_run` and need `confirm`. `log_sets` takes `swapped_to` (a session swap; sets keep their swap when corrected). The workout info button shows the swapped-in exercise (`backupGuides`). 25 MCP tools.
 - Only `--dur-*` / `--ease-*` tokens; no new colours (so no translucent bars). No animation library added.
 
 ## Build order (stop after each step for testing)
@@ -124,7 +124,7 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 5. Cardio cards  (built)
 6. Chat quick-log (pure rule-based parser + confirmation card)  (built, then REMOVED from the workout screen by the owner; the parser stays for MCP)
 7. Progress charts, week 4/8/12 reviews, Plan editor, Library + form guides, CSV export, (account-deletion UI removed by the owner)  (done, tested on a phone)
-7b. Remote MCP server in this app (streamable HTTP, official SDK, authenticated, rate limited, logged)  (done, working with Claude; 24 tools, change log + undo)
+7b. Remote MCP server in this app (streamable HTTP, official SDK, authenticated, rate limited, logged)  (done, working with Claude; 25 tools, change log + undo)
 8. Web push for rest-timer end, safe areas, offline + error states  (done, tested on a phone)
 9. Optional: server-side LLM call for messy chat input
 

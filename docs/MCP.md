@@ -86,6 +86,7 @@ On the owner's explicit instruction the connector can now also change things. Ad
 | `delete_workout` | Remove a whole session with its sets, cardio and check-in | `confirm: true` AND the date repeated (`confirm_date`) |
 | `delete_cardio_entry` | Remove one cardio / walk / stretch entry | `confirm: true` |
 | `edit_plan_day` | Replace one training day's exercises (1-2 sets, rep range, max 8) | shows before and after |
+| `swap_plan_exercise` | Swap one exercise for another in a plan day (or its built-in backup), keeping place and sets | shows before and after; `confirm` |
 | `schedule_day` | Skip, light, move or clear a session this week | this week only |
 | `update_settings` | Rest alerts, bodyweight tracking, deload weeks | only the fields given |
 | `set_exercise_settings` | One exercise's weight jump, start weight, machine notes | only the fields given |

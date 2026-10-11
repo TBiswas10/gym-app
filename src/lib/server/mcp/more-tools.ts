@@ -244,8 +244,9 @@ export function registerMoreTools(server: McpServer, { supabase, uid }: Ctx): vo
         .limit(1)
         .maybeSingle();
       if (!w) return errorResult(`There’s no session on ${day}. Use start_workout first.`);
-      const { data: before } = await supabase.from("sets").select("set_number, position, weight_kg, reps, seconds").eq("workout_id", w.id).eq("exercise_slug", info.slug).order("set_number");
+      const { data: before } = await supabase.from("sets").select("set_number, position, weight_kg, reps, seconds, variant").eq("workout_id", w.id).eq("exercise_slug", info.slug).order("set_number");
       const position = before?.[0]?.position ?? 100;
+      const variant = before?.find((b) => b.variant)?.variant ?? null; // correcting numbers must not undo a swap
       const ops: Op[] = sets.map((s, i) => ({
         t: "set",
         id: randomUUID(),
@@ -253,7 +254,7 @@ export function registerMoreTools(server: McpServer, { supabase, uid }: Ctx): vo
         slug: info.slug,
         position,
         n: i + 1,
-        variant: null,
+        variant,
         kg: info.kind === "timed" ? null : (s.weight_kg ?? 0),
         reps: info.kind === "timed" ? null : (s.reps ?? null),
         secs: info.kind === "timed" ? (s.seconds ?? null) : null,

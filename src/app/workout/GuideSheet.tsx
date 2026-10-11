@@ -9,7 +9,7 @@ import type { Guide } from "@/lib/server/workout-data";
 const TABS = ["Setup", "Form cues", "Mistakes"] as const;
 
 /** Bottom sheet with a quick form guide for the exercise on screen. */
-export function GuideSheet({ guide, slug, onClose: done }: { guide: Guide; slug: string; onClose: () => void }) {
+export function GuideSheet({ guide, slug, onClose: done, bare = false }: { guide: Guide; slug: string; onClose: () => void; bare?: boolean }) {
   const [tab, setTab] = useState(0);
   // Leave the way it arrived: play the exit, then unmount (a second tap while leaving is ignored).
   const [leaving, setLeaving] = useState(false);
@@ -27,7 +27,7 @@ export function GuideSheet({ guide, slug, onClose: done }: { guide: Guide; slug:
               <Icon name="x" />
             </button>
           </div>
-          <ExerciseMedia slug={slug} name={guide.name} />
+          {!bare && <ExerciseMedia slug={slug} name={guide.name} />}
           <div className="row g2 wrap">
             {guide.muscles.map((m, i) => (
               <span key={m} className={`tag ${i === 0 ? "tag-accent" : ""}`}>{m}</span>
@@ -52,7 +52,7 @@ export function GuideSheet({ guide, slug, onClose: done }: { guide: Guide; slug:
             <Icon name="triangle-alert" />
             <span>Sharp or joint pain? Stop and tell someone.</span>
           </div>
-          <Link className="btn btn-secondary btn-block" href={`/library/${slug}`}>Open full guide</Link>
+          {!bare && <Link className="btn btn-secondary btn-block" href={`/library/${slug}`}>Open full guide</Link>}
         </div>
       </div>
     </>

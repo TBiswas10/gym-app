@@ -153,10 +153,11 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
           reps: z.number().int().min(1).max(100).optional(),
           seconds: z.number().int().min(1).max(3600).optional(),
         })).min(1).max(2).describe("Set 1, then set 2"),
+        swapped_to: z.string().min(2).max(60).optional().describe("Did the swap instead (machine busy)? Give the exercise you actually did, or 'backup' for the plan's backup. Swapped sets are kept out of progression, like a swap in the app. Leave out to keep how it was."),
       },
       annotations: WRITE(true),
     },
-    async ({ exercise, sets }) => {
+    async ({ exercise, sets, swapped_to }) => {
       const cx = await needCx(ctx);
       if (!cx) return errorResult(NO_PROGRAM);
       const matches = findExercises(exercise, cx.catalog);
@@ -196,9 +197,21 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
       if (sets.length > planned) return errorResult(`${info.name} has ${planned} ${planned === 1 ? "set" : "sets"} in the plan${deload ? " this deload week" : ""}. You gave ${sets.length}. Nothing was logged.`);
       const position = inPlan ? inPlan.position : 100;
 
-      const { data: before } = await supabase.from("sets").select("set_number, weight_kg, reps, seconds").eq("workout_id", workout.id).eq("exercise_slug", info.slug).order("set_number");
+      const { data: before } = await supabase.from("sets").select("set_number, weight_kg, reps, seconds, variant").eq("workout_id", workout.id).eq("exercise_slug", info.slug).order("set_number");
+      // A swap sticks: sets already logged as the backup stay that way unless swapped_to says otherwise.
+      let variant: string | null = before?.find((b) => b.variant)?.variant ?? null;
+      if (swapped_to !== undefined) {
+        if (swapped_to.trim().toLowerCase() === "backup") {
+          const { data: ex } = await supabase.from("exercises").select("backup_name").eq("slug", info.slug).maybeSingle();
+          variant = ex?.backup_name ?? "a similar exercise";
+        } else if (swapped_to.trim().toLowerCase() === info.name.toLowerCase()) {
+          variant = null;
+        } else {
+          variant = swapped_to.trim();
+        }
+      }
       const ops: Op[] = sets.map((s, i) => ({
-        t: "set", id: randomUUID(), workoutId: workout!.id, slug: info.slug, position, n: i + 1, variant: null,
+        t: "set", id: randomUUID(), workoutId: workout!.id, slug: info.slug, position, n: i + 1, variant,
         kg: info.kind === "timed" ? null : (s.weight_kg ?? 0), reps: info.kind === "timed" ? null : (s.reps ?? null), secs: info.kind === "timed" ? (s.seconds ?? null) : null, source: "mcp",
       }));
       const res = await applyOps(supabase, ops);
@@ -212,13 +225,13 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
       });
       const all = (after ?? []).map((r) => ({ kg: r.weight_kg, reps: r.reps, secs: r.seconds }));
       const spec = { kind: info.kind, repLo: inPlan ? info.repLo : info.repLo, repHi: info.repHi, step: info.step, increment: cx.increments.get(info.slug) ?? info.defaultIncrement };
-      const lines = [`${info.name} logged for ${workout.day_name} (${workout.planned_date}).`, ...changes];
+      const lines = [`${info.name}${variant ? ` (swapped to ${variant})` : ""} logged for ${workout.day_name} (${workout.planned_date}).`, ...changes];
       if ((after ?? []).length < planned) lines.push(`${planned - (after ?? []).length} more ${planned - (after ?? []).length === 1 ? "set" : "sets"} to go.`);
       if ((after ?? []).length >= planned && planned === 2) {
         const v = verdict(spec, all, { setup: cx.setup, highSoreness: cx.highSoreness, hold: cx.hold });
         lines.push(`${v.title}. ${v.sub}`);
       }
-      if (isPB(info.kind, cx.lastBySlug[info.slug] ?? null, all)) lines.push("That’s a personal best versus last time.");
+      if (!variant && isPB(info.kind, cx.lastBySlug[info.slug] ?? null, all)) lines.push("That’s a personal best versus last time.");
       return textResult(lines.join("\n"));
     },
   );
@@ -401,6 +414,6 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
 export const TOOL_NAMES = [
   "get_today_workout", "get_history", "log_sets", "log_cardio", "log_checkin", "get_progress", "suggest_next_weights", "get_review",
   "get_plan", "list_exercises", "get_schedule", "get_settings", "start_workout", "finish_workout", "edit_logged_sets",
-  "delete_logged_sets", "delete_workout", "delete_cardio_entry", "edit_plan_day", "schedule_day", "update_settings", "set_exercise_settings",
+  "delete_logged_sets", "delete_workout", "delete_cardio_entry", "edit_plan_day", "swap_plan_exercise", "schedule_day", "update_settings", "set_exercise_settings",
   "get_change_log", "undo_change",
 ] as const;

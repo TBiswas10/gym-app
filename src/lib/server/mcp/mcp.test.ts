@@ -37,7 +37,7 @@ describe("tool list", () => {
     const c = await connect();
     const { tools } = await c.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
-    expect(tools).toHaveLength(24);
+    expect(tools).toHaveLength(25);
   });
   it("marks read tools read-only and write tools as non-destructive", async () => {
     const { tools } = await (await connect()).listTools();
@@ -72,6 +72,15 @@ describe("destructive tools refuse without an explicit confirmation", () => {
   it("delete_logged_sets and delete_cardio_entry need confirm: true", async () => {
     expect((await call("delete_logged_sets", { exercise: "chest press" })).isError).toBe(true);
     expect((await call("delete_cardio_entry", { date: "2026-10-08", machine: "bike" })).isError).toBe(true);
+  });
+  it("swap_plan_exercise needs confirm: true and can be previewed", async () => {
+    expect((await call("swap_plan_exercise", { exercise: "chest press", with: "backup" })).isError).toBe(true);
+    const { tools } = await (await connect()).listTools();
+    expect(JSON.stringify(tools.find((t) => t.name === "swap_plan_exercise")!.inputSchema)).toContain("dry_run");
+  });
+  it("log_sets takes swapped_to", async () => {
+    const { tools } = await (await connect()).listTools();
+    expect(JSON.stringify(tools.find((t) => t.name === "log_sets")!.inputSchema)).toContain("swapped_to");
   });
   it("edit_plan_day rejects 3 sets and an empty list", async () => {
     expect((await call("edit_plan_day", { weekday: 1, exercises: [{ exercise: "chest press", sets: 3, rep_lo: 8, rep_hi: 12 }] })).isError).toBe(true);
