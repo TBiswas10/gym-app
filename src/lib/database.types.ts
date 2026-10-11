@@ -96,9 +96,9 @@ export type Database = {
         ];
       };
       user_exercise_settings: {
-        Row: { exercise_slug: string; increment_kg: number | null; notes: string | null; start_weight_kg: number | null; user_id: string };
-        Insert: { exercise_slug: string; increment_kg?: number | null; notes?: string | null; start_weight_kg?: number | null; user_id?: string };
-        Update: { exercise_slug?: string; increment_kg?: number | null; notes?: string | null; start_weight_kg?: number | null; user_id?: string };
+        Row: { backup_name: string | null; exercise_slug: string; increment_kg: number | null; notes: string | null; start_weight_kg: number | null; user_id: string };
+        Insert: { backup_name?: string | null; exercise_slug: string; increment_kg?: number | null; notes?: string | null; start_weight_kg?: number | null; user_id?: string };
+        Update: { backup_name?: string | null; exercise_slug?: string; increment_kg?: number | null; notes?: string | null; start_weight_kg?: number | null; user_id?: string };
         Relationships: [{ foreignKeyName: "user_exercise_settings_exercise_slug_fkey"; columns: ["exercise_slug"]; isOneToOne: false; referencedRelation: "exercises"; referencedColumns: ["slug"] }];
       };
       workouts: {

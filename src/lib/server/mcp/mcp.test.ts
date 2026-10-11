@@ -78,6 +78,10 @@ describe("destructive tools refuse without an explicit confirmation", () => {
     const { tools } = await (await connect()).listTools();
     expect(JSON.stringify(tools.find((t) => t.name === "swap_plan_exercise")!.inputSchema)).toContain("dry_run");
   });
+  it("set_exercise_settings takes a backup (the Swap button substitute)", async () => {
+    const { tools } = await (await connect()).listTools();
+    expect(JSON.stringify(tools.find((t) => t.name === "set_exercise_settings")!.inputSchema)).toContain("backup");
+  });
   it("log_sets takes swapped_to", async () => {
     const { tools } = await (await connect()).listTools();
     expect(JSON.stringify(tools.find((t) => t.name === "log_sets")!.inputSchema)).toContain("swapped_to");

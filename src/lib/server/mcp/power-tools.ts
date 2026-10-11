@@ -377,29 +377,41 @@ export function registerPowerTools(server: McpServer, { supabase, uid }: Ctx): v
     "set_exercise_settings",
     {
       title: "Per-exercise settings",
-      description: "Set one exercise's weight jump (kg), starting weight (kg) or machine notes. Only the fields you give are changed. Pass notes as an empty string to clear them. Recorded in the change log and can be undone.",
+      description: "Set one exercise's weight jump (kg), starting weight (kg), machine notes or its Swap-button substitute (backup). Only the fields you give are changed. Pass notes as an empty string to clear them. Recorded in the change log and can be undone.",
       inputSchema: {
         exercise: z.string().min(2).max(60),
         weight_jump_kg: z.number().min(0.5).max(20).optional(),
         start_weight_kg: z.number().min(0).max(400).optional(),
         notes: z.string().max(200).optional(),
+        backup: z.string().max(60).optional().describe("The substitute the Swap button offers for this exercise (a library exercise name works best, so its form guide shows). Pass an empty string to go back to the built-in backup."),
       },
       annotations: CHANGE,
     },
-    async ({ exercise, weight_jump_kg, start_weight_kg, notes }) => {
+    async ({ exercise, weight_jump_kg, start_weight_kg, notes, backup }) => {
       const cx = await loadCx(supabase);
       if (!cx) return errorResult(NO_PROGRAM);
       const m = findExercises(exercise, cx.catalog);
       if (m.length !== 1) return errorResult(m.length === 0 ? `I don’t know an exercise called “${exercise}”.` : `“${exercise}” could be ${m.map((x) => x.name).join(" or ")}. Which one?`);
-      const row: { exercise_slug: string; increment_kg?: number; start_weight_kg?: number; notes?: string | null } = { exercise_slug: m[0].slug };
+      const row: { exercise_slug: string; increment_kg?: number; start_weight_kg?: number; notes?: string | null; backup_name?: string | null } = { exercise_slug: m[0].slug };
       if (weight_jump_kg !== undefined) row.increment_kg = weight_jump_kg;
       if (start_weight_kg !== undefined) row.start_weight_kg = start_weight_kg;
       if (notes !== undefined) row.notes = notes.trim() || null;
-      if (Object.keys(row).length === 1) return errorResult("Nothing to change: give weight_jump_kg, start_weight_kg or notes.");
+      if (backup !== undefined) {
+        const b = backup.trim();
+        if (!b) row.backup_name = null;
+        else {
+          if (b.length < 2) return errorResult("backup needs at least 2 characters.");
+          const hit = findExercises(b, cx.catalog);
+          if (hit.length > 1) return errorResult(`“${b}” could be ${hit.map((x) => x.name).join(" or ")}. Which one?`);
+          if (hit.length === 1 && hit[0].slug === m[0].slug) return errorResult("That’s the same exercise, so it can’t be its own substitute.");
+          row.backup_name = hit.length === 1 ? hit[0].name : b; // a library name keeps the form guide working
+        }
+      }
+      if (Object.keys(row).length === 1) return errorResult("Nothing to change: give weight_jump_kg, start_weight_kg, notes or backup.");
       const { data: prev } = await supabase.from("user_exercise_settings").select("*").eq("exercise_slug", m[0].slug).maybeSingle();
       const { error } = await supabase.from("user_exercise_settings").upsert(row, { onConflict: "user_id,exercise_slug" });
       if (error) return errorResult(FRIENDLY);
-      const what = Object.entries(row).filter(([k]) => k !== "exercise_slug").map(([k, v]) => `${k.replace(/_/g, " ")} = ${v ?? "cleared"}`).join("; ");
+      const what = Object.entries(row).filter(([k]) => k !== "exercise_slug").map(([k, v]) => `${k === "backup_name" ? "swap substitute" : k.replace(/_/g, " ")} = ${v ?? "cleared (built-in backup)"}`).join("; ");
       const previous = prev ? (({ user_id: _u, ...r }) => (void _u, r))(prev) : null;
       await recordChange(supabase, { source: "claude", action: "exercise_settings", undoable: true, summary: `${m[0].name}: ${what}`, before: { kind: "exercise_settings", exercise_slug: m[0].slug, previous } });
       return textResult(`${m[0].name} updated: ${what}. ${UNDO_NOTE}`);

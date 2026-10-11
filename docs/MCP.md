@@ -89,7 +89,7 @@ On the owner's explicit instruction the connector can now also change things. Ad
 | `swap_plan_exercise` | Swap one exercise for another in a plan day (or its built-in backup), keeping place and sets | shows before and after; `confirm` |
 | `schedule_day` | Skip, light, move or clear a session this week | this week only |
 | `update_settings` | Rest alerts, bodyweight tracking, deload weeks | only the fields given |
-| `set_exercise_settings` | One exercise's weight jump, start weight, machine notes | only the fields given |
+| `set_exercise_settings` | One exercise's weight jump, start weight, machine notes, and `backup` (the substitute the Swap button offers; empty = built-in) | only the fields given |
 
 Delete tools carry `destructiveHint`, so Claude clients can ask you first. Still refused by the database for connector
 tokens: deleting the account, restarting the programme, switching plan type, changing the start date, reviews, and

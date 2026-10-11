@@ -134,7 +134,7 @@ export function registerMoreTools(server: McpServer, { supabase, uid }: Ctx): vo
       if (!cx) return errorResult(NO_PROGRAM);
       const [ps, ex] = await Promise.all([
         supabase.from("program_state").select("rest_alerts, track_bodyweight, deload_weeks, test_mode").maybeSingle(),
-        supabase.from("user_exercise_settings").select("exercise_slug, increment_kg, start_weight_kg, notes"),
+        supabase.from("user_exercise_settings").select("exercise_slug, increment_kg, start_weight_kg, notes, backup_name"),
       ]);
       return textResult(
         json({
@@ -147,6 +147,7 @@ export function registerMoreTools(server: McpServer, { supabase, uid }: Ctx): vo
             weight_jump_kg: e.increment_kg ?? undefined,
             start_weight_kg: e.start_weight_kg ?? undefined,
             notes: e.notes ?? undefined,
+            swap_substitute: e.backup_name ?? undefined,
           })),
         }),
       );

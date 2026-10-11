@@ -166,7 +166,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
       .select("position, sets, rep_lo, rep_hi, exercise_slug, exercises(name, kind, muscle_group, muscles, setup, cues, mistakes, weight_step_kg, default_increment_kg, default_notes, backup_name)")
       .eq("template_id", tpl.id).eq("weekday", w.weekday).order("position"),
     supabase.from("workouts").select("id").eq("status", "completed").neq("id", w.id).order("planned_date", { ascending: false }).limit(12),
-    supabase.from("user_exercise_settings").select("exercise_slug, increment_kg, start_weight_kg, notes"),
+    supabase.from("user_exercise_settings").select("exercise_slug, increment_kg, start_weight_kg, notes, backup_name"),
     supabase.from("sets").select("id, exercise_slug, set_number, variant, weight_kg, reps, seconds").eq("workout_id", w.id).order("set_number"),
     supabase.from("cardio_entries").select("id, kind, params, feel").eq("workout_id", w.id).limit(1),
     supabase.from("cardio_entries").select("kind, params, minutes").not("kind", "in", "(walk,stretch)").order("logged_at", { ascending: false }).limit(40),
@@ -213,7 +213,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
       stall: setup ? null : stallCheck({ kind: asKind(ex.kind), repLo: e.rep_lo, repHi: e.rep_hi, step: Number(ex.weight_step_kg) }, recentBySlug[e.exercise_slug] ?? []),
       startWeightKg: s?.start_weight_kg != null ? Number(s.start_weight_kg) : null,
       notes: s?.notes ?? ex.default_notes ?? "",
-      backup: ex.backup_name ?? "a similar exercise",
+      backup: s?.backup_name ?? ex.backup_name ?? "a similar exercise",
       logged,
       variant: mySets.find((m) => m.exercise_slug === e.exercise_slug && m.variant)?.variant ?? null,
     };
@@ -223,7 +223,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
   const byName = new Map((catalogRes.data ?? []).map((c) => [c.name.trim().toLowerCase(), c]));
   const backupGuides: Record<string, { slug: string; guide: Guide } | null> = {};
   for (const e of exRes.data ?? []) {
-    const backup = (e.exercises as unknown as { backup_name: string | null }).backup_name;
+    const backup = settings.get(e.exercise_slug)?.backup_name ?? (e.exercises as unknown as { backup_name: string | null }).backup_name;
     const hit = backup ? byName.get(backup.trim().toLowerCase()) : undefined;
     backupGuides[e.exercise_slug] = hit
       ? { slug: hit.slug, guide: { name: hit.name, group: hit.muscle_group, muscles: hit.muscles, setup: hit.setup, cues: hit.cues, mistakes: hit.mistakes } }
