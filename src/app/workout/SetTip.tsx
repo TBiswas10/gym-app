@@ -1,15 +1,14 @@
 import { Icon } from "@/components/Icon";
 
 /**
- * How to do the sets of an exercise. Open the first time you do a lift (or a swapped one) and tucked away after
- * that. The rep range is the exercise's own, so a plank reads in seconds and a calf raise in 12-15.
+ * How to do the sets of an exercise. Always collapsed until you tap it. The rep range is the exercise's own, so a plank reads in seconds and a calf raise in 12-15.
  */
 export function SetTip({ range, kind, planned, swapped, first }: { range: [number, number]; kind: "weight" | "timed" | "bodyweight"; planned: number; swapped: boolean; first: boolean }) {
   const [lo, hi] = range;
   const timed = kind === "timed";
   const r = `${lo}-${hi} ${timed ? "seconds" : "reps"}`;
   return (
-    <details className="banner banner-info tip" open={first || swapped}>
+    <details className="banner banner-info tip">
       <summary><Icon name="info" size={20} />How to do your sets</summary>
       <div className="tip-body">
         {swapped && <p className="t-small">No history for this one. Start light and use the steppers.</p>}
