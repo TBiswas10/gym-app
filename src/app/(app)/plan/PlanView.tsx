@@ -15,7 +15,7 @@ import { saveBackup, savePlanCardio, saveSettings, savePlanDay, setTestMode, swi
 export function PlanView({ data }: { data: PlanData }) {
   const [days, setDays] = useState(data.days);
   const [dayIdx, setDayIdx] = useState(0);
-  const [open, setOpen] = useState(0);
+  const [open, setOpen] = useState(-1);
   const [adding, setAdding] = useState(false);
   const [backups, setBackups] = useState(data.backups ?? {});
   const [cardioOpen, setCardioOpen] = useState(false);

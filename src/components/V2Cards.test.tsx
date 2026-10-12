@@ -11,7 +11,9 @@ describe("v2 cards", () => {
   });
   it("shows a suggestion with a clear accept and a not now", () => {
     const out = renderToStaticMarkup(<NudgeCard nudge={{ key: "deload:w6", kind: "deload", title: "Time for a lighter week?", body: "Half the sets.", accept: "Make this a deload week", payload: { week: 6 } }} />);
-    for (const t of ["Suggestion", "Time for a lighter week?", "Not now", "Make this a deload week"]) expect(out).toContain(t);
+    // collapsed to one row first: its label and title, with the actions behind a tap
+    for (const t of ["SUGGESTION", "Time for a lighter week?"]) expect(out).toContain(t);
+    expect(out).not.toContain("Make this a deload week");
   });
   it("shows goals with progress and what is left, and an add button when there is a free lift", () => {
     const out = renderToStaticMarkup(

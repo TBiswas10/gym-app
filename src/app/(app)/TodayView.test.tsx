@@ -46,9 +46,9 @@ describe("Today screen", () => {
     expect(out).toContain("Start workout");
     expect(out).toContain("Go light today");
     expect(out).toContain("Cardio · Bike or treadmill");
-    expect(out).toContain("Tuesday’s Pull didn’t happen.");
-    expect(out).toContain("Move to a free day");
-    expect(out).toContain("Friday and Sunday are free");
+    // the missed day is one row until you open it
+    expect(out).toContain("MISSED WORKOUT");
+    expect(out).toContain("Tuesday’s Pull didn’t happen");
     expect(out).not.toContain("Setup mode");
     expect(out).toContain("Sets");
     expect(out).toContain("This week");

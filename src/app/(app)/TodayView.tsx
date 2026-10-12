@@ -44,6 +44,7 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
     }
   }, []);
   const [deloadHidden, setDeloadHidden] = useState(false);
+  const [missedOpen, setMissedOpen] = useState(false);
   // Press and hold a day in the week strip for quick actions (start early, go light, skip).
   const [quick, setQuick] = useState<number | null>(null);
   const pressTimer = useRef<number | null>(null);
@@ -228,7 +229,17 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
         {v2?.review && <ReviewTeaser review={v2.review} />}
 
         {/* missed day */}
-        {m && mPlan && (
+        {m && mPlan && m.state === "ask" && !moving && !missedOpen && (
+          <button type="button" className="attn-row" onClick={() => setMissedOpen(true)} aria-expanded="false">
+            <span className="round round-subtle"><Icon name="triangle-alert" /></span>
+            <span className="col" style={{ flex: 1, minWidth: 0 }}>
+              <span className="t-caption c-warning">MISSED WORKOUT</span>
+              <strong className="attn-title">{mDay}’s {mPlan.shortName} didn’t happen</strong>
+            </span>
+            <span className="t-small c-2">Choose</span>
+          </button>
+        )}
+        {m && mPlan && !(m.state === "ask" && !moving && !missedOpen) && (
           <section className="card card-warning anim-in">
             {m.state === "ask" && !moving && (
               <>
@@ -412,14 +423,14 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
             {v2?.briefing && d.date === today && startable && <BriefingInline briefing={v2.briefing} />}
             <ol className="list" style={{ margin: 0, padding: 0, listStyle: "none" }}>
               {plan.exercises.map((e) => (
-                <li key={e.slug} className="list-row" style={{ minHeight: "var(--size-tap)" }}>
+                <li key={e.slug} className="list-row" style={{ minHeight: 40 }}>
                   <span className="t-body" style={{ fontWeight: 600 }}>{e.name}</span>
                   <span className="t-small c-2" style={{ whiteSpace: "nowrap" }}>
                     {formatTarget(e.sets, e.repLo, e.repHi, e.kind)}
                   </span>
                 </li>
               ))}
-              <li className="list-row" style={{ minHeight: "var(--size-tap)" }}>
+              <li className="list-row" style={{ minHeight: 40 }}>
                 <span className="t-body row g2 c-info" style={{ fontWeight: 600 }}>
                   <Icon name="timer" size={20} />
                   Cardio · {plan.cardioName}
@@ -427,7 +438,6 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
                 <span className="t-small c-2" style={{ whiteSpace: "nowrap" }}>{plan.cardioLabel}</span>
               </li>
             </ol>
-            <p className="t-small c-2">Cool-down 2–3 min is optional.</p>
             {showLightToggle && (
               <div className="switch-row inset" style={{ flexDirection: "row", padding: "var(--space-1) var(--space-1) var(--space-1) var(--space-4)" }}>
                 <span className="col">

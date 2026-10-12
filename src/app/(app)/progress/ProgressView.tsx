@@ -10,7 +10,7 @@ import { fmtNum } from "@/lib/format";
 import type { ProgressData } from "@/lib/server/progress-data";
 
 const CELL_CLASS = { done: "wk-done", now: "wk-now", check: "wk-check", todo: "" } as const;
-const SHOWN = 5;
+const SHOWN = 3;
 
 export function ProgressView({ data }: { data: ProgressData }) {
   // Every lift with a number, biggest gain first. The one you tap gets the full chart underneath.
@@ -142,15 +142,18 @@ export function ProgressView({ data }: { data: ProgressData }) {
             <div className="card inset" style={{ alignItems: "center", gap: 0, padding: "var(--space-3) var(--space-1)" }}><span className="num-m">{data.thisWeek.sets}</span><span className="t-caption c-2">SETS</span></div>
             <div className="card inset" style={{ alignItems: "center", gap: 0, padding: "var(--space-3) var(--space-1)" }}><span className={`num-m ${data.thisWeek.pbs.length ? "c-accent" : ""}`}>{data.thisWeek.pbs.length}</span><span className="t-caption c-2">NEW PBS</span></div>
           </div>
-          <div className="col g3">
-            {data.thisWeek.groups.map(([name, n]) => (
-              <div key={name} className="row g3">
-                <span className="t-small" style={{ width: 84, fontWeight: 600 }}>{name}</span>
-                <div className="bar" style={{ flex: 1 }}><i style={{ transform: `scaleX(${Math.min(100, Math.round((n / 10) * 100)) / 100})` }} /></div>
-                <span className="t-small" style={{ width: 56, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{n} sets</span>
-              </div>
-            ))}
-          </div>
+          <details className="fold-in">
+            <summary>Sets per muscle group</summary>
+            <div className="col g3" style={{ paddingTop: "var(--space-2)" }}>
+              {data.thisWeek.groups.map(([name, n]) => (
+                <div key={name} className="row g3">
+                  <span className="t-small" style={{ width: 84, fontWeight: 600 }}>{name}</span>
+                  <div className="bar" style={{ flex: 1 }}><i style={{ transform: `scaleX(${Math.min(100, Math.round((n / 10) * 100)) / 100})` }} /></div>
+                  <span className="t-small" style={{ width: 56, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{n} sets</span>
+                </div>
+              ))}
+            </div>
+          </details>
           {data.thisWeek.pbs.length > 0 && (
             <div className="col g2">
               {data.thisWeek.pbs.map((p) => (
@@ -178,8 +181,8 @@ export function ProgressView({ data }: { data: ProgressData }) {
         </section>
 
         {data.records.length > 0 && (
-          <section className="card" aria-label="Records">
-            <h2 className="t-heading">Records</h2>
+          <details className="card fold" aria-label="Records">
+            <summary><h2 className="t-heading">Records</h2><span className="t-small c-2">{data.records.length}</span></summary>
             <div className="col g2">
               {data.records.map((r) => (
                 <button key={r.name} type="button" className="rec-row" onClick={() => openLift(r.name)} aria-label={`${r.name}, best ${r.text}. Show its chart.`}>
@@ -191,7 +194,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
                 </button>
               ))}
             </div>
-          </section>
+          </details>
         )}
 
         <section className="card" aria-label="Consistency">
@@ -226,10 +229,13 @@ export function ProgressView({ data }: { data: ProgressData }) {
               <span className="c-accent"><Icon name="chevron-right" /></span>
             </Link>
           )}
-          <div className="col g1 t-small c-2">
-            <span><strong className="c-text">Every week:</strong> Mon Push, Tue Pull, Wed Legs + Core, Thu Upper (light), Sat Lower + Core + Cardio. Fri and Sun rest.</span>
-            <span>Weeks 1 and 2: find your weight. Weeks 3 to 12: build.</span>
-          </div>
+          <details className="fold-in">
+            <summary>How the 12 weeks work</summary>
+            <div className="col g1 t-small c-2" style={{ paddingTop: "var(--space-2)" }}>
+              <span><strong className="c-text">Every week:</strong> Mon Push, Tue Pull, Wed Legs + Core, Thu Upper (light), Sat Lower + Core + Cardio. Fri and Sun rest.</span>
+              <span>Weeks 1 and 2: find your weight. Weeks 3 to 12: build.</span>
+            </div>
+          </details>
         </section>
       </div>
     </>

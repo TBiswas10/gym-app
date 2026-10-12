@@ -63,6 +63,7 @@ export function NudgeStack({ nudges }: { nudges: Nudge[] }) {
 /** A suggestion about your plan. Nothing changes unless you accept it. */
 export function NudgeCard({ nudge, position, onDone }: { nudge: Nudge; position?: string; onDone?: () => void }) {
   const [gone, setGone] = useState(false);
+  const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   if (gone) return null;
@@ -74,6 +75,18 @@ export function NudgeCard({ nudge, position, onDone }: { nudge: Nudge; position?
         onDone?.();
       } else setError(r.error);
     });
+  if (!open) {
+    return (
+      <button type="button" className="attn-row" onClick={() => setOpen(true)} aria-expanded="false">
+        <span className="round round-subtle"><Icon name="info" /></span>
+        <span className="col" style={{ flex: 1, minWidth: 0 }}>
+          <span className="t-caption c-warning">SUGGESTION{position ? ` · ${position}` : ""}</span>
+          <strong className="attn-title">{nudge.title}</strong>
+        </span>
+        <span className="c-2"><Icon name="chevron-down" /></span>
+      </button>
+    );
+  }
   return (
     <section className="card card-warning anim-in" aria-label="Suggestion">
       <div className="row between">
