@@ -30,7 +30,7 @@ const progress = (over: Partial<ProgressData> = {}): ProgressData => ({
 describe("Progress", () => {
   it("renders the design's sections", () => {
     const out = renderToStaticMarkup(<ProgressView data={progress()} />);
-    for (const t of ["Week 3 of 12", "Chest press", "30 kg", "+10 kg overall", "Top set, last 8 sessions", "This week", "3/5", "32", "NEW PBS", "Legs", "8 sets", "Soreness and energy", "Soreness is easing", "12-week program", "Week 4 check-in next"]) expect(out).toContain(t);
+    for (const t of ["Week 3 of 12", "Chest press", "30 kg", "+10 kg over", "Top set, last 8 sessions", "lifts are up", "This week", "3/5", "32", "NEW PBS", "Legs", "8 sets", "How you’ve felt", "Lower is better", "Higher is better", "Easing", "12-week program", "Week 4 check-in next"]) expect(out).toContain(t);
     expect(out).toContain("wk-now");
     expect(out).toContain("wk-check");
   });
@@ -147,7 +147,7 @@ describe("Session complete", () => {
   });
   it("renders the check-in", () => {
     const out = renderToStaticMarkup(<CompleteView workoutId="w" data={data} problem={false} initialStage="checkin" />);
-    for (const t of ["How do you feel?", "2 · A little", "4 · Good", "Bodyweight (kg)", "Save and finish"]) expect(out).toContain(t);
+    for (const t of ["How do you feel?", "How sore are you?", "A little", "Good", "Bodyweight (kg)", "Save and finish", "Skip the check-in"]) expect(out).toContain(t);
   });
   it("hides bodyweight unless tracking is on, and shows a save problem", () => {
     expect(renderToStaticMarkup(<CompleteView workoutId="w" data={{ ...data, trackBodyweight: false }} problem={false} initialStage="checkin" />)).not.toContain("Bodyweight (kg)");

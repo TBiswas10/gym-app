@@ -26,6 +26,7 @@ Lets Claude read and write your workout data. The server lives inside this app a
 | `get_records` | All-time best per exercise and the lifts that have stalled (with advice) |
 | `get_bodyweight` | Bodyweight check-ins, change since first and over 4 weeks, weekly averages |
 | `edit_logged_cardio` | Fix a logged cardio entry (minutes, machine numbers, feel, or move a rest-day entry to another date) | shows before and after; `confirm`; undoable |
+| `edit_checkin` | Fix a past check-in (soreness, energy, notes, bodyweight) for the session on a date | shows before and after; `confirm`; undoable |
 | `edit_plan_cardio` | Change a day's cardio machine text, label and planned minutes | shows before and after; `confirm`; undoable |
 | `get_cardio` | Cardio entries with machine numbers and feel, a per-machine summary and minutes per week (includes rest-day walks) |
 | `log_sets` | Log or correct up to 2 sets of one exercise in today's session; starts the session if needed |

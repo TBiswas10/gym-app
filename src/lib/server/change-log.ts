@@ -13,7 +13,8 @@ export type ChangeKind =
   | "update_settings"
   | "exercise_settings"
   | "edit_cardio"
-  | "edit_plan_cardio";
+  | "edit_plan_cardio"
+  | "edit_checkin";
 
 export interface ChangeRow {
   id: string;
@@ -130,6 +131,14 @@ export async function undoChange(supabase: ServerClient, id: string): Promise<Un
     }
     case "edit_cardio": {
       failed = (await supabase.from("cardio_entries").update(b.previous).eq("id", b.id)).error !== null;
+      break;
+    }
+    case "edit_checkin": {
+      if (b.previous) {
+        failed = (await supabase.from("checkins").update(b.previous).eq("id", b.id)).error !== null;
+      } else {
+        failed = (await supabase.from("checkins").delete().eq("id", b.id)).error !== null;
+      }
       break;
     }
     case "edit_plan_cardio": {

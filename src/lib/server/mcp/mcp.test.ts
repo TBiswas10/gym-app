@@ -37,7 +37,7 @@ describe("tool list", () => {
     const c = await connect();
     const { tools } = await c.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
-    expect(tools).toHaveLength(31);
+    expect(tools).toHaveLength(32);
   });
   it("marks read tools read-only and write tools as non-destructive", async () => {
     const { tools } = await (await connect()).listTools();
@@ -87,6 +87,12 @@ describe("destructive tools refuse without an explicit confirmation", () => {
     expect((await call("edit_plan_cardio", { weekday: 1, minutes: 12 })).isError).toBe(true);
     const { tools } = await (await connect()).listTools();
     for (const n of ["edit_logged_cardio", "edit_plan_cardio"]) expect(JSON.stringify(tools.find((t) => t.name === n)!.inputSchema)).toContain("dry_run");
+  });
+  it("edit_checkin needs confirm: true, takes 1-5, and can be previewed", async () => {
+    expect((await call("edit_checkin", { soreness: 3 })).isError).toBe(true);
+    expect((await call("edit_checkin", { soreness: 6, confirm: true })).isError).toBe(true);
+    const { tools } = await (await connect()).listTools();
+    expect(JSON.stringify(tools.find((t) => t.name === "edit_checkin")!.inputSchema)).toContain("dry_run");
   });
   it("the plan's cardio text must name a machine", async () => {
     expect((await call("edit_plan_cardio", { weekday: 1, cardio: "Easy jog", confirm: true })).isError).toBe(true);

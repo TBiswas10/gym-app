@@ -215,6 +215,68 @@ export function registerPowerTools(server: McpServer, { supabase, uid }: Ctx): v
     },
   );
 
+  // ---------------------------------------------------------------- edit_checkin
+  server.registerTool(
+    "edit_checkin",
+    {
+      title: "Correct a check-in",
+      description:
+        "Fix the soreness (1 none to 5 very sore), energy (1 drained to 5 buzzing), notes and/or bodyweight of the check-in for the session on a date (default today). If that session has no check-in yet it is created. Only the fields you give change (notes: an empty string clears them). Use dry_run: true to preview. Needs confirm: true. Recorded in the change log and can be undone with undo_change.",
+      inputSchema: {
+        date: DATE.optional().describe("The session's date, YYYY-MM-DD (default today)"),
+        soreness: z.number().int().min(1).max(5).optional(),
+        energy: z.number().int().min(1).max(5).optional(),
+        notes: z.string().max(500).optional(),
+        bodyweight_kg: z.number().min(20).max(400).optional(),
+        ...PREVIEW,
+      },
+      annotations: CHANGE,
+    },
+    async ({ date, soreness, energy, notes, bodyweight_kg, dry_run, confirm }) => {
+      if (!dry_run && confirm !== true) return errorResult(NEEDS_CONFIRM);
+      if (soreness === undefined && energy === undefined && notes === undefined && bodyweight_kg === undefined) return errorResult("Nothing to change: give soreness, energy, notes or bodyweight_kg.");
+      const day = date ?? sydneyDate();
+      const w = await workoutOn(supabase, day);
+      let q = supabase.from("checkins").select("*");
+      q = w ? q.eq("workout_id", w.id) : q.is("workout_id", null).eq("checked_on", day);
+      const { data: found } = await q.limit(1);
+      const prev = found?.[0] ?? null;
+      if (!prev && !w) return errorResult(`There’s no session or check-in on ${day}.`);
+
+      const patch: { soreness?: number; energy?: number; notes?: string | null; bodyweight_kg?: number } = {};
+      if (soreness !== undefined) patch.soreness = soreness;
+      if (energy !== undefined) patch.energy = energy;
+      if (notes !== undefined) patch.notes = notes.trim() || null;
+      if (bodyweight_kg !== undefined) patch.bodyweight_kg = Math.round(bodyweight_kg * 10) / 10;
+
+      const show = (r: { soreness?: number | null; energy?: number | null; notes?: string | null; bodyweight_kg?: number | null } | null) =>
+        r ? `soreness ${r.soreness ?? "none"}, energy ${r.energy ?? "none"}${r.bodyweight_kg != null ? `, bodyweight ${r.bodyweight_kg} kg` : ""}${r.notes ? `, notes “${r.notes}”` : ""}` : "no check-in";
+      const label = w ? `${w.day_name} (${day})` : day;
+      const after = { ...(prev ?? {}), ...patch };
+      if (dry_run) return textResult(["Preview:", `${label}`, `Before: ${show(prev)}`, `After:  ${show(after)}`, "Nothing was changed."].join("\n"));
+
+      let id: string | null = prev?.id ?? null;
+      if (prev) {
+        const { error } = await supabase.from("checkins").update(patch).eq("id", prev.id);
+        if (error) return errorResult(FRIENDLY);
+      } else {
+        const { data: created, error } = await supabase.from("checkins").insert({ ...patch, workout_id: w!.id, checked_on: day }).select("id").single();
+        if (error || !created) return errorResult(FRIENDLY);
+        id = created.id;
+      }
+      await recordChange(supabase, {
+        source: "claude", action: "edit_checkin", undoable: true,
+        summary: `Check-in ${label}: ${show(prev)} → ${show(after)}`,
+        before: {
+          kind: "edit_checkin", id,
+          previous: prev ? { soreness: prev.soreness, energy: prev.energy, notes: prev.notes, bodyweight_kg: prev.bodyweight_kg } : null,
+        },
+        after: patch as unknown as Json,
+      });
+      return textResult([`Check-in updated for ${label}.`, `Before: ${show(prev)}`, `After:  ${show(after)}`, UNDO_NOTE].join("\n"));
+    },
+  );
+
   // ---------------------------------------------------------------- edit_logged_cardio
   server.registerTool(
     "edit_logged_cardio",

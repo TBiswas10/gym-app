@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { haptic } from "@/lib/haptics";
 import { Icon } from "@/components/Icon";
+import { ScalePick } from "@/components/ScalePick";
+import { ENERGY_WORDS, SORENESS_WORDS } from "@/lib/checkin-scale";
 import { saveCheckin } from "@/app/workout/actions";
-
-const SORE = ["None", "A little", "Moderate", "Quite sore", "Very sore"];
-const ENERGY = ["Drained", "Low", "Okay", "Good", "Buzzing"];
 
 // Fixed confetti pieces from the design (each flies out from the centre).
 const CONFETTI = [
@@ -22,16 +21,16 @@ export interface CompleteData {
   time: string;
   pbs: { name: string; text: string }[];
   cardio: string;
-  soreness: number;
-  energy: number;
+  soreness: number | null; // null until you pick one (no silent defaults)
+  energy: number | null;
   notes: string;
   trackBodyweight: boolean;
   bodyweight: string;
 }
 
 export function CompleteView({ workoutId, data, problem, initialStage }: { workoutId: string; data: CompleteData; problem: boolean; initialStage?: "tick" | "checkin" }) {
-  const [sore, setSore] = useState(data.soreness);
-  const [energy, setEnergy] = useState(data.energy);
+  const [sore, setSore] = useState<number | null>(data.soreness);
+  const [energy, setEnergy] = useState<number | null>(data.energy);
   const [saving, setSaving] = useState(false);
   // First the whole screen says it is done; then the quick check-in.
   const [stage, setStage] = useState<"tick" | "checkin">(initialStage ?? (problem ? "checkin" : "tick"));
@@ -42,10 +41,10 @@ export function CompleteView({ workoutId, data, problem, initialStage }: { worko
   return (
     <form className="screen fill" action={saveCheckin} onSubmit={() => setSaving(true)}>
       <input type="hidden" name="workoutId" value={workoutId} />
-      <input type="hidden" name="soreness" value={sore} />
-      <input type="hidden" name="energy" value={energy} />
+      <input type="hidden" name="soreness" value={sore ?? ""} />
+      <input type="hidden" name="energy" value={energy ?? ""} />
       {stage === "tick" ? (
-        <>
+        <Fragment key="tick">
           <div className="scroll done-stage">
             <div className="done-tick-wrap">
               <span className="confetti" aria-hidden="true">
@@ -74,30 +73,16 @@ export function CompleteView({ workoutId, data, problem, initialStage }: { worko
             <p className="t-small c-2" style={{ textAlign: "center" }}>Cardio: {data.cardio}</p>
           </div>
           <div className="bottom-bar">
-            <button type="button" className="btn btn-primary btn-cta" onClick={() => setStage("checkin")}>Continue</button>
+            <button key="continue" type="button" className="btn btn-primary btn-cta" onClick={() => setStage("checkin")}>Continue</button>
           </div>
-        </>
+        </Fragment>
       ) : (
-        <>
+        <Fragment key="checkin">
       <div className="scroll">
         <section className="card" style={{ gap: "var(--space-6)" }}>
           <h2 className="t-heading">How do you feel?</h2>
-          <div className="col g1">
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <label className="t-body" style={{ fontWeight: 700 }} htmlFor="sore">Soreness</label>
-              <span className="t-body c-accent" style={{ fontWeight: 700 }}>{sore} · {SORE[sore - 1]}</span>
-            </div>
-            <input id="sore" className="slider" type="range" min={1} max={5} step={1} value={sore} style={{ "--pct": `${(sore - 1) * 25}%` } as React.CSSProperties} onChange={(e) => setSore(Number(e.target.value))} aria-valuetext={`${sore}, ${SORE[sore - 1]}`} />
-            <div className="row t-caption c-2" style={{ justifyContent: "space-between", textTransform: "none", letterSpacing: 0 }}><span>1 None</span><span>5 Very sore</span></div>
-          </div>
-          <div className="col g1">
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <label className="t-body" style={{ fontWeight: 700 }} htmlFor="energy">Energy</label>
-              <span className="t-body c-accent" style={{ fontWeight: 700 }}>{energy} · {ENERGY[energy - 1]}</span>
-            </div>
-            <input id="energy" className="slider" type="range" min={1} max={5} step={1} value={energy} style={{ "--pct": `${(energy - 1) * 25}%` } as React.CSSProperties} onChange={(e) => setEnergy(Number(e.target.value))} aria-valuetext={`${energy}, ${ENERGY[energy - 1]}`} />
-            <div className="row t-caption c-2" style={{ justifyContent: "space-between", textTransform: "none", letterSpacing: 0 }}><span>1 Drained</span><span>5 Buzzing</span></div>
-          </div>
+          <ScalePick label="How sore are you?" hint="1 is not sore at all, 5 is very sore." words={SORENESS_WORDS} value={sore} onChange={setSore} warn />
+          <ScalePick label="How much energy do you have?" hint="1 is drained, 5 is buzzing." words={ENERGY_WORDS} value={energy} onChange={setEnergy} />
           {data.trackBodyweight && (
             <div className="field">
               <label className="field-label" htmlFor="bw">Bodyweight (kg), once a week</label>
@@ -117,9 +102,12 @@ export function CompleteView({ workoutId, data, problem, initialStage }: { worko
         </section>
       </div>
       <div className="bottom-bar">
-        <button type="submit" className={`btn btn-primary btn-cta ${saving ? "is-loading" : ""}`} disabled={saving}>Save and finish</button>
+        <button key="save" type="submit" className={`btn btn-primary btn-cta ${saving ? "is-loading" : ""}`} disabled={saving || sore === null || energy === null}>
+          {sore === null || energy === null ? "Pick one for each" : "Save and finish"}
+        </button>
+        <button key="skip" type="submit" name="skip" value="1" className="btn btn-tertiary btn-block" disabled={saving}>Skip the check-in</button>
       </div>
-        </>
+        </Fragment>
       )}
     </form>
   );

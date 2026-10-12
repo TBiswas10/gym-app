@@ -59,11 +59,19 @@ export async function saveStartWeight(slug: string, kg: number): Promise<Result>
 /** Session complete: make sure the workout is finished and keep the soreness / energy check-in. */
 export async function saveCheckin(formData: FormData) {
   const workoutId = String(formData.get("workoutId") ?? "");
+  const skip = formData.get("skip") === "1";
   const soreness = Number(formData.get("soreness"));
   const energy = Number(formData.get("energy"));
   const notes = String(formData.get("notes") ?? "").trim().slice(0, 500);
   const bwRaw = String(formData.get("bodyweight") ?? "").trim();
   const bodyweight = bwRaw === "" ? null : Number(bwRaw);
+  if (skip && /^[0-9a-f-]{36}$/i.test(workoutId)) {
+    // Leave without rating: just make sure the session is finished.
+    const sb = await createClient();
+    await sb.from("workouts").update({ status: "completed", ended_at: new Date().toISOString() }).eq("id", workoutId).eq("status", "in_progress");
+    revalidatePath("/", "layout");
+    redirect("/");
+  }
   if (bodyweight !== null && !(Number.isFinite(bodyweight) && bodyweight >= 20 && bodyweight <= 400)) redirect(`/complete?w=${encodeURIComponent(workoutId)}&problem=1`);
   if (!/^[0-9a-f-]{36}$/i.test(workoutId) || ![soreness, energy].every((n) => Number.isInteger(n) && n >= 1 && n <= 5)) redirect(`/complete?w=${encodeURIComponent(workoutId)}&problem=1`);
 

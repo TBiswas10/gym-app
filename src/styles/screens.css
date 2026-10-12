@@ -134,3 +134,33 @@
 /* Test mode bar (all tabs) */
 .test-bar{flex:none;display:flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-4);padding-top:calc(var(--safe-top) - var(--space-3));background:var(--warning-subtle);color:var(--warning);border-bottom:1px solid var(--warning);text-decoration:none;font:600 .8125rem/1.125rem var(--font-body)}
 .test-bar span{flex:1;min-width:0;color:var(--text)}
+/* Check-in scales: five big buttons with the word under the number */
+.scale5-set{border:0;padding:0;margin:0;min-width:0;display:flex;flex-direction:column;gap:var(--space-2)}
+.scale5-set legend{padding:0;margin-bottom:var(--space-1)}
+.scale5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--space-2)}
+.scale5-btn{appearance:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:72px;padding:var(--space-2) var(--space-1);border-radius:var(--radius-md);border:1px solid var(--border-strong);background:transparent;color:var(--text);transition:background var(--dur-press) var(--ease-out),border-color var(--dur-press) var(--ease-out),transform var(--dur-press) var(--ease-out)}
+.scale5-btn:active{transform:scale(.96)}
+.scale5-n{font:800 1.5rem/1 var(--font-display)}
+.scale5-w{font:600 .75rem/1rem var(--font-body);color:var(--text-2);text-align:center}
+.scale5-btn.is-on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.scale5-btn.is-on .scale5-w{color:var(--on-accent)}
+.scale5-warn .scale5-btn.is-on{background:var(--warning);border-color:var(--warning)}
+/* Progress: strength rows and the 1-5 trend lines */
+.srow{appearance:none;width:100%;display:grid;grid-template-columns:minmax(0,1fr) 64px auto;align-items:center;gap:var(--space-3);padding:var(--space-3);border-radius:var(--radius-sm);border:1px solid transparent;background:transparent;color:var(--text);text-align:left;transition:background var(--dur-press) var(--ease-out),border-color var(--dur-press) var(--ease-out)}
+.srow:active{background:var(--raised)}
+.srow[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-subtle)}
+.srow-name{font:700 1rem/1.25rem var(--font-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow-val{display:flex;flex-direction:column;align-items:flex-end;font-variant-numeric:tabular-nums}
+.srow-val b{font:800 1rem/1.25rem var(--font-body)}
+.srow-up{color:var(--success)}
+.srow-down{color:var(--warning)}
+.spark{width:64px;height:24px;display:block;overflow:visible}
+.spark path{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.spark circle{fill:var(--accent)}
+.t5{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-3);border-radius:var(--radius-sm);background:var(--raised)}
+.t5-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-3);flex-wrap:wrap}
+.t5 svg{width:100%;height:auto;display:block}
+.t5-grid{stroke:var(--border);stroke-width:1}
+.t5-line{fill:none;stroke:var(--tone);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.t5-dot{fill:var(--raised);stroke:var(--tone);stroke-width:3}
+.t5-now{fill:var(--tone);stroke:var(--tone);stroke-width:3}

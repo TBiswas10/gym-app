@@ -1,21 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Icon } from "@/components/Icon";
 import { LineChart } from "@/components/LineChart";
+import { direction, wordFor } from "@/lib/checkin-scale";
 import { fmtNum } from "@/lib/format";
 import type { ProgressData } from "@/lib/server/progress-data";
 
 const CELL_CLASS = { done: "wk-done", now: "wk-now", check: "wk-check", todo: "" } as const;
+const SHOWN = 5;
 
 export function ProgressView({ data }: { data: ProgressData }) {
-  const [sel, setSel] = useState(0);
-  const [picking, setPicking] = useState(false);
+  // Every lift with a number, biggest gain first. The one you tap gets the full chart underneath.
+  const rows = data.chips.map((c, i) => {
+    const first = c.values[0];
+    const last = c.values[c.values.length - 1];
+    return { c, i, last, delta: last - first, pct: first ? (last - first) / first : 0, moved: c.values.length > 1 };
+  });
+  const ordered = [...rows].sort((a, b) => b.pct - a.pct);
+  const withChange = rows.filter((r) => r.moved);
+  const up = withChange.filter((r) => r.delta > 0).length;
+  const best = ordered.find((r) => r.moved && r.delta > 0) ?? null;
+
+  const [sel, setSel] = useState(best ? best.i : 0);
+  const [all, setAll] = useState(false);
   const chip = data.chips[sel];
   const unit = chip?.unit ?? "kg";
   const fmt = (v: number) => `${fmtNum(v)} ${unit}`;
   const delta = chip && chip.values.length > 1 ? chip.values[chip.values.length - 1] - chip.values[0] : 0;
+  const shown = all ? ordered : ordered.slice(0, SHOWN);
+
+  const energy = data.trend.map((t) => t.energy);
+  const soreness = data.trend.map((t) => t.soreness);
 
   return (
     <>
@@ -28,24 +45,60 @@ export function ProgressView({ data }: { data: ProgressData }) {
         <section className="card" aria-label="Strength">
           {chip ? (
             <>
-              <button type="button" className="picker" aria-haspopup="dialog" onClick={() => setPicking(true)}>
-                <span className="col" style={{ alignItems: "flex-start", minWidth: 0 }}>
-                  <span className="t-caption c-2">EXERCISE</span>
-                  <strong className="t-heading" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{chip.name}</strong>
-                </span>
-                <span className="c-2"><Icon name="chevron-down" /></span>
-              </button>
-              <div className="row between" style={{ alignItems: "flex-end" }}>
-                <span className="num-m">{fmt(chip.values[chip.values.length - 1])}</span>
-                {chip.values.length > 1 && <span className="tag tag-accent">{delta >= 0 ? "+" : "−"}{fmtNum(Math.abs(delta))} {unit} overall</span>}
+              <div className="col g1">
+                <span className="t-caption c-2">STRENGTH</span>
+                {withChange.length > 0 ? (
+                  <>
+                    <span className="row g2" style={{ alignItems: "baseline" }}>
+                      <span className="num-m">{up} of {withChange.length}</span>
+                      <span className="t-body c-2">lifts are up</span>
+                    </span>
+                    {best && <p className="t-small c-2">Biggest jump: <strong className="c-text">{best.c.name}</strong>, +{fmtNum(best.delta)} {best.c.unit}</p>}
+                  </>
+                ) : (
+                  <p className="t-body">Your first numbers are in. Do each lift once more and the trends start.</p>
+                )}
               </div>
-              <LineChart
-                key={chip.slug}
-                values={chip.values}
-                format={fmt}
-                ariaLabel={`${chip.name} ${chip.kind === "timed" ? "longest hold" : chip.kind === "bodyweight" ? "best set" : "top set"} by session: ${chip.values.map(fmtNum).join(", ")} ${unit}`}
-              />
-              <p className="t-small c-2">{chip.kind === "timed" ? "Longest hold" : chip.kind === "bodyweight" ? "Best set" : "Top set"}, last {chip.values.length} sessions. Tap a point.</p>
+
+              <div className="col g1" role="group" aria-label="Your lifts, biggest gain first">
+                {shown.map((r) => {
+                  const dir = !r.moved ? "" : r.delta > 0 ? "srow-up" : r.delta < 0 ? "srow-down" : "c-2";
+                  return (
+                    <button key={r.c.slug} type="button" className="srow" aria-pressed={r.i === sel} onClick={() => setSel(r.i)}>
+                      <span className="srow-name">{r.c.name}</span>
+                      <Spark values={r.c.values} />
+                      <span className="srow-val">
+                        <b>{fmtNum(r.last)} {r.c.unit}</b>
+                        <span className={`t-caption ${dir}`} style={{ textTransform: "none", letterSpacing: 0 }}>
+                          {!r.moved ? "first session" : r.delta === 0 ? "no change" : `${r.delta > 0 ? "+" : "−"}${fmtNum(Math.abs(r.delta))} ${r.c.unit}`}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+                {ordered.length > SHOWN && (
+                  <button type="button" className="btn btn-tertiary" onClick={() => setAll((v) => !v)}>
+                    {all ? "Show fewer" : `Show all ${ordered.length} lifts`}
+                  </button>
+                )}
+              </div>
+
+              <div className="col g2">
+                <div className="row between" style={{ alignItems: "flex-end" }}>
+                  <span className="col" style={{ minWidth: 0 }}>
+                    <span className="t-caption c-2">{chip.name.toUpperCase()}</span>
+                    <span className="num-m">{fmt(chip.values[chip.values.length - 1])}</span>
+                  </span>
+                  {chip.values.length > 1 && <span className="tag tag-accent">{delta >= 0 ? "+" : "−"}{fmtNum(Math.abs(delta))} {unit} over {chip.values.length} sessions</span>}
+                </div>
+                <LineChart
+                  key={chip.slug}
+                  values={chip.values}
+                  format={fmt}
+                  ariaLabel={`${chip.name} ${chip.kind === "timed" ? "longest hold" : chip.kind === "bodyweight" ? "best set" : "top set"} by session: ${chip.values.map(fmtNum).join(", ")} ${unit}`}
+                />
+                <p className="t-small c-2">{chip.kind === "timed" ? "Longest hold" : chip.kind === "bodyweight" ? "Best set" : "Top set"}, last {chip.values.length} sessions. Tap a point.</p>
+              </div>
             </>
           ) : (
             <div className="empty">
@@ -85,25 +138,13 @@ export function ProgressView({ data }: { data: ProgressData }) {
           )}
         </section>
 
-        <section className="card">
-          <div className="row between">
-            <h2 className="t-heading">Soreness and energy</h2>
-            <span className="row g3 t-small c-2">
-              <span className="row g1"><i className="legend" style={{ background: "var(--accent)" }} />Energy</span>
-              <span className="row g1"><i className="legend" style={{ background: "var(--warning)" }} />Soreness</span>
-            </span>
-          </div>
+        <section className="card" aria-label="How you have felt">
+          <h2 className="t-heading">How you’ve felt</h2>
           {data.trend.length > 0 ? (
             <>
-              <div role="img" aria-label={`Last ${data.trend.length} sessions, 1 to 5 scale. Energy ${data.trend.map((t) => t.energy).join(", ")}. Soreness ${data.trend.map((t) => t.soreness).join(", ")}.`} className="row" style={{ gap: "var(--space-2)", alignItems: "flex-end", height: 96 }}>
-                {data.trend.map((t, i) => (
-                  <div key={i} className="row" style={{ flex: 1, gap: 3, alignItems: "flex-end", height: "100%" }}>
-                    <span style={{ flex: 1, height: t.energy * 18, background: "var(--accent)", borderRadius: 3 }} />
-                    <span style={{ flex: 1, height: t.soreness * 18, background: "var(--warning)", borderRadius: 3 }} />
-                  </div>
-                ))}
-              </div>
-              <p className="t-small c-2">{trendLine(data.trend)}</p>
+              <Trend5 label="Energy" kind="energy" values={energy} tone="var(--accent)" />
+              <Trend5 label="Soreness" kind="soreness" values={soreness} tone="var(--warning)" />
+              <p className="t-small c-2">From your check-in after each session, last {data.trend.length}. Energy 1 is drained, 5 is buzzing. Soreness 1 is none, 5 is very sore.</p>
             </>
           ) : (
             <p className="t-small c-2">After each session you’ll rate soreness and energy. They show up here.</p>
@@ -162,47 +203,59 @@ export function ProgressView({ data }: { data: ProgressData }) {
           </div>
         </section>
       </div>
-      {picking && (
-        <>
-          <div className="scrim anim-fade" onClick={() => setPicking(false)} />
-          <div className="sheet-wrap">
-            <div className="sheet" role="dialog" aria-label="Choose an exercise" style={{ maxHeight: 640, overflowY: "auto" }}>
-              <span className="sheet-grab" />
-              <div className="row between">
-                <h2 className="t-title">Choose an exercise</h2>
-                <button type="button" className="icon-btn" aria-label="Close" onClick={() => setPicking(false)}><Icon name="x" /></button>
-              </div>
-              <div className="col g1">
-                {data.chips.map((c, i) => (
-                  <button
-                    key={c.slug}
-                    type="button"
-                    className={`list-row pick-row ${i === sel ? "is-on" : ""}`}
-                    onClick={() => {
-                      setSel(i);
-                      setPicking(false);
-                    }}
-                  >
-                    <span className="t-body" style={{ fontWeight: 600 }}>{c.name}</span>
-                    <span className="t-small c-2 tnum">{fmtNum(c.values[c.values.length - 1])} {c.unit}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
     </>
   );
 }
 
-function trendLine(t: { soreness: number; energy: number }[]): string {
-  if (t.length < 2) return "Keep logging to see the trend.";
-  const half = Math.max(1, Math.floor(t.length / 2));
-  const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
-  const s = avg(t.slice(-half).map((x) => x.soreness)) - avg(t.slice(0, half).map((x) => x.soreness));
-  const e = avg(t.slice(-half).map((x) => x.energy)) - avg(t.slice(0, half).map((x) => x.energy));
-  const sPart = s <= -0.5 ? "Soreness is easing as your body adapts." : s >= 0.5 ? "Soreness is creeping up." : "Soreness is steady.";
-  const ePart = e >= 0.5 ? "Energy is trending up." : e <= -0.5 ? "Energy is dipping." : "Energy is steady.";
-  return `${sPart} ${ePart}`;
+/** A tiny line for one lift: oldest to newest, with the latest point filled. */
+function Spark({ values }: { values: number[] }) {
+  const W = 64;
+  const H = 24;
+  const lo = Math.min(...values);
+  const hi = Math.max(...values);
+  const x = (i: number) => (values.length === 1 ? W / 2 : (i * W) / (values.length - 1));
+  const y = (v: number) => (hi === lo ? H / 2 : H - 3 - ((v - lo) / (hi - lo)) * (H - 6));
+  const d = values.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
+  return (
+    <svg className="spark" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+      {values.length > 1 && <path d={d} />}
+      <circle cx={x(values.length - 1)} cy={y(values[values.length - 1])} r={3} />
+    </svg>
+  );
+}
+
+/** One 1-5 series as a line, with the latest answer in words and which way is better written out. */
+function Trend5({ label, kind, values, tone }: { label: string; kind: "soreness" | "energy"; values: number[]; tone: string }) {
+  const W = 300;
+  const H = 72;
+  const px = 12;
+  const py = 10;
+  const n = values.length;
+  const x = (i: number) => (n === 1 ? W / 2 : px + (i * (W - 2 * px)) / (n - 1));
+  const y = (v: number) => py + ((5 - v) * (H - 2 * py)) / 4;
+  const d = values.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
+  const last = values[n - 1];
+  const dir = direction(values);
+  const phrase = dir === "flat" ? "Steady" : kind === "energy" ? (dir === "up" ? "Rising" : "Dipping") : dir === "down" ? "Easing" : "Creeping up";
+  return (
+    <div className="t5" style={{ "--tone": tone } as CSSProperties}>
+      <div className="t5-head">
+        <strong className="t-body">{label}</strong>
+        <span className="t-body" style={{ color: tone, fontWeight: 800 }}>{wordFor(kind, last)} · {last} of 5</span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${label}, 1 to 5, last ${n} sessions: ${values.join(", ")}`}>
+        {[1, 2, 3, 4, 5].map((v) => (
+          <line key={v} className="t5-grid" x1={px} x2={W - px} y1={y(v)} y2={y(v)} />
+        ))}
+        {n > 1 && <path className="t5-line" d={d} />}
+        {values.map((v, i) => (
+          <circle key={i} className={i === n - 1 ? "t5-now" : "t5-dot"} cx={x(i)} cy={y(v)} r={i === n - 1 ? 6 : 4} />
+        ))}
+      </svg>
+      <div className="row between t-small c-2">
+        <span>{kind === "energy" ? "Higher is better" : "Lower is better"}</span>
+        <span>{phrase}</span>
+      </div>
+    </div>
+  );
 }
