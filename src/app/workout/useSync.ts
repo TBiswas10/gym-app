@@ -35,6 +35,8 @@ export function useSync() {
           res = await applyOpsAction(batch);
         } catch {
           setOnline(false); // no connection: everything stays in the queue
+          // Online but the call failed: most likely this copy is older than the server. Ask for a version check.
+          if (typeof navigator !== "undefined" && navigator.onLine) window.dispatchEvent(new Event("wt:check-version"));
           break;
         }
         setOnline(true);

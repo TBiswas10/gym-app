@@ -70,6 +70,31 @@ export function PlanView({ data }: { data: PlanData }) {
 
   const [alertNote, setAlertNote] = useState<{ ok: boolean; text: string } | null>(null);
 
+  /**
+   * Fix a glitch: drop this phone's saved screen state and cached app files, then reload. Things that have not been
+   * uploaded yet (wt.queue.v1) are kept; your data on the server is never touched.
+   */
+  const cleanReload = async () => {
+    try {
+      for (let i = window.localStorage.length - 1; i >= 0; i--) {
+        const k = window.localStorage.key(i);
+        if (k && (k.startsWith("wt.ws.") || k === "wt.rest")) window.localStorage.removeItem(k);
+      }
+      window.sessionStorage.clear();
+    } catch {
+      /* ignore */
+    }
+    try {
+      const regs = await navigator.serviceWorker?.getRegistrations();
+      await Promise.all((regs ?? []).map((r) => r.unregister()));
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    } catch {
+      /* ignore */
+    }
+    window.location.href = "/";
+  };
+
   /** Turning alerts on asks permission (this is the tap) and subscribes this phone. */
   const toggleAlerts = (value: boolean) => {
     setAlertNote(null);
@@ -271,6 +296,8 @@ export function PlanView({ data }: { data: PlanData }) {
         <details className="card fold">
           <summary><h2 className="t-heading">Your data</h2><span className="t-small c-2">Export and backup</span></summary>
           <div className="col g2">
+            <button type="button" className="btn btn-secondary btn-block" onClick={cleanReload}>Fix a glitch (clean reload)</button>
+            <p className="t-small c-2">Clears this phone’s saved screen state and cached files, then reloads. Your data and anything not uploaded yet are kept.</p>
             <a className="btn btn-secondary btn-block" href="/api/export" download>Export data as CSV</a>
             <a className="btn btn-secondary btn-block" href="/api/backup" download>Download full backup (JSON)</a>
           </div>

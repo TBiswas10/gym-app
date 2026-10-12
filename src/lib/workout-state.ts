@@ -425,3 +425,50 @@ export function diffOps(a: WState, b: WState, source: Source = "app"): Op[] {
 
 /** Sets logged in this session (for the header and the complete screen). */
 export const totalSets = (s: WState): number => exercises(s).reduce((n, e) => n + e.sets.length, 0) + s.extras.reduce((n, x) => n + x.sets.length, 0);
+
+const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+const sameKey = (x: Step): string => (x.kind === "ex" ? `ex:${x.slug}` : x.kind);
+
+function wellFormedStep(st: unknown): st is Step {
+  if (!st || typeof st !== "object") return false;
+  const x = st as Record<string, unknown>;
+  if (typeof x.status !== "string" || typeof x.kind !== "string") return false;
+  if (x.kind === "ex") {
+    return (
+      typeof x.slug === "string" && typeof x.name === "string" && typeof x.backup === "string" && typeof x.exKind === "string" &&
+      Array.isArray(x.range) && x.range.length === 2 && x.range.every(isNum) &&
+      isNum(x.planned) && x.planned >= 1 && Array.isArray(x.sets) && isNum(x.kg) && isNum(x.reps) && isNum(x.secs) && typeof x.swapped === "boolean"
+    );
+  }
+  return x.kind === "warm" || x.kind === "cardio" || x.kind === "cool";
+}
+
+/**
+ * Take the state saved on the phone only when it still fits the session the server just described.
+ * A copy from an older version of the app, a plan that changed since, or a half-written save must never break the
+ * screen: any doubt and the server's copy is used instead. Sets the server already has that the phone lacks are kept
+ * (another device, or Claude, logged them).
+ */
+export function restoreState(saved: unknown, fresh: WState): WState | null {
+  if (!saved || typeof saved !== "object") return null;
+  const s = saved as WState;
+  if (s.workoutId !== fresh.workoutId || !Array.isArray(s.steps) || s.steps.length !== fresh.steps.length) return null;
+  if (!s.steps.every(wellFormedStep)) return null;
+  if (!Number.isInteger(s.cur) || s.cur < 0 || s.cur >= s.steps.length) return null;
+  if (!s.cardio || typeof s.cardio !== "object" || !s.cardio.params || typeof s.cardio.machine !== "string") return null;
+  if (typeof s.loggedOn !== "string" || !Array.isArray(s.extras)) return null;
+  // Same exercises (the order may differ: you can reorder lifts here).
+  const a = s.steps.map(sameKey).sort().join("|");
+  const b = fresh.steps.map(sameKey).sort().join("|");
+  if (a !== b) return null;
+
+  const freshBySlug = new Map(fresh.steps.filter((x): x is ExStep => x.kind === "ex").map((x) => [x.slug, x]));
+  const steps = s.steps.map((st) => {
+    if (st.kind !== "ex") return st;
+    const f = freshBySlug.get(st.slug);
+    return f && f.sets.length > st.sets.length ? { ...st, sets: f.sets, status: f.status } : st;
+  });
+  const cur = steps[s.cur];
+  const editOk = Number.isInteger(s.editIdx) && s.editIdx >= 0 && cur?.kind === "ex" && s.editIdx < cur.sets.length;
+  return { ...s, steps, editIdx: editOk ? s.editIdx : -1 };
+}

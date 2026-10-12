@@ -12,7 +12,7 @@ import { haptic } from "@/lib/haptics";
 import { cardioGuard, extendRest, mmss, restPercent, restRemaining, restSecondsAfter, sessionClock } from "@/lib/timers";
 import { isPB, verdict as verdictFor } from "@/lib/progression";
 import type { Op, Source } from "@/lib/ops";
-import {
+import { restoreState,
   addKg, adjust, adjustCardio, advance, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exSpec, exercises,
   finishCardio, goTo, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setNotes, setValue, skip, startEdit, swap,
   moveExercise, updateSet, restoreLast, wrapUp, type ExStep, type Step, type WState,
@@ -78,13 +78,15 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
       }
       const raw = window.localStorage.getItem(WS_KEY(id));
       if (raw) {
-        const saved = JSON.parse(raw) as WState;
-        if (saved.workoutId === id && Array.isArray(saved.steps)) commit(saved);
+        // Only a copy that still fits today's session is used; anything else is dropped and the server's copy stays.
+        const ok = restoreState(JSON.parse(raw), buildState(init));
+        if (ok) commit(ok);
+        else window.localStorage.removeItem(WS_KEY(id));
       }
     } catch {
       /* no storage: the server copy is used */
     }
-  }, [id, commit]);
+  }, [id, commit, init]);
   useEffect(() => {
     try {
       window.localStorage.setItem(WS_KEY(id), JSON.stringify(ws));

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   addKg, moveExercise, adjust, adjustCardio, advance, applyEntry, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exercises,
-  finishCardio, goTo, logSet, nextIndex, sameAsLast, setFeel, setNotes, skip, startEdit, setValue, swap, totalSets, updateSet, restoreLast, wrapUp,
-  type ExStep, type InitExercise, type WState, type WorkoutInit,
+  finishCardio, goTo, logSet, nextIndex, sameAsLast, setFeel, setNotes, skip, startEdit, setValue, swap, totalSets, updateSet, restoreLast, wrapUp, restoreState,
+  type ExStep, type InitExercise, type SetVal, type WState, type WorkoutInit,
 } from "./workout-state";
 import type { Entry } from "./parser";
 
@@ -297,5 +297,59 @@ describe("reordering and finishing a skipped lift", () => {
     s = goTo(s, 1);
     s = logSet(logSet(s, "x1"), "x2");
     expect(s.steps.find((t) => t.kind === "ex" && t.slug === skippedSlug)?.status).toBe("done");
+  });
+});
+
+describe("restoreState: the copy saved on the phone is only used when it still fits", () => {
+  const exInit = (slug: string, logged: SetVal[] = []): InitExercise => ({
+    slug, name: slug, kind: "weight", repLo: 8, repHi: 12, sets: 2, step: 2.5, increment: 2.5, last: null, startWeightKg: null, notes: "", backup: "x", logged, variant: null,
+  });
+  const init = (exercises: InitExercise[]): WorkoutInit => ({
+    workoutId: "w", loggedOn: "2026-10-12", light: false, setup: false, highSoreness: false, hold: false, skipped: [], exercises, extras: [],
+    cardio: { machine: "bike", plannedMinutes: 10, lastParams: {}, logged: null, newId: "c" },
+  });
+  const fresh = buildState(init([exInit("chest"), exInit("lat")]));
+  const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
+
+  it("keeps a valid saved state", () => {
+    const saved = clone(fresh);
+    expect(restoreState(saved, fresh)).toMatchObject({ workoutId: "w", cur: saved.cur });
+  });
+  it("rejects anything that is not this session", () => {
+    expect(restoreState(null, fresh)).toBeNull();
+    expect(restoreState("nope", fresh)).toBeNull();
+    expect(restoreState({ ...clone(fresh), workoutId: "other" }, fresh)).toBeNull();
+    expect(restoreState({ ...clone(fresh), steps: "x" }, fresh)).toBeNull();
+  });
+  it("rejects a state from a plan with different lifts or a different number of steps", () => {
+    const other = buildState(init([exInit("chest"), exInit("legpress")]));
+    expect(restoreState(clone(other), fresh)).toBeNull();
+    const shorter = buildState(init([exInit("chest")]));
+    expect(restoreState(clone(shorter), fresh)).toBeNull();
+  });
+  it("rejects a current step that does not exist", () => {
+    expect(restoreState({ ...clone(fresh), cur: 99 }, fresh)).toBeNull();
+    expect(restoreState({ ...clone(fresh), cur: -1 }, fresh)).toBeNull();
+  });
+  it("rejects a step with missing fields (an older version of the app)", () => {
+    const broken = clone(fresh);
+    const ex = broken.steps.find((s) => s.kind === "ex") as unknown as Record<string, unknown>;
+    delete ex.range;
+    expect(restoreState(broken, fresh)).toBeNull();
+  });
+  it("fixes an edit index that points nowhere", () => {
+    expect(restoreState({ ...clone(fresh), editIdx: 5 }, fresh)?.editIdx).toBe(-1);
+  });
+  it("allows lifts to be reordered on the phone", () => {
+    const saved = clone(fresh);
+    const i = saved.steps.findIndex((s) => s.kind === "ex");
+    [saved.steps[i], saved.steps[i + 1]] = [saved.steps[i + 1], saved.steps[i]];
+    expect(restoreState(saved, fresh)).not.toBeNull();
+  });
+  it("keeps sets the server has that the phone does not (logged elsewhere, or by Claude)", () => {
+    const withServerSet = buildState(init([exInit("chest", [{ id: "s1", kg: 30, reps: 12, secs: null }]), exInit("lat")]));
+    const out = restoreState(clone(fresh), withServerSet)!;
+    const chest = out.steps.find((s) => s.kind === "ex" && s.slug === "chest") as ExStep;
+    expect(chest.sets).toHaveLength(1);
   });
 });

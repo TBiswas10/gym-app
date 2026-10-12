@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // Paths that work without a session.
 // /mcp checks its own bearer token; /.well-known tells connectors where to sign in;
 // /offline and /sw.js must load without a session (they are what works when you have no signal).
-const PUBLIC = [/^\/login$/, /^\/auth\//, /^\/manifest\.webmanifest$/, /^\/icons\//, /^\/splash\//, /^\/mcp$/, /^\/\.well-known\//, /^\/offline$/, /^\/sw\.js$/, /^\/share\/[A-Za-z0-9_-]+$/];
+const PUBLIC = [/^\/login$/, /^\/auth\//, /^\/manifest\.webmanifest$/, /^\/icons\//, /^\/splash\//, /^\/mcp$/, /^\/\.well-known\//, /^\/offline$/, /^\/sw\.js$/, /^\/api\/version$/, /^\/share\/[A-Za-z0-9_-]+$/];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });

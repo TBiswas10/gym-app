@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { KeyboardFit } from "@/components/KeyboardFit";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { SplashScreen } from "@/components/SplashScreen";
+import { UpdateWatcher } from "@/components/UpdateWatcher";
 import { SPLASH_SIZES, splashKey, splashMedia } from "@/lib/splash";
 import { BG } from "@/lib/tokens";
 import "./globals.css";
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{ background: BG }}>
         <ServiceWorker />
         <KeyboardFit />
+        <UpdateWatcher />
         <SplashScreen />
         {children}
       </body>
