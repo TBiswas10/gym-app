@@ -20,6 +20,7 @@ import {
 import type { Guide, WorkoutPage } from "@/lib/server/workout-data";
 import { CardioCard } from "./CardioCard";
 import { GuideSheet } from "./GuideSheet";
+import { SetTip } from "./SetTip";
 import { useSync } from "./useSync";
 import { cancelRestPush, disableRestAlerts, enableRestAlerts, PUSH_MESSAGE, pushState, scheduleRestPush } from "@/lib/push-client";
 import { restAlertText } from "@/lib/push";
@@ -477,14 +478,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
             </div>
 
             {ex.last && !ex.swapped && <p className="t-small c-2">Last time: <strong className="c-text">{lastLabel(ex)}</strong></p>}
-            {(!ex.last || ex.swapped) && (
-              <div className="banner banner-info">
-                <Icon name="info" />
-                <span className="col">
-                  <span>{ex.swapped ? "No history for this one. Start light and use the steppers." : "First time on this one. Pick a weight you can lift 10 times with 1 or 2 left."}</span>
-                </span>
-              </div>
-            )}
+            {(!complete || editing) && <SetTip key={`${ex.slug}-${ex.swapped}`} range={ex.range} kind={ex.exKind} planned={ex.planned} swapped={ex.swapped} first={!ex.last} />}
 
             <div className="grid2">
               {Array.from({ length: ex.planned }, (_, i) => {

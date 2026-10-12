@@ -83,7 +83,7 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
   // In weeks 1-2 an exercise with no starting weight goes through "Find your weight" first.
   // No separate setup step: weeks 1 and 2 find their weights inside the workout itself, and those sets count.
   const startHref = `/workout?date=${d.sessionOrigin}`;
-  const startLabel = light ? "Start light workout" : d.status === "today" ? "Start workout" : `Start ${longName}’s workout`;
+  const startLabel = light ? "Start light workout" : d.status === "today" ? "Start workout" : d.status === "next" ? `Start ${longName} workout early` : `Start ${longName}’s workout`;
   const showLightToggle = !!plan && d.status !== "missed" && d.status !== "done";
 
   // ----- missed card
