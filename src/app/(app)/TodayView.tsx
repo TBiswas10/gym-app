@@ -240,8 +240,6 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
 
         {/* v2: today's briefing, suggestions about the plan, and this week's review */}
         {v2 && v2.nudges.length > 0 && <NudgeStack nudges={v2.nudges} />}
-        {v2?.review && <ReviewTeaser review={v2.review} />}
-
         {/* missed day */}
         {m && mPlan && m.state === "ask" && !moving && !missedOpen && (
           <button type="button" className="attn-row" onClick={() => setMissedOpen(true)} aria-expanded="false">
@@ -437,13 +435,11 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
             {v2?.briefing && d.date === today && startable && <BriefingInline briefing={v2.briefing} />}
             <ol className="list" style={{ margin: 0, padding: 0, listStyle: "none" }}>
               {plan.exercises.map((e) => (
-                <li key={e.slug} className="list-row" style={{ minHeight: 40 }}>
-                  <span className="col" style={{ minWidth: 0 }}>
-                    <span className="t-body" style={{ fontWeight: 600 }}>{e.name}</span>
-                    {v2?.lasts?.[e.slug] && <span className="t-caption c-2" style={{ textTransform: "none", letterSpacing: 0 }}>Last time {v2.lasts[e.slug]}</span>}
-                  </span>
-                  <span className="t-small c-2" style={{ whiteSpace: "nowrap" }}>
-                    {formatTarget(e.sets, e.repLo, e.repHi, e.kind)}
+                <li key={e.slug} className="list-row" style={{ minHeight: 44 }}>
+                  <span className="t-body" style={{ fontWeight: 600, minWidth: 0 }}>{e.name}</span>
+                  <span className="col" style={{ alignItems: "flex-end", flex: "none", gap: 0 }}>
+                    <span className="t-small c-2" style={{ whiteSpace: "nowrap" }}>{formatTarget(e.sets, e.repLo, e.repHi, e.kind)}</span>
+                    {v2?.lasts?.[e.slug] && <span className="t-caption c-accent" style={{ textTransform: "none", letterSpacing: 0, whiteSpace: "nowrap" }}>Last {v2.lasts[e.slug]}</span>}
                   </span>
                 </li>
               ))}
@@ -570,6 +566,7 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
             <span className="t-small c-2">{data.totalDone === 0 ? "Your first session is today." : `${data.totalDone} ${data.totalDone === 1 ? "session" : "sessions"} so far.`}</span>
           </Link>
         </section>
+        {v2?.review && <ReviewTeaser review={v2.review} />}
       </div>
 
       {quick !== null && (() => {

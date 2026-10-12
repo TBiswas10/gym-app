@@ -34,19 +34,32 @@ export function BriefingCard({ briefing }: { briefing: Briefing }) {
 /** The same briefing, inside the day's card: only what the card does not already say (what to try, and the notes). */
 export function BriefingInline({ briefing }: { briefing: Briefing }) {
   if (briefing.tries.length === 0 && briefing.notes.length === 0) return null;
+  const tries = briefing.tries.slice(0, 2);
+  const shown = briefing.notes.slice(0, 1);
+  const more = briefing.notes.slice(1);
   return (
     <div className="col g2 brief-inline" aria-label="For today">
-      <span className="t-eyebrow c-accent">For today</span>
-      {briefing.tries.length > 0 && (
+      <span className="t-eyebrow c-2">For today</span>
+      {tries.length > 0 && (
         <ul className="brief-list">
-          {briefing.tries.map((t) => (
-            <li key={t}><Icon name="arrow-up" size={16} /><span className="t-body">{t}</span></li>
+          {tries.map((t) => (
+            <li key={t}><Icon name="arrow-up" size={16} /><span className="t-small" style={{ fontWeight: 600 }}>{t}</span></li>
           ))}
         </ul>
       )}
-      {briefing.notes.map((n) => (
+      {shown.map((n) => (
         <p key={n} className="t-small c-2">{n}</p>
       ))}
+      {more.length > 0 && (
+        <details className="fold-in">
+          <summary>{more.length} more {more.length === 1 ? "note" : "notes"}</summary>
+          <div className="col g1" style={{ paddingTop: "var(--space-1)" }}>
+            {more.map((n) => (
+              <p key={n} className="t-small c-2">{n}</p>
+            ))}
+          </div>
+        </details>
+      )}
     </div>
   );
 }

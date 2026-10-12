@@ -45,8 +45,8 @@ describe("Today header and list", () => {
   });
   it("shows last time's number under each lift when it has one", () => {
     const out = htmlWith(base, { lasts: { chest: "30 kg", plank: "40 s" }, briefing: null, nudges: [], review: null });
-    expect(out).toContain("Last time 30 kg");
-    expect(out).not.toContain("Last time undefined");
+    expect(out).toContain("Last 30 kg");
+    expect(out).not.toContain("Last undefined");
   });
 });
 
