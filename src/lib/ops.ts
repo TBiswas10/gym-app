@@ -12,6 +12,7 @@ export type Op =
   | { t: "cardio"; id: string; workoutId: string | null; kind: MachineId | "walk" | "stretch"; minutes: number; params: Record<string, number>; feel: Feel | null; loggedOn: string }
   | { t: "delcardio"; id: string }
   | { t: "notes"; slug: string; notes: string }
-  | { t: "finish"; workoutId: string; endedAt: string };
+  | { t: "finish"; workoutId: string; endedAt: string }
+  | { t: "checkin"; workoutId: string; soreness: number | null; energy: number | null; notes: string; bodyweightKg: number | null; checkedOn: string };
 
 export const MAX_OPS_PER_CALL = 50;

@@ -68,6 +68,16 @@ export function validateOp(raw: unknown): Op | null {
       if (Number.isNaN(ms) || ms > Date.now() + 5 * 60_000 || ms < Date.now() - 30 * 86_400_000) return null;
       return { t: "finish", workoutId, endedAt: new Date(ms).toISOString() };
     }
+    case "checkin": {
+      const { workoutId, soreness, energy, notes, bodyweightKg, checkedOn } = raw;
+      if (!uuid(workoutId)) return null;
+      if (!nullable(soreness, (x): x is number => int(x, 1, 5)) || !nullable(energy, (x): x is number => int(x, 1, 5))) return null;
+      if (typeof notes !== "string" || notes.length > 500) return null;
+      if (!nullable(bodyweightKg, (x): x is number => num(x, 20, 400))) return null;
+      if (typeof checkedOn !== "string" || !DATE.test(checkedOn) || Number.isNaN(Date.parse(checkedOn))) return null;
+      if (soreness === null && energy === null && !notes.trim() && bodyweightKg === null) return null;
+      return { t: "checkin", workoutId, soreness, energy, notes: notes.trim(), bodyweightKg: bodyweightKg === null ? null : Math.round(bodyweightKg * 10) / 10, checkedOn };
+    }
     default:
       return null;
   }

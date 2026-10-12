@@ -47,6 +47,16 @@ export async function applyOne(supabase: ServerClient, op: Op): Promise<Outcome>
       const { error } = await supabase.from("workouts").update({ status: "completed", ended_at: op.endedAt }).eq("id", op.workoutId).eq("status", "in_progress");
       return classify(error);
     }
+    case "checkin": {
+      // One check-in per workout: update it if it is there, otherwise add it. Safe to send twice.
+      const { data: existing, error: e1 } = await supabase.from("checkins").select("id").eq("workout_id", op.workoutId).maybeSingle();
+      if (e1) return classify(e1);
+      const row = { soreness: op.soreness, energy: op.energy, notes: op.notes || null, ...(op.bodyweightKg !== null ? { bodyweight_kg: op.bodyweightKg } : {}) };
+      const { error } = existing
+        ? await supabase.from("checkins").update(row).eq("id", existing.id)
+        : await supabase.from("checkins").insert({ ...row, workout_id: op.workoutId, checked_on: op.checkedOn });
+      return classify(error);
+    }
   }
 }
 

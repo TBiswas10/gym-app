@@ -3,6 +3,7 @@ import { GestureTour } from "@/components/GestureTour";
 import { Icon } from "@/components/Icon";
 import { OnlineBanner } from "@/components/OnlineBanner";
 import { SwipeTabs } from "@/components/SwipeTabs";
+import { SyncKeeper } from "@/components/SyncKeeper";
 import { TabBar } from "@/components/TabBar";
 import { createClient } from "@/lib/supabase/server";
 
@@ -27,6 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Icon name="chevron-right" size={16} />
         </Link>
       )}
+      <SyncKeeper />
       <SwipeTabs>{children}</SwipeTabs>
       <TabBar />
       <GestureTour />

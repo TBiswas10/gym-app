@@ -11,7 +11,7 @@ import { useSwipeUp } from "@/components/useSwipeUp";
 import { haptic } from "@/lib/haptics";
 import { cardioGuard, extendRest, mmss, restPercent, restRemaining, restSecondsAfter, sessionClock } from "@/lib/timers";
 import { isPB, verdict as verdictFor } from "@/lib/progression";
-import type { Source } from "@/lib/ops";
+import type { Op, Source } from "@/lib/ops";
 import {
   addKg, adjust, adjustCardio, advance, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exSpec, exercises,
   finishCardio, goTo, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setNotes, setValue, skip, startEdit, swap,
@@ -21,6 +21,9 @@ import type { Guide, WorkoutPage } from "@/lib/server/workout-data";
 import { CardioCard } from "./CardioCard";
 import { GuideSheet } from "./GuideSheet";
 import { SetTip } from "./SetTip";
+import { ScalePick } from "@/components/ScalePick";
+import { ENERGY_WORDS, SORENESS_WORDS } from "@/lib/checkin-scale";
+import { sydneyDate } from "@/lib/dates";
 import { useSync } from "./useSync";
 import { cancelRestPush, disableRestAlerts, enableRestAlerts, PUSH_MESSAGE, pushState, scheduleRestPush } from "@/lib/push-client";
 import { restAlertText } from "@/lib/push";
@@ -375,7 +378,26 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     run(skip(ws), { toast: `Skipped ${label}.`, undoable: true });
     stopRest();
   };
+  // No signal at the end of a session: finish and check in right here, saved on the phone, uploaded later.
+  const [offlineFinish, setOfflineFinish] = useState(false);
+  const [offSaved, setOffSaved] = useState(false);
+  const [offSore, setOffSore] = useState<number | null>(null);
+  const [offEnergy, setOffEnergy] = useState<number | null>(null);
+  const [offNotes, setOffNotes] = useState("");
+  const saveOffline = () => {
+    const ops: Op[] = [{ t: "finish", workoutId: id, endedAt: new Date().toISOString() }];
+    if (offSore !== null || offEnergy !== null || offNotes.trim()) {
+      ops.push({ t: "checkin", workoutId: id, soreness: offSore, energy: offEnergy, notes: offNotes.trim().slice(0, 500), bodyweightKg: null, checkedOn: sydneyDate(new Date()) });
+    }
+    enqueue(ops);
+    stopRest();
+    setOffSaved(true);
+  };
   const onFinish = async () => {
+    if (!online || (typeof navigator !== "undefined" && navigator.onLine === false)) {
+      setOfflineFinish(true);
+      return;
+    }
     setFinishing(true);
     enqueue([{ t: "finish", workoutId: id, endedAt: new Date().toISOString() }]);
     for (let i = 0; i < 20 && loadQueue().length > 0; i++) await new Promise((r) => setTimeout(r, 200));
@@ -776,6 +798,42 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
             <strong className="t-heading tnum">{pbCard.text}</strong>
           </span>
         </button>
+      )}
+
+      {offlineFinish && (
+        <>
+          <div className="scrim anim-fade" onClick={() => !offSaved && setOfflineFinish(false)} />
+          <div className="sheet-wrap">
+            <div className="sheet" role="dialog" aria-label="Finish without signal" style={{ maxHeight: 700, overflowY: "auto" }}>
+              <span className="sheet-grab" />
+              {!offSaved ? (
+                <>
+                  <h2 className="t-title">No signal. Finish now.</h2>
+                  <p className="t-small c-2">Everything is saved on this phone and uploads on its own when you’re back online.</p>
+                  <ScalePick label="How sore are you?" hint="1 is not sore at all, 5 is very sore." words={SORENESS_WORDS} value={offSore} onChange={setOffSore} warn />
+                  <ScalePick label="How much energy do you have?" hint="1 is drained, 5 is buzzing." words={ENERGY_WORDS} value={offEnergy} onChange={setOffEnergy} />
+                  <div className="field">
+                    <label className="field-label" htmlFor="offnotes">Notes</label>
+                    <textarea id="offnotes" className="input" rows={2} maxLength={500} value={offNotes} onChange={(e) => setOffNotes(e.target.value)} placeholder="Anything to remember for next time?" />
+                  </div>
+                  <button type="button" className="btn btn-primary btn-cta" onClick={saveOffline}>Save and finish</button>
+                  <button type="button" className="btn btn-tertiary btn-block" onClick={() => setOfflineFinish(false)}>Keep training</button>
+                </>
+              ) : (
+                <>
+                  <div className="row g3" style={{ alignItems: "center" }} role="status">
+                    <span className="done-mini"><Icon name="check" /></span>
+                    <span className="col">
+                      <strong className="t-heading">Saved on this phone</strong>
+                      <span className="t-small c-2">{pending > 0 ? `${pending} ${pending === 1 ? "change" : "changes"} waiting to upload.` : "Everything is uploaded."}</span>
+                    </span>
+                  </div>
+                  <Link className="btn btn-primary btn-cta" href="/">Back to Today</Link>
+                </>
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       {leaveOpen && (

@@ -65,3 +65,22 @@ describe("validateOp", () => {
     expect(validateOp({ t: "skips", workoutId: W, slugs: Array(31).fill("lat") })).toBeNull();
   });
 });
+
+describe("validateOp checkin", () => {
+  const base = { t: "checkin", workoutId: "11111111-1111-4111-8111-111111111111", soreness: 3, energy: 4, notes: " felt ok ", bodyweightKg: 80.04, checkedOn: "2026-10-12" };
+  it("accepts a check-in and tidies the notes and weight", () => {
+    expect(validateOp(base)).toMatchObject({ t: "checkin", soreness: 3, energy: 4, notes: "felt ok", bodyweightKg: 80 });
+  });
+  it("accepts a partial check-in but not an empty one", () => {
+    expect(validateOp({ ...base, soreness: null, bodyweightKg: null })).not.toBeNull();
+    expect(validateOp({ ...base, soreness: null, energy: null, notes: "  ", bodyweightKg: null })).toBeNull();
+  });
+  it("rejects out-of-range and malformed values", () => {
+    expect(validateOp({ ...base, soreness: 6 })).toBeNull();
+    expect(validateOp({ ...base, energy: 0 })).toBeNull();
+    expect(validateOp({ ...base, bodyweightKg: 5 })).toBeNull();
+    expect(validateOp({ ...base, checkedOn: "yesterday" })).toBeNull();
+    expect(validateOp({ ...base, workoutId: "nope" })).toBeNull();
+    expect(validateOp({ ...base, notes: "x".repeat(501) })).toBeNull();
+  });
+});

@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import { haptic } from "@/lib/haptics";
 import { Icon } from "@/components/Icon";
 import { ScalePick } from "@/components/ScalePick";
 import { ENERGY_WORDS, SORENESS_WORDS } from "@/lib/checkin-scale";
 import { saveCheckin } from "@/app/workout/actions";
+import { useSync } from "@/app/workout/useSync";
+import { sydneyDate } from "@/lib/dates";
 
 // Fixed confetti pieces from the design (each flies out from the centre).
 const CONFETTI = [
@@ -32,6 +35,9 @@ export function CompleteView({ workoutId, data, problem, initialStage }: { worko
   const [sore, setSore] = useState<number | null>(data.soreness);
   const [energy, setEnergy] = useState<number | null>(data.energy);
   const [saving, setSaving] = useState(false);
+  const [local, setLocal] = useState(false); // saved on the phone because there was no signal
+  const [notesText, setNotesText] = useState(data.notes);
+  const { enqueue } = useSync();
   // First the whole screen says it is done; then the quick check-in.
   const [stage, setStage] = useState<"tick" | "checkin">(initialStage ?? (problem ? "checkin" : "tick"));
   useEffect(() => {
@@ -39,7 +45,25 @@ export function CompleteView({ workoutId, data, problem, initialStage }: { worko
   }, [stage]);
 
   return (
-    <form className="screen fill" action={saveCheckin} onSubmit={() => setSaving(true)}>
+    <form
+      className="screen fill"
+      action={saveCheckin}
+      onSubmit={(e) => {
+        if (typeof navigator !== "undefined" && navigator.onLine === false) {
+          // Nothing to send to: keep it on the phone and let the uploader do it when the signal is back.
+          e.preventDefault();
+          const raw = new FormData(e.currentTarget).get("bodyweight");
+          const bw = raw === null || String(raw).trim() === "" ? null : Number(raw);
+          enqueue([
+            { t: "finish", workoutId, endedAt: new Date().toISOString() },
+            { t: "checkin", workoutId, soreness: sore, energy, notes: notesText.trim().slice(0, 500), bodyweightKg: bw !== null && Number.isFinite(bw) && bw >= 20 && bw <= 400 ? bw : null, checkedOn: sydneyDate(new Date()) },
+          ]);
+          setLocal(true);
+          return;
+        }
+        setSaving(true);
+      }}
+    >
       <input type="hidden" name="workoutId" value={workoutId} />
       <input type="hidden" name="soreness" value={sore ?? ""} />
       <input type="hidden" name="energy" value={energy ?? ""} />
@@ -91,8 +115,14 @@ export function CompleteView({ workoutId, data, problem, initialStage }: { worko
           )}
           <div className="field">
             <label className="field-label" htmlFor="cnotes">Notes</label>
-            <textarea id="cnotes" name="notes" className="input" rows={3} defaultValue={data.notes} maxLength={500} placeholder="Anything to remember for next time?" />
+            <textarea id="cnotes" name="notes" className="input" rows={3} value={notesText} onChange={(e) => setNotesText(e.target.value)} maxLength={500} placeholder="Anything to remember for next time?" />
           </div>
+          {local && (
+            <div className="banner banner-success" role="status">
+              <Icon name="circle-check" />
+              <span>Saved on this phone. It uploads on its own when you’re back online.</span>
+            </div>
+          )}
           {problem && (
             <div className="banner banner-danger" role="alert">
               <Icon name="circle-alert" />
@@ -105,7 +135,11 @@ export function CompleteView({ workoutId, data, problem, initialStage }: { worko
         <button key="save" type="submit" className={`btn btn-primary btn-cta ${saving ? "is-loading" : ""}`} disabled={saving || sore === null || energy === null}>
           {sore === null || energy === null ? "Pick one for each" : "Save and finish"}
         </button>
-        <button key="skip" type="submit" name="skip" value="1" className="btn btn-tertiary btn-block" disabled={saving}>Skip the check-in</button>
+        {local ? (
+          <Link className="btn btn-primary btn-cta" href="/">Back to Today</Link>
+        ) : (
+          <button key="skip" type="submit" name="skip" value="1" className="btn btn-tertiary btn-block" disabled={saving}>Skip the check-in</button>
+        )}
       </div>
         </Fragment>
       )}
