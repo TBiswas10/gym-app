@@ -99,16 +99,37 @@ async function loadStalls(supabase: ServerClient, cx: Cx, t: TodayData) {
   return out;
 }
 
-export async function loadV2Today(supabase: ServerClient, t: TodayData): Promise<V2Today> {
-  const cx = await loadCx(supabase);
+/** The queries that do not depend on Today's data. Start them first so they run while Today loads. */
+export function startV2Today(supabase: ServerClient) {
+  // Reduce each query to { data } and never throw: Today works without the extras.
+  const quiet = async <D,>(p: PromiseLike<{ data: D }>, fallback: D): Promise<{ data: D }> => {
+    try {
+      const r = await p;
+      return { data: r.data ?? fallback };
+    } catch {
+      return { data: fallback };
+    }
+  };
+  return {
+    cx: loadCx(supabase).catch(() => null),
+    feel: quiet(supabase.from("checkins").select("soreness, energy").order("created_at", { ascending: false }).limit(3), [] as { soreness: number | null; energy: number | null }[]),
+    cardio: quiet(supabase.from("cardio_entries").select("kind, minutes, feel, params").not("kind", "in", "(walk,stretch)").order("logged_at", { ascending: false }).limit(1).maybeSingle(), null),
+    answered: quiet(supabase.from("nudge_responses").select("key"), [] as { key: string }[]),
+    goals: loadGoals(supabase).catch(() => [] as GoalView[]),
+    reviews: loadReviews(supabase, 1).catch(() => [] as ReviewView[]),
+  };
+}
+
+export async function loadV2Today(supabase: ServerClient, t: TodayData, pre: ReturnType<typeof startV2Today> = startV2Today(supabase)): Promise<V2Today> {
+  const cx = await pre.cx;
   if (!cx) return { briefing: null, nudges: [], review: null };
 
   const [feelRes, cardioRes, answeredRes, goals, reviews, stalls] = await Promise.all([
-    supabase.from("checkins").select("soreness, energy").order("created_at", { ascending: false }).limit(3),
-    supabase.from("cardio_entries").select("kind, minutes, feel, params").not("kind", "in", "(walk,stretch)").order("logged_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("nudge_responses").select("key"),
-    loadGoals(supabase).catch(() => [] as GoalView[]),
-    loadReviews(supabase, 1).catch(() => [] as ReviewView[]),
+    pre.feel,
+    pre.cardio,
+    pre.answered,
+    pre.goals,
+    pre.reviews,
     loadStalls(supabase, cx, t).catch(() => []),
   ]);
   const feel = (feelRes.data ?? []).map((f) => ({ soreness: f.soreness, energy: f.energy }));

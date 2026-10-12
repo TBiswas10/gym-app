@@ -49,16 +49,22 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
   const [quick, setQuick] = useState<number | null>(null);
   const pressTimer = useRef<number | null>(null);
   const longFired = useRef(false);
-  const pressStart = (i: number) => {
+  const pressAt = useRef({ x: 0, y: 0 });
+  const pressStart = (i: number, x: number, y: number) => {
     longFired.current = false;
+    pressAt.current = { x, y };
     pressTimer.current = window.setTimeout(() => {
       longFired.current = true;
       setQuick(i);
-    }, 450);
+    }, 500);
   };
   const pressEnd = () => {
     if (pressTimer.current !== null) window.clearTimeout(pressTimer.current);
     pressTimer.current = null;
+  };
+  // Moving the finger (a swipe or a scroll) is not a press: cancel it.
+  const pressMove = (x: number, y: number) => {
+    if (pressTimer.current !== null && Math.hypot(x - pressAt.current.x, y - pressAt.current.y) > 8) pressEnd();
   };
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -140,7 +146,9 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
                 className="day"
                 aria-pressed={i === sel}
                 aria-label={`${longDay(s.weekday)} ${name}${STATUS_WORDS[s.status] ?? ""}`}
-                onPointerDown={() => pressStart(i)}
+                onPointerDown={(e) => pressStart(i, e.clientX, e.clientY)}
+                onPointerMove={(e) => pressMove(e.clientX, e.clientY)}
+                onTouchMove={pressEnd}
                 onPointerUp={pressEnd}
                 onPointerLeave={pressEnd}
                 onPointerCancel={pressEnd}
@@ -611,6 +619,7 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
           <Link className="btn btn-primary btn-cta" href={startHref} prefetch={false}>
             <Icon name="play" />
             {startLabel}
+            {total > 0 && <span style={{ fontWeight: 500, opacity: 0.75 }}> · ~{total} min</span>}
           </Link>
         )}
         {!startable && sel !== todayIdx && (

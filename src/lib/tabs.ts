@@ -11,8 +11,18 @@ export function tabIndex(path: string): number {
   return TABS.findIndex((t) => t.href !== "/" && path.startsWith(t.href));
 }
 
-/** The tab a swipe leads to: dir +1 = next (swipe left), -1 = previous (swipe right). null at the ends or off the tabs. */
+/** True for the four tab screens themselves, not their sub-pages (a guide, the change log, a session). */
+export function isTabRoot(path: string): boolean {
+  const p = path.length > 1 ? path.replace(/\/+$/, "") : path;
+  return TABS.some((t) => t.href === p);
+}
+
+/**
+ * The tab a swipe leads to: dir +1 = next (swipe left), -1 = previous (swipe right). null at the ends, off the tabs,
+ * and on sub-pages: there a sideways swipe should go back (EdgeBack), not jump to another tab.
+ */
 export function neighbourTab(path: string, dir: 1 | -1): string | null {
+  if (!isTabRoot(path)) return null;
   const i = tabIndex(path);
   if (i < 0) return null;
   return TABS[i + dir]?.href ?? null;

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loadToday } from "@/lib/server/today-data";
-import { loadV2Today, type V2Today } from "@/lib/server/v2-data";
+import { loadV2Today, startV2Today, type V2Today } from "@/lib/server/v2-data";
 import { TodayView } from "./TodayView";
 
 export default async function TodayPage() {
@@ -10,6 +10,7 @@ export default async function TodayPage() {
   const uid = auth?.claims?.sub;
   if (!uid) redirect("/login");
 
+  const pre = startV2Today(supabase); // runs while Today's own data loads
   let data;
   try {
     data = await loadToday(supabase, uid);
@@ -27,7 +28,7 @@ export default async function TodayPage() {
   // The briefing, nudges and review are extras: if they fail, Today still works.
   let v2: V2Today | undefined;
   try {
-    v2 = await loadV2Today(supabase, data);
+    v2 = await loadV2Today(supabase, data, pre);
   } catch {
     v2 = undefined;
   }

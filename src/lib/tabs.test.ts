@@ -15,6 +15,12 @@ describe("tabs", () => {
     expect(neighbourTab("/plan", 1)).toBeNull();
     expect(neighbourTab("/workout", 1)).toBeNull();
   });
+  it("only the tab screens swipe between tabs, not their sub-pages", () => {
+    expect(neighbourTab("/library/chest", 1)).toBeNull();
+    expect(neighbourTab("/progress/history", 1)).toBeNull();
+    expect(neighbourTab("/plan/changes", -1)).toBeNull();
+    expect(neighbourTab("/progress/", 1)).toBe("/library");
+  });
   it("classifies drags", () => {
     expect(classifySwipe(-120, 10, 0, false)).toBe("next");
     expect(classifySwipe(120, -10, 0, false)).toBe("prev");
