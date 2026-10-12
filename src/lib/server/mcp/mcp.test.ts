@@ -37,7 +37,7 @@ describe("tool list", () => {
     const c = await connect();
     const { tools } = await c.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
-    expect(tools).toHaveLength(32);
+    expect(tools).toHaveLength(37);
   });
   it("marks read tools read-only and write tools as non-destructive", async () => {
     const { tools } = await (await connect()).listTools();
@@ -96,6 +96,22 @@ describe("destructive tools refuse without an explicit confirmation", () => {
   });
   it("the plan's cardio text must name a machine", async () => {
     expect((await call("edit_plan_cardio", { weekday: 1, cardio: "Easy jog", confirm: true })).isError).toBe(true);
+  });
+  it("weekly review and goals tools are bounded and a goal removal needs confirm", async () => {
+    expect((await call("save_weekly_review", { headline: "ok" })).isError).toBe(true);
+    expect((await call("save_weekly_review", { headline: "A good week", wins: ["a1", "a2", "a3", "a4", "a5", "a6", "a7"] })).isError).toBe(true);
+    expect((await call("set_goal", { exercise: "leg press", target: -5 })).isError).toBe(true);
+    const r = await call("remove_goal", { exercise: "leg press" });
+    expect(r.isError).toBe(true);
+  });
+  it("offers a weekly_review prompt that saves through save_weekly_review", async () => {
+    const c = await connect();
+    const { prompts } = await c.listPrompts();
+    expect(prompts.map((p) => p.name)).toContain("weekly_review");
+    const got = await c.getPrompt({ name: "weekly_review" });
+    const text = JSON.stringify(got.messages);
+    expect(text).toContain("save_weekly_review");
+    expect(text).toContain("get_week_summary");
   });
   it("log_sets takes swapped_to", async () => {
     const { tools } = await (await connect()).listTools();

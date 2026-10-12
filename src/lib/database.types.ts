@@ -29,6 +29,30 @@ export type Database = {
         Update: { undone_at?: string | null };
         Relationships: [];
       };
+      nudge_responses: {
+        Row: { created_at: string; key: string; response: string; user_id: string };
+        Insert: { created_at?: string; key: string; response: string; user_id?: string };
+        Update: { created_at?: string; key?: string; response?: string; user_id?: string };
+        Relationships: [];
+      };
+      coach_reviews: {
+        Row: { created_at: string; headline: string; id: string; next_week: string[]; source: string; user_id: string; watch: string[]; week_start: string; wins: string[] };
+        Insert: { created_at?: string; headline: string; id?: string; next_week?: string[]; source?: string; user_id?: string; watch?: string[]; week_start: string; wins?: string[] };
+        Update: { created_at?: string; headline?: string; id?: string; next_week?: string[]; source?: string; user_id?: string; watch?: string[]; week_start?: string; wins?: string[] };
+        Relationships: [];
+      };
+      goals: {
+        Row: { created_at: string; exercise_slug: string; id: string; start_value: number; target: number; user_id: string };
+        Insert: { created_at?: string; exercise_slug: string; id?: string; start_value?: number; target: number; user_id?: string };
+        Update: { created_at?: string; exercise_slug?: string; id?: string; start_value?: number; target?: number; user_id?: string };
+        Relationships: [{ foreignKeyName: "goals_exercise_slug_fkey"; columns: ["exercise_slug"]; isOneToOne: false; referencedRelation: "exercises"; referencedColumns: ["slug"] }];
+      };
+      share_links: {
+        Row: { created_at: string; expires_at: string; id: string; label: string; revoked_at: string | null; token: string; user_id: string };
+        Insert: { created_at?: string; expires_at: string; id?: string; label?: string; revoked_at?: string | null; token: string; user_id?: string };
+        Update: { revoked_at?: string | null };
+        Relationships: [];
+      };
       mcp_requests: {
         Row: { client_id: string | null; created_at: string; id: number; method: string; ms: number; ok: boolean; status: number; tool: string | null; user_id: string };
         Insert: { client_id?: string | null; created_at?: string; id?: number; method: string; ms: number; ok: boolean; status: number; tool?: string | null; user_id?: string };
@@ -118,6 +142,7 @@ export type Database = {
       clone_template: { Args: { p_plan_type: string }; Returns: string };
       delete_my_account: { Args: never; Returns: undefined };
       replace_day_exercises: { Args: { p_template: string; p_weekday: number; p_rows: Json }; Returns: undefined };
+      share_summary: { Args: { p_token: string }; Returns: Json };
       start_program: { Args: { p_plan_type: string; p_start_date: string }; Returns: undefined };
     };
     Enums: { [_ in never]: never };

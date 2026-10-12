@@ -3,6 +3,7 @@ import { programmeWeek, sydneyDate, weekDates } from "../dates";
 import type { ExerciseKind } from "../plan";
 import { checkInDue, consistency, records, exercisesWithData, nextCheckIn, topSeries, weekCells, weekStats, type WeekCell } from "../stats";
 import { fmtNum } from "../format";
+import { loadGoals, loadReviews, type GoalView, type ReviewView } from "./v2-data";
 
 export interface ProgressData {
   week: number;
@@ -15,6 +16,8 @@ export interface ProgressData {
   consistency: { weeks: { week: number; done: number; planned: number }[]; streak: number };
   next: number | null;
   due: number | null;
+  goals?: GoalView[];
+  reviews?: ReviewView[];
 }
 
 const GROUPS = ["Legs", "Chest", "Shoulders", "Arms", "Back", "Core"];
@@ -60,7 +63,10 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
   const planned = (tplRes.data ?? []).reduce((n, t) => Math.max(n, (t.template_days as unknown[]).length), 0) || 5;
 
   const done = (reviewRes.data ?? []).map((r) => r.week);
+  const [goals, reviews] = await Promise.all([loadGoals(supabase).catch(() => [] as GoalView[]), loadReviews(supabase).catch(() => [] as ReviewView[])]);
   return {
+    goals,
+    reviews,
     week,
     empty: workouts.length === 0,
     chips,

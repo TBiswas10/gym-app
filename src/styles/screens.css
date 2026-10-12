@@ -164,3 +164,12 @@
 .t5-line{fill:none;stroke:var(--tone);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .t5-dot{fill:var(--raised);stroke:var(--tone);stroke-width:3}
 .t5-now{fill:var(--tone);stroke:var(--tone);stroke-width:3}
+/* v2: briefing list, goals, stretch routine */
+.brief-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--space-2)}
+.brief-list li{display:flex;gap:var(--space-2);align-items:flex-start}
+.brief-list li .ic{flex:none;margin-top:2px;color:var(--accent)}
+.goal-x{appearance:none;background:transparent;border:0;color:var(--text-2);min-height:var(--size-tap);padding:0 var(--space-2);text-decoration:underline}
+.stretch{border-top:1px solid var(--border);padding-top:var(--space-3)}
+.stretch summary{min-height:var(--size-tap);display:flex;align-items:center;font-weight:700;cursor:pointer}
+.stretch ol{margin:0;padding:var(--space-2) 0 0;list-style:decimal inside}
+.stretch li{display:block}

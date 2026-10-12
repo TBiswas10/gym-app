@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type CSSProperties } from "react";
 import { Icon } from "@/components/Icon";
 import { LineChart } from "@/components/LineChart";
+import { GoalsCard, ReviewCard } from "@/components/V2Cards";
 import { direction, wordFor } from "@/lib/checkin-scale";
 import { fmtNum } from "@/lib/format";
 import type { ProgressData } from "@/lib/server/progress-data";
@@ -108,6 +109,10 @@ export function ProgressView({ data }: { data: ProgressData }) {
             </div>
           )}
         </section>
+
+        <ReviewCard reviews={data.reviews ?? []} />
+
+        <GoalsCard goals={data.goals ?? []} choices={data.chips.map((c) => ({ slug: c.slug, name: c.name, unit: c.unit }))} />
 
         <section className="card">
           <h2 className="t-heading">This week</h2>

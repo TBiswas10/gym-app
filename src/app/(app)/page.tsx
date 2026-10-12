@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loadToday } from "@/lib/server/today-data";
+import { loadV2Today, type V2Today } from "@/lib/server/v2-data";
 import { TodayView } from "./TodayView";
 
 export default async function TodayPage() {
@@ -23,5 +24,12 @@ export default async function TodayPage() {
     );
   }
   if (!data) redirect("/install"); // first run: install guide, then notifications, then the programme starts
-  return <TodayView data={data} />;
+  // The briefing, nudges and review are extras: if they fail, Today still works.
+  let v2: V2Today | undefined;
+  try {
+    v2 = await loadV2Today(supabase, data);
+  } catch {
+    v2 = undefined;
+  }
+  return <TodayView data={data} v2={v2} />;
 }

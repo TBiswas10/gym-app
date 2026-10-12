@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { ResumeBar } from "@/components/ResumeBar";
+import { BriefingCard, NudgeCard, ReviewTeaser } from "@/components/V2Cards";
+import { STRETCH_ROUTINE } from "@/lib/stretch";
+import type { V2Today } from "@/lib/server/v2-data";
 import { Rings } from "@/components/Rings";
 import { formatLongDate, longDay, weekdayOf } from "@/lib/dates";
 import { countLine, estimateMinutes, formatTarget, liftMinutes } from "@/lib/plan";
@@ -24,7 +27,7 @@ const STATUS_WORDS: Partial<Record<StripDay["status"], string>> = {
   pre: ", before you started",
 };
 
-export function TodayView({ data }: { data: TodayData }) {
+export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
   const { strip, today } = data;
   const todayIdx = Math.max(0, strip.findIndex((d) => d.date === today));
   const [sel, setSel] = useState(todayIdx);
@@ -193,6 +196,11 @@ export function TodayView({ data }: { data: TodayData }) {
             </div>
           </section>
         )}
+
+        {/* v2: today's briefing, suggestions about the plan, and this week's review */}
+        {v2?.briefing && d.date === today && startable && <BriefingCard briefing={v2.briefing} />}
+        {v2?.nudges.map((n) => <NudgeCard key={n.key} nudge={n} />)}
+        {v2?.review && <ReviewTeaser review={v2.review} />}
 
         {/* missed day */}
         {m && mPlan && (
@@ -451,6 +459,18 @@ export function TodayView({ data }: { data: TodayData }) {
                 ) : (
                   <p className="t-small c-2">Come back on the day to log a walk or a stretch.</p>
                 )}
+                <p className="t-small c-2">{data.highSoreness ? "Soreness has been high, so the stretch is worth more than the walk today." : "A walk and a stretch both help. Do whichever you feel like."}</p>
+                <details className="stretch">
+                  <summary>See the 10 minute stretch routine</summary>
+                  <ol className="col g2">
+                    {STRETCH_ROUTINE.map((m) => (
+                      <li key={m.name}>
+                        <span className="row between baseline g3"><strong className="t-body">{m.name}</strong><span className="t-small c-2">{m.time}</span></span>
+                        <span className="t-small c-2">{m.how}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </details>
               </>
             )}
             {d.status === "skipped" && (

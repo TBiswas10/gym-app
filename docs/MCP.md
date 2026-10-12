@@ -26,6 +26,10 @@ Lets Claude read and write your workout data. The server lives inside this app a
 | `get_records` | All-time best per exercise and the lifts that have stalled (with advice) |
 | `get_bodyweight` | Bodyweight check-ins, change since first and over 4 weeks, weekly averages |
 | `edit_logged_cardio` | Fix a logged cardio entry (minutes, machine numbers, feel, or move a rest-day entry to another date) | shows before and after; `confirm`; undoable |
+| `save_weekly_review` | Save the weekly review (headline, wins, watch, next week); shows in the app. One per week, replaces |
+| `get_weekly_reviews` | Earlier weekly reviews |
+| `get_goals` / `set_goal` / `remove_goal` | Goals per exercise with progress; `remove_goal` needs `confirm` |
+| prompt `weekly_review` | Starts a weekly review: gather the numbers, then save it |
 | `edit_checkin` | Fix a past check-in (soreness, energy, notes, bodyweight) for the session on a date | shows before and after; `confirm`; undoable |
 | `edit_plan_cardio` | Change a day's cardio machine text, label and planned minutes | shows before and after; `confirm`; undoable |
 | `get_cardio` | Cardio entries with machine numbers and feel, a per-machine summary and minutes per week (includes rest-day walks) |
