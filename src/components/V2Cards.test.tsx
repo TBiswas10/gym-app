@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { BriefingCard, GoalsCard, NudgeCard, ReviewCard, ReviewTeaser } from "./V2Cards";
+import { BriefingCard, BriefingInline, GoalsCard, NudgeCard, NudgeStack, ReviewCard, ReviewTeaser } from "./V2Cards";
 
 describe("v2 cards", () => {
   it("shows the briefing: headline, what to try and the notes", () => {
@@ -21,6 +21,27 @@ describe("v2 cards", () => {
       />,
     );
     for (const t of ["Goals", "Leg press", "80 of 100 kg", "20 kg to go", "Add a goal"]) expect(out).toContain(t);
+  });
+  it("inside the day card the briefing shows only what to try and the notes", () => {
+    const out = renderToStaticMarkup(<BriefingInline briefing={{ headline: "Push, about 38 min", sub: "x", tries: ["Chest press: go up to 32.5 kg"], notes: ["Last cardio: 10 min bike."] }} />);
+    expect(out).toContain("For today");
+    expect(out).toContain("Chest press: go up to 32.5 kg");
+    expect(out).not.toContain("Push, about 38 min");
+    expect(renderToStaticMarkup(<BriefingInline briefing={{ headline: "h", sub: "s", tries: [], notes: [] }} />)).toBe("");
+  });
+  it("shows suggestions one at a time with a position", () => {
+    const mk = (k: string) => ({ key: k, kind: "stalled" as const, title: `Title ${k}`, body: "b", accept: "Use 1 kg jumps", payload: { slug: "chest", kg: 1 } });
+    const out = renderToStaticMarkup(<NudgeStack nudges={[mk("a"), mk("b")]} />);
+    expect(out).toContain("Title a");
+    expect(out).not.toContain("Title b");
+    expect(out).toContain("1 of 2");
+  });
+  it("empty states say what to do next", () => {
+    const review = renderToStaticMarkup(<ReviewCard reviews={[]} />);
+    for (const t of ["Weekly review", "Write my weekly review", "Copy that to ask Claude"]) expect(review).toContain(t);
+    const goals = renderToStaticMarkup(<GoalsCard goals={[]} choices={[{ slug: "chest", name: "Chest press", unit: "kg" }]} />);
+    expect(goals).toContain("Add your first goal");
+    expect(renderToStaticMarkup(<GoalsCard goals={[]} choices={[]} />)).toContain("Finish a workout first");
   });
   it("shows the weekly review and a teaser for it", () => {
     const r = { id: "r1", weekStart: "2026-10-05", headline: "Four of five done and legs are moving", wins: ["Leg press up 5 kg"], watch: ["Energy dipped Thursday"], nextWeek: ["Keep Thursday light"], createdAt: "2026-10-11T00:00:00Z" };

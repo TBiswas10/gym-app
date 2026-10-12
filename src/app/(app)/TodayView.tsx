@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { ResumeBar } from "@/components/ResumeBar";
-import { BriefingCard, NudgeCard, ReviewTeaser } from "@/components/V2Cards";
+import { BriefingInline, NudgeStack, ReviewTeaser } from "@/components/V2Cards";
 import { STRETCH_ROUTINE } from "@/lib/stretch";
 import type { V2Today } from "@/lib/server/v2-data";
 import { Rings } from "@/components/Rings";
@@ -12,7 +12,7 @@ import { formatLongDate, longDay, weekdayOf } from "@/lib/dates";
 import { countLine, estimateMinutes, formatTarget, liftMinutes } from "@/lib/plan";
 import type { StripDay } from "@/lib/schedule";
 import type { PlanDay, TodayData } from "@/lib/server/today-data";
-import { chooseMissed, setLight, toggleRestLog, undoMissed, type ActionResult } from "./actions";
+import { chooseMissed, setLight, skipDay, toggleRestLog, undoMissed, type ActionResult } from "./actions";
 import { setDeloadWeek, setTestMode } from "./plan/actions";
 
 const joinNames = (names: string[]): string =>
@@ -44,6 +44,21 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
     }
   }, []);
   const [deloadHidden, setDeloadHidden] = useState(false);
+  // Press and hold a day in the week strip for quick actions (start early, go light, skip).
+  const [quick, setQuick] = useState<number | null>(null);
+  const pressTimer = useRef<number | null>(null);
+  const longFired = useRef(false);
+  const pressStart = (i: number) => {
+    longFired.current = false;
+    pressTimer.current = window.setTimeout(() => {
+      longFired.current = true;
+      setQuick(i);
+    }, 450);
+  };
+  const pressEnd = () => {
+    if (pressTimer.current !== null) window.clearTimeout(pressTimer.current);
+    pressTimer.current = null;
+  };
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -118,7 +133,18 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
                 className="day"
                 aria-pressed={i === sel}
                 aria-label={`${longDay(s.weekday)} ${name}${STATUS_WORDS[s.status] ?? ""}`}
-                onClick={() => setSel(i)}
+                onPointerDown={() => pressStart(i)}
+                onPointerUp={pressEnd}
+                onPointerLeave={pressEnd}
+                onPointerCancel={pressEnd}
+                onContextMenu={(e) => e.preventDefault()}
+                onClick={() => {
+                  if (longFired.current) {
+                    longFired.current = false;
+                    return;
+                  }
+                  setSel(i);
+                }}
                 style={{ opacity: s.status === "pre" ? 0.45 : 1 }}
               >
                 <span style={{ color: s.status === "today" ? "var(--accent)" : s.status === "missed" ? "var(--warning)" : "inherit" }}>{s.label}</span>
@@ -198,8 +224,7 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
         )}
 
         {/* v2: today's briefing, suggestions about the plan, and this week's review */}
-        {v2?.briefing && d.date === today && startable && <BriefingCard briefing={v2.briefing} />}
-        {v2?.nudges.map((n) => <NudgeCard key={n.key} nudge={n} />)}
+        {v2 && v2.nudges.length > 0 && <NudgeStack nudges={v2.nudges} />}
         {v2?.review && <ReviewTeaser review={v2.review} />}
 
         {/* missed day */}
@@ -334,7 +359,7 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
           </div>
         )}
 
-        {data.deloadSuggested && !data.inDeload && !deloadHidden && (
+        {!v2 && data.deloadSuggested && !data.inDeload && !deloadHidden && (
           <section className="card card-raised">
             <span className="t-eyebrow c-2">Week {data.week}</span>
             <h2 className="t-heading">Take an easier week?</h2>
@@ -384,6 +409,7 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
               <span><i style={{ background: "var(--info)" }} />Cardio warm-up {cardio}</span>
               <span><i style={{ background: "var(--accent)" }} />Lifts {lifts}</span>
             </div>
+            {v2?.briefing && d.date === today && startable && <BriefingInline briefing={v2.briefing} />}
             <ol className="list" style={{ margin: 0, padding: 0, listStyle: "none" }}>
               {plan.exercises.map((e) => (
                 <li key={e.slug} className="list-row" style={{ minHeight: "var(--size-tap)" }}>
@@ -525,6 +551,47 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
           </Link>
         </section>
       </div>
+
+      {quick !== null && (() => {
+        const q = strip[quick];
+        const qPlan = q.sessionOrigin ? data.days[weekdayOf(q.sessionOrigin)] : null;
+        const canStart = !!qPlan && (q.status === "today" || q.status === "next" || q.status === "light");
+        const canLight = !!qPlan && q.status !== "done" && q.status !== "missed";
+        const canSkip = !!qPlan && (q.status === "today" || q.status === "next");
+        const canRestore = q.status === "skipped" && !!q.skippedOrigin;
+        const close = () => setQuick(null);
+        return (
+          <>
+            <div className="scrim anim-fade" onClick={close} />
+            <div className="sheet-wrap">
+              <div className="sheet" role="dialog" aria-label={`${longDay(q.weekday)} quick actions`}>
+                <span className="sheet-grab" />
+                <div className="row between">
+                  <h2 className="t-title">{longDay(q.weekday)}{qPlan ? ` · ${qPlan.shortName}` : ""}</h2>
+                  <button type="button" className="icon-btn" aria-label="Close" onClick={close}><Icon name="x" /></button>
+                </div>
+                {canStart && (
+                  <Link className="btn btn-primary btn-block" href={`/workout?date=${q.sessionOrigin}`} prefetch={false}>
+                    <Icon name="play" />{q.status === "next" ? "Start it early" : "Start now"}
+                  </Link>
+                )}
+                {canLight && (
+                  <button type="button" className="btn btn-secondary btn-block" disabled={pending} onClick={() => { run(() => setLight(q.sessionOrigin!, !q.light)); close(); }}>
+                    {q.light ? "Back to a normal session" : "Make it a light session"}
+                  </button>
+                )}
+                {canSkip && (
+                  <button type="button" className="btn btn-secondary btn-block" disabled={pending} onClick={() => { run(() => skipDay(q.sessionOrigin!)); close(); }}>Skip this one</button>
+                )}
+                {canRestore && (
+                  <button type="button" className="btn btn-secondary btn-block" disabled={pending} onClick={() => { run(() => undoMissed(q.skippedOrigin!)); close(); }}>Bring it back</button>
+                )}
+                {!canStart && !canLight && !canSkip && !canRestore && <p className="t-body c-2">Nothing to change on this day.</p>}
+              </div>
+            </div>
+          </>
+        );
+      })()}
 
       {(startable || sel !== todayIdx) && (
       <div className="bottom-bar above-tabs">

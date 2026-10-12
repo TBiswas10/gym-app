@@ -31,8 +31,37 @@ export function BriefingCard({ briefing }: { briefing: Briefing }) {
   );
 }
 
+/** The same briefing, inside the day's card: only what the card does not already say (what to try, and the notes). */
+export function BriefingInline({ briefing }: { briefing: Briefing }) {
+  if (briefing.tries.length === 0 && briefing.notes.length === 0) return null;
+  return (
+    <div className="col g2 brief-inline" aria-label="For today">
+      <span className="t-eyebrow c-accent">For today</span>
+      {briefing.tries.length > 0 && (
+        <ul className="brief-list">
+          {briefing.tries.map((t) => (
+            <li key={t}><Icon name="arrow-up" size={16} /><span className="t-body">{t}</span></li>
+          ))}
+        </ul>
+      )}
+      {briefing.notes.map((n) => (
+        <p key={n} className="t-small c-2">{n}</p>
+      ))}
+    </div>
+  );
+}
+
+/** Suggestions one at a time, so Today never stacks them. */
+export function NudgeStack({ nudges }: { nudges: Nudge[] }) {
+  const [done, setDone] = useState<string[]>([]);
+  const left = nudges.filter((n) => !done.includes(n.key));
+  if (left.length === 0) return null;
+  const n = left[0];
+  return <NudgeCard key={n.key} nudge={n} position={nudges.length > 1 ? `${done.length + 1} of ${nudges.length}` : undefined} onDone={() => setDone((d) => [...d, n.key])} />;
+}
+
 /** A suggestion about your plan. Nothing changes unless you accept it. */
-export function NudgeCard({ nudge }: { nudge: Nudge }) {
+export function NudgeCard({ nudge, position, onDone }: { nudge: Nudge; position?: string; onDone?: () => void }) {
   const [gone, setGone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -40,12 +69,17 @@ export function NudgeCard({ nudge }: { nudge: Nudge }) {
   const answer = (accept: boolean) =>
     start(async () => {
       const r = await answerNudge(nudge.key, nudge.kind, nudge.payload, accept);
-      if (r.ok) setGone(true);
-      else setError(r.error);
+      if (r.ok) {
+        setGone(true);
+        onDone?.();
+      } else setError(r.error);
     });
   return (
     <section className="card card-warning anim-in" aria-label="Suggestion">
-      <span className="t-eyebrow c-warning row g2"><Icon name="info" size={16} />Suggestion</span>
+      <div className="row between">
+        <span className="t-eyebrow c-warning row g2"><Icon name="info" size={16} />Suggestion</span>
+        {position && <span className="t-small c-2">{position}</span>}
+      </div>
       <div className="col g1">
         <h2 className="t-heading">{nudge.title}</h2>
         <p className="t-small c-2">{nudge.body}</p>
@@ -76,7 +110,31 @@ export function ReviewTeaser({ review }: { review: ReviewView }) {
 /** Progress: the weekly review written by Claude, with the earlier ones under it. */
 export function ReviewCard({ reviews }: { reviews: ReviewView[] }) {
   const [more, setMore] = useState(false);
-  if (!reviews.length) return null;
+  const [copied, setCopied] = useState(false);
+  if (!reviews.length) {
+    const ask = "Write my weekly review";
+    return (
+      <section className="card card-dashed" aria-label="Weekly review">
+        <h2 className="t-heading">Weekly review</h2>
+        <p className="t-small c-2">Claude can read your week and write a short review that shows up here. In Claude, say:</p>
+        <p className="t-body" style={{ fontWeight: 700 }}>“{ask}”</p>
+        <button
+          type="button"
+          className="btn btn-secondary btn-block"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(ask);
+              setCopied(true);
+            } catch {
+              /* the phrase is on screen to type */
+            }
+          }}
+        >
+          {copied ? "Copied" : "Copy that to ask Claude"}
+        </button>
+      </section>
+    );
+  }
   const [latest, ...older] = reviews;
   const list = (title: string, items: string[]) =>
     items.length > 0 && (
@@ -142,11 +200,16 @@ export function GoalsCard({ goals, choices }: { goals: GoalView[]; choices: { sl
     <section className="card" aria-label="Goals">
       <div className="row between baseline">
         <h2 className="t-heading">Goals</h2>
-        {!adding && free.length > 0 && (
+        {!adding && free.length > 0 && goals.length > 0 && (
           <button type="button" className="btn btn-tertiary" onClick={() => { setSlug(free[0].slug); setAdding(true); }}>Add a goal</button>
         )}
       </div>
-      {goals.length === 0 && !adding && <p className="t-small c-2">Pick a lift and a number to chase. The bar fills as you get closer.</p>}
+      {goals.length === 0 && !adding && (
+        <>
+          <p className="t-small c-2">{free.length > 0 ? "Pick a lift and a number to chase. The bar fills as you get closer." : "Finish a workout first, then you can set a goal for any lift you have logged."}</p>
+          {free.length > 0 && <button type="button" className="btn btn-secondary btn-block" onClick={() => { setSlug(free[0].slug); setAdding(true); }}>Add your first goal</button>}
+        </>
+      )}
       <div className="col g3">
         {goals.map((g) => (
           <div key={g.id} className="col g1">

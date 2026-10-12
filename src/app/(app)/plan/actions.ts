@@ -133,3 +133,44 @@ export async function undoChangeAction(id: string): Promise<Result> {
   revalidatePath("/", "layout");
   return { ok: true };
 }
+
+/** Your own Swap-button substitute for one exercise. An empty name goes back to the built-in one. */
+export async function saveBackup(slug: string, name: string): Promise<Result> {
+  const clean = String(name ?? "").trim();
+  if (!SLUG.test(slug) || clean.length > 60 || (clean !== "" && clean.length < 2)) return { ok: false, error: FRIENDLY };
+  const supabase = await createClient();
+  const { data: prev } = await supabase.from("user_exercise_settings").select("*").eq("exercise_slug", slug).maybeSingle();
+  const { error } = await supabase.from("user_exercise_settings").upsert({ exercise_slug: slug, backup_name: clean || null }, { onConflict: "user_id,exercise_slug" });
+  if (error) return { ok: false, error: FRIENDLY };
+  const previous = prev ? (({ user_id: _u, ...r }) => (void _u, r))(prev) : null;
+  await recordChange(supabase, {
+    source: "app", action: "exercise_settings", undoable: true,
+    summary: clean ? `Swap substitute for ${slug} set to ${clean}` : `Swap substitute for ${slug} back to the built-in one`,
+    before: { kind: "exercise_settings", exercise_slug: slug, previous },
+  });
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+const MACHINE_WORD = /(bike|treadmill|stair|rower|cross-trainer)/i;
+
+/** One day's cardio in your plan: what you start on and for how long. */
+export async function savePlanCardio(templateId: string, weekday: number, name: string, minutes: number): Promise<Result> {
+  const clean = String(name ?? "").trim();
+  if (!UUID.test(templateId) || !Number.isInteger(weekday) || weekday < 1 || weekday > 7) return { ok: false, error: FRIENDLY };
+  if (clean.length < 2 || clean.length > 60 || !MACHINE_WORD.test(clean) || !Number.isInteger(minutes) || minutes < 5 || minutes > 60) return { ok: false, error: FRIENDLY };
+  const supabase = await createClient();
+  const { data: day } = await supabase.from("template_days").select("full_name, cardio_name, cardio_label, cardio_minutes").eq("template_id", templateId).eq("weekday", weekday).maybeSingle();
+  if (!day) return { ok: false, error: FRIENDLY };
+  const next = { cardio_name: clean, cardio_minutes: minutes, cardio_label: `${minutes} min` };
+  if (day.cardio_name === next.cardio_name && day.cardio_minutes === next.cardio_minutes) return { ok: true };
+  const { error } = await supabase.from("template_days").update(next).eq("template_id", templateId).eq("weekday", weekday);
+  if (error) return { ok: false, error: FRIENDLY };
+  await recordChange(supabase, {
+    source: "app", action: "edit_plan_cardio", undoable: true,
+    summary: `${day.full_name} cardio: ${day.cardio_name} (${day.cardio_label}) → ${next.cardio_name} (${next.cardio_label})`,
+    before: { kind: "edit_plan_cardio", template_id: templateId, weekday, previous: { cardio_name: day.cardio_name, cardio_label: day.cardio_label, cardio_minutes: day.cardio_minutes } },
+  });
+  revalidatePath("/", "layout");
+  return { ok: true };
+}

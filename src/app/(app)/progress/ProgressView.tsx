@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { Icon } from "@/components/Icon";
 import { LineChart } from "@/components/LineChart";
 import { GoalsCard, ReviewCard } from "@/components/V2Cards";
@@ -32,6 +32,26 @@ export function ProgressView({ data }: { data: ProgressData }) {
   const delta = chip && chip.values.length > 1 ? chip.values[chip.values.length - 1] - chip.values[0] : 0;
   const shown = all ? ordered : ordered.slice(0, SHOWN);
 
+  // One line that says where you are, before any chart.
+  const streak = data.consistency.streak;
+  const story = data.empty
+    ? "Finish your first workout and this page fills in."
+    : [
+        `Week ${data.week} of 12.`,
+        withChange.length > 0 ? `${up} of ${withChange.length} lifts are up.` : "",
+        streak > 0 ? `${streak} full ${streak === 1 ? "week" : "weeks"} in a row.` : "",
+      ].filter(Boolean).join(" ");
+
+  // Tapping a record opens that lift's chart at the top.
+  const strengthRef = useRef<HTMLElement | null>(null);
+  const openLift = (name: string) => {
+    const r = rows.find((x) => x.c.name === name);
+    if (!r) return;
+    setSel(r.i);
+    setAll(true);
+    strengthRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const energy = data.trend.map((t) => t.energy);
   const soreness = data.trend.map((t) => t.soreness);
 
@@ -40,10 +60,11 @@ export function ProgressView({ data }: { data: ProgressData }) {
       <div className="scroll">
         <div className="row between">
           <h1 className="t-title">Progress</h1>
-          <span className="tag">Week {data.week} of 12</span>
+          <Link className="btn btn-tertiary" href="/progress/history">History</Link>
         </div>
+        <p className="t-body" style={{ fontWeight: 700 }}>{story}</p>
 
-        <section className="card" aria-label="Strength">
+        <section className="card" aria-label="Strength" ref={strengthRef}>
           {chip ? (
             <>
               <div className="col g1">
@@ -161,10 +182,13 @@ export function ProgressView({ data }: { data: ProgressData }) {
             <h2 className="t-heading">Records</h2>
             <div className="col g2">
               {data.records.map((r) => (
-                <div key={r.name} className="row between g3">
+                <button key={r.name} type="button" className="rec-row" onClick={() => openLift(r.name)} aria-label={`${r.name}, best ${r.text}. Show its chart.`}>
                   <span className="t-body">{r.name}</span>
-                  <span className="t-body" style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{r.text}</span>
-                </div>
+                  <span className="row g2">
+                    <span className="t-body" style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{r.text}</span>
+                    <span className="c-2"><Icon name="chevron-right" size={16} /></span>
+                  </span>
+                </button>
               ))}
             </div>
           </section>

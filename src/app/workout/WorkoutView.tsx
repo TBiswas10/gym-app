@@ -248,6 +248,24 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const [guideOpen, setGuideOpen] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  // The set that was just logged gets a quick pop, so you can tell it registered without reading.
+  const [just, setJust] = useState(-1);
+
+  // After the last set of a lift, when the rest runs out, move on by itself (with a moment to say no).
+  const [autoAt, setAutoAt] = useState<number | null>(null);
+  const autoOff = useRef(-1);
+  const restOver = !!rest && restLeft === 0;
+  const wantAuto = restOver && complete && !!next && !editing && autoOff.current !== ws.cur;
+  useEffect(() => {
+    if (wantAuto) setAutoAt((a) => a ?? Date.now() + 3000);
+    else setAutoAt(null);
+  }, [wantAuto]);
+  const autoGo = useRef<() => void>(() => {});
+  useEffect(() => {
+    if (autoAt === null) return;
+    const t = window.setTimeout(() => autoGo.current(), Math.max(0, autoAt - Date.now()));
+    return () => window.clearTimeout(t);
+  }, [autoAt]);
   const [reorder, setReorder] = useState(false);
   // Drag a lift by its handle: the row follows your finger and swaps places as it passes its neighbours.
   const [drag, setDrag] = useState<{ slug: string; startY: number; h: number; emitted: number } | null>(null);
@@ -318,12 +336,25 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
       ? `${n.planned} × ${targetLabel(n)}${n.last && !n.swapped ? ` · Last ${lastLabel(n)}` : " · First time"}`
       : n.kind === "cardio" ? meta.cardioLabel : "2–3 min · optional";
 
+  const restNext =
+    ex && !complete
+      ? `Then set ${ex.sets.length + 1} of ${ex.planned}`
+      : next && nextLabel
+        ? `Next: ${nextLabel}${next.kind === "ex" ? ` · ${next.planned} × ${targetLabel(next)}` : ""}`
+        : "Then finish up";
+  autoGo.current = () => {
+    stopRest();
+    run(advance(wsRef.current));
+  };
+
   // ---- actions
   const onLog = () => {
     if (!ex) return;
     const n = ex.sets.length + 1;
     haptic("tap");
     run(logSet(ws, crypto.randomUUID()), { toast: `Nice work. Set ${n} logged.`, undoable: true });
+    setJust(n - 1);
+    window.setTimeout(() => setJust(-1), 700);
     startRest(restSecondsAfter(n), restAlertText({ name: dispName(ex), setsLogged: n, planned: ex.planned, kind: ex.exKind, kg: ex.kg, reps: ex.reps, secs: ex.secs, nextName: nextLabel }));
   };
   const onUpdate = () => {
@@ -349,7 +380,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   if (s.kind === "warm") { primaryLabel = "Warm-up done"; primaryAct = () => { local(advance(ws)); }; }
   else if (ex) {
     if (editing) { primaryLabel = `Update set ${ws.editIdx + 1}`; primaryAct = onUpdate; }
-    else if (ex.sets.length < ex.planned) { primaryLabel = `Log set ${ex.sets.length + 1}`; primaryAct = onLog; }
+    else if (ex.sets.length < ex.planned) { primaryLabel = `Log set ${ex.sets.length + 1} · ${setText(ex, { kg: ex.kg, reps: ex.reps, secs: ex.secs })}`; primaryAct = onLog; }
     else { primaryLabel = nextLabel ? `Next: ${nextLabel}` : "Next"; primaryAct = () => { stopRest(); run(advance(ws)); }; }
   } else if (s.kind === "cardio") { primaryLabel = "Cardio done"; primaryAct = () => run(finishCardio(ws), { toast: "Cardio logged.", undoable: true }); }
   else { primaryLabel = "Finish session"; primaryAct = onFinish; }
@@ -420,6 +451,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
               </div>
               <div className="col grow g1">
                 <span className="t-eyebrow c-accent">Rest</span>
+                <strong className="t-body">{restNext}</strong>
                 <span className="t-caption c-2" style={{ fontWeight: 600 }}>{notify ? "Alert when rest ends: on" : "Alert when rest ends: off"}</span>
               </div>
               <button type="button" className={`icon-btn ${notify ? "is-on" : ""}`} aria-pressed={notify} aria-label="Notify me when rest ends" onClick={toggleNotify}>
@@ -432,6 +464,13 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
               <button type="button" className="btn btn-tertiary" onClick={stopRest}>Skip</button>
             </div>
             {notifyNote && <div className="banner banner-info" role="status"><Icon name="info" /><span>{notifyNote}</span></div>}
+          </div>
+        )}
+        {autoAt !== null && next && nextLabel && (
+          <div className="banner banner-info anim-in" role="status" style={{ alignItems: "center" }}>
+            <Icon name="skip-forward" size={16} />
+            <span className="grow"><b>Next up: {nextLabel}.</b> Moving on.</span>
+            <button type="button" className="btn btn-secondary" onClick={() => { autoOff.current = ws.cur; setAutoAt(null); }}>Stay here</button>
           </div>
         )}
       </header>
@@ -488,7 +527,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                 const value = v ? setText(ex, v) : isCur ? "Now" : "";
                 const cls = isEd ? "logged editing" : v ? "logged" : isCur ? "now" : "todo";
                 return v ? (
-                  <button key={i} type="button" className={`set ${cls}`} aria-label={`Edit set ${i + 1}: ${value}`} onClick={() => local(startEdit(ws, i))}>
+                  <button key={i} type="button" className={`set ${cls}${just === i ? " anim-pop" : ""}`} aria-label={`Edit set ${i + 1}: ${value}`} onClick={() => local(startEdit(ws, i))}>
                     <span className="set-n">Set {i + 1}</span><span className="set-v">{value}</span>
                   </button>
                 ) : (

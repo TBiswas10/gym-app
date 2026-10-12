@@ -179,3 +179,6 @@
 .tip summary::-webkit-details-marker{display:none}
 .tip-body{display:flex;flex-direction:column;gap:var(--space-2);padding-bottom:var(--space-2)}
 .tip-list{margin:0;padding-left:var(--space-5);display:flex;flex-direction:column;gap:var(--space-1)}
+.brief-inline{padding:var(--space-3);border-radius:var(--radius-sm);background:var(--accent-subtle)}
+.rec-row{appearance:none;width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);min-height:var(--size-tap);padding:0;background:transparent;border:0;color:var(--text);text-align:left}
+.rec-row:active{background:var(--raised)}

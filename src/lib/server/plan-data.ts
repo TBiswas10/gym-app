@@ -27,6 +27,8 @@ export interface PlanData {
   trackBodyweight: boolean;
   testMode?: boolean;
   email: string;
+  /** Per exercise: your own Swap-button substitute (null = use the built-in one) and the built-in one. */
+  backups?: Record<string, { own: string | null; builtin: string | null }>;
 }
 
 const kindOf = (k: string): ExerciseKind => (k === "timed" || k === "bodyweight" ? k : "weight");
@@ -43,10 +45,11 @@ export async function loadPlan(supabase: ServerClient, uid: string, email: strin
   }
   if (!tpl) throw new Error("plan missing");
 
-  const [daysRes, exRes, libRes] = await Promise.all([
+  const [daysRes, exRes, libRes, ownRes] = await Promise.all([
     supabase.from("template_days").select("weekday, short_name, full_name, cardio_name, cardio_label, cardio_minutes").eq("template_id", tpl.id).order("weekday"),
     supabase.from("template_exercises").select("weekday, position, sets, rep_lo, rep_hi, exercise_slug, exercises(name, kind)").eq("template_id", tpl.id).order("position"),
-    supabase.from("exercises").select("slug, name, muscle_group, kind, rep_lo, rep_hi").order("sort_order"),
+    supabase.from("exercises").select("slug, name, muscle_group, kind, rep_lo, rep_hi, backup_name").order("sort_order"),
+    supabase.from("user_exercise_settings").select("exercise_slug, backup_name"),
   ]);
   for (const r of [daysRes, exRes, libRes]) if (r.error) throw r.error;
 
@@ -60,7 +63,12 @@ export async function loadPlan(supabase: ServerClient, uid: string, email: strin
       }),
   }));
 
+  const own = new Map((ownRes.data ?? []).map((r) => [r.exercise_slug, r.backup_name]));
+  const backups: NonNullable<PlanData["backups"]> = {};
+  for (const e of libRes.data ?? []) backups[e.slug] = { own: own.get(e.slug) ?? null, builtin: e.backup_name };
+
   return {
+    backups,
     planType, templateId: tpl.id, days,
     library: (libRes.data ?? []).map((e) => ({ slug: e.slug, name: e.name, group: e.muscle_group, kind: kindOf(e.kind), repLo: e.rep_lo, repHi: e.rep_hi })),
     restAlerts: state.rest_alerts, trackBodyweight: state.track_bodyweight, testMode: !!state.test_mode, email,

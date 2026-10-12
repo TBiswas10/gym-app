@@ -14,8 +14,8 @@ export const dynamic = "force-dynamic";
 
 const MACHINE_WORDS: Record<string, string> = { bike: "bike", treadmill: "treadmill", stair: "stair machine", rower: "rower", xtrainer: "cross-trainer" };
 
-export default async function CompletePage({ searchParams }: { searchParams: Promise<{ w?: string; problem?: string }> }) {
-  const { w, problem } = await searchParams;
+export default async function CompletePage({ searchParams }: { searchParams: Promise<{ w?: string; problem?: string; edit?: string }> }) {
+  const { w, problem, edit } = await searchParams;
   if (!w || !/^[0-9a-f-]{36}$/i.test(w)) redirect("/");
   const supabase = await createClient();
 
@@ -71,6 +71,7 @@ export default async function CompletePage({ searchParams }: { searchParams: Pro
     <CompleteView
       workoutId={w}
       problem={!!problem}
+      initialStage={edit ? "checkin" : undefined}
       data={{
         name: workout.day_name,
         line,

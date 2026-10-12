@@ -77,3 +77,17 @@ export async function toggleRestLog(date: string, kind: "walk" | "stretch", on: 
   revalidatePath("/", "layout");
   return { ok: true };
 }
+
+/** Skip a session that is today or later this week (it can still be done later with "Do it now"). */
+export async function skipDay(plannedDate: string): Promise<ActionResult> {
+  if (!isDate(plannedDate)) return { ok: false, error: FRIENDLY };
+  const today = sydneyToday();
+  if (!weekDates(today).includes(plannedDate) || plannedDate < today) return { ok: false, error: FRIENDLY };
+  const supabase = await createClient();
+  const { data: existing } = await supabase.from("schedule_overrides").select("action").eq("planned_date", plannedDate).maybeSingle();
+  if (existing && existing.action === "moved") return { ok: false, error: "That day was already moved." };
+  const { error } = await supabase.from("schedule_overrides").upsert({ planned_date: plannedDate, action: "skipped", moved_to_date: null }, { onConflict: "user_id,planned_date" });
+  if (error) return { ok: false, error: FRIENDLY };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}

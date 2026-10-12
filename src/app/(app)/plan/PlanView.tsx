@@ -5,17 +5,20 @@ import { useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { logOut } from "@/lib/auth-actions";
 import { shortDay } from "@/lib/dates";
+import { defaultMachine, MACHINES, machineLabel, type MachineId } from "@/lib/cardio";
 import { estimateMinutes } from "@/lib/plan";
 import { add, estimateNote, move, rangeLabel, rangesFor, removeAt, setRange, setSets, type Row } from "@/lib/plan-edit";
 import type { PlanData } from "@/lib/server/plan-data";
 import { disableRestAlerts, enableRestAlerts, PUSH_MESSAGE } from "@/lib/push-client";
-import { saveSettings, savePlanDay, setTestMode, switchPlan, type Result } from "./actions";
+import { saveBackup, savePlanCardio, saveSettings, savePlanDay, setTestMode, switchPlan, type Result } from "./actions";
 
 export function PlanView({ data }: { data: PlanData }) {
   const [days, setDays] = useState(data.days);
   const [dayIdx, setDayIdx] = useState(0);
   const [open, setOpen] = useState(0);
   const [adding, setAdding] = useState(false);
+  const [backups, setBackups] = useState(data.backups ?? {});
+  const [cardioOpen, setCardioOpen] = useState(false);
   const [restAlerts, setRestAlerts] = useState(data.restAlerts);
   const [bodyweight, setBodyweight] = useState(data.trackBodyweight);
   const [testMode, setTestModeState] = useState(!!data.testMode);
@@ -44,6 +47,21 @@ export function PlanView({ data }: { data: PlanData }) {
     setDays(days.map((d, i) => (i === dayIdx ? { ...d, exercises: next } : d)));
     run(() => savePlanDay(data.templateId, day.weekday, next.map((r) => ({ slug: r.slug, sets: r.sets, repLo: r.repLo, repHi: r.repHi }))), () => setDays(before));
   };
+
+  /** What the Swap button offers for one exercise ("" = the built-in one). */
+  const changeBackup = (slug: string, name: string) => {
+    const before = backups;
+    setBackups({ ...backups, [slug]: { own: name || null, builtin: backups[slug]?.builtin ?? null } });
+    run(() => saveBackup(slug, name), () => setBackups(before));
+  };
+
+  /** The day's cardio: machine and minutes. */
+  const changeCardio = (name: string, mins: number) => {
+    const before = days;
+    setDays(days.map((d, i) => (i === dayIdx ? { ...d, cardioName: name, cardioMinutes: mins, cardioLabel: `${mins} min` } : d)));
+    run(() => savePlanCardio(data.templateId, day.weekday, name, mins), () => setDays(before));
+  };
+  const cardioMachine: MachineId = defaultMachine(day.cardioName);
 
   const pickPlan = (p: "5day" | "3day") => {
     if (p === data.planType) return;
@@ -168,6 +186,16 @@ export function PlanView({ data }: { data: PlanData }) {
                       <button type="button" className="btn btn-secondary" style={{ flex: 1, padding: "0 var(--space-2)" }} disabled={i === rows.length - 1} aria-label="Move down" onClick={() => { commit(move(rows, i, 1)); setOpen(i + 1); }}>Down</button>
                       <button type="button" className="btn btn-tertiary" style={{ flex: 1, padding: "0 var(--space-2)", color: "var(--danger)" }} onClick={() => { commit(removeAt(rows, i)); setOpen(-1); }}>Remove</button>
                     </div>
+                    <div className="col g2">
+                      <label className="t-body" style={{ fontWeight: 700 }} htmlFor={`sub-${r.slug}`}>Swap button offers</label>
+                      <select id={`sub-${r.slug}`} className="input" value={backups[r.slug]?.own ?? ""} onChange={(e) => changeBackup(r.slug, e.target.value)}>
+                        <option value="">Built-in: {backups[r.slug]?.builtin ?? "a similar exercise"}</option>
+                        {data.library.filter((l) => l.slug !== r.slug).map((l) => (
+                          <option key={l.slug} value={l.name}>{l.name}</option>
+                        ))}
+                      </select>
+                      <span className="t-small c-2">What you get when a machine is busy and you tap Swap.</span>
+                    </div>
                     <Link className="link" href={`/library/${r.slug}`}>Weight jump and form guide <Icon name="chevron-right" size={20} /></Link>
                   </div>
                 </div>
@@ -175,9 +203,32 @@ export function PlanView({ data }: { data: PlanData }) {
             );
           })}
 
-          <div className="card" style={{ flexDirection: "row", alignItems: "center", padding: "var(--space-3) var(--space-4)" }}>
-            <span className="round round-subtle"><Icon name="timer" /></span>
-            <span className="col"><strong className="t-body">Cardio · {day.cardioName}</strong><span className="t-small c-2">{day.cardioLabel} · talk-test pace</span></span>
+          <div className="card" style={{ padding: 0, gap: 0, ...(cardioOpen ? { borderColor: "var(--border-strong)" } : {}) }}>
+            <button type="button" className="list-row" style={{ padding: "var(--space-3) var(--space-4)", background: "transparent", border: 0, color: "var(--text)", textAlign: "left", width: "100%", borderTop: 0 }} aria-expanded={cardioOpen} onClick={() => setCardioOpen((v) => !v)}>
+              <span className="round round-subtle"><Icon name="timer" /></span>
+              <span className="col" style={{ flex: 1, minWidth: 0 }}><strong className="t-body">Cardio · {day.cardioName}</strong><span className="t-small c-2">{day.cardioLabel} · talk-test pace</span></span>
+              <span className="c-2" style={{ transform: cardioOpen ? "rotate(180deg)" : "none" }}><Icon name="chevron-right" /></span>
+            </button>
+            <div className={`collapse ${cardioOpen ? "is-open" : ""}`} aria-hidden={!cardioOpen} inert={!cardioOpen}>
+              <div className="col g4" style={{ padding: "0 var(--space-4) var(--space-4)" }}>
+                <div className="col g2">
+                  <span className="t-body" style={{ fontWeight: 700 }}>Start on</span>
+                  <div className="row g2 wrap">
+                    {MACHINES.map((m) => (
+                      <button key={m.id} type="button" className="chip" aria-pressed={cardioMachine === m.id} onClick={() => changeCardio(machineLabel(m.id), day.cardioMinutes)}>{machineLabel(m.id)}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="row between">
+                  <span className="t-body" style={{ fontWeight: 700 }}>Minutes</span>
+                  <div className="row g3">
+                    <button type="button" className="step-btn" style={{ width: 48, height: 48 }} aria-label="Fewer minutes" disabled={day.cardioMinutes <= 5} onClick={() => changeCardio(day.cardioName, day.cardioMinutes - 1)}><Icon name="minus" /></button>
+                    <span className="num-m" style={{ minWidth: 40, textAlign: "center" }}>{day.cardioMinutes}</span>
+                    <button type="button" className="step-btn" style={{ width: 48, height: 48 }} aria-label="More minutes" disabled={day.cardioMinutes >= 30} onClick={() => changeCardio(day.cardioName, day.cardioMinutes + 1)}><Icon name="plus" /></button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <p className="t-small c-2">Every session starts with cardio, which is your warm-up, and can end with an optional 2 to 3 min cool-down.</p>
           <button type="button" className="btn btn-secondary btn-block" disabled={rows.length >= 8 || available.length === 0} onClick={() => setAdding(true)}>Add exercise</button>
