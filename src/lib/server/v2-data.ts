@@ -40,6 +40,8 @@ export interface ReviewView {
 }
 
 export interface V2Today {
+  /** slug -> a short "last time" like "30 kg" or "40 s" */
+  lasts?: Record<string, string>;
   briefing: Briefing | null;
   nudges: Nudge[];
   review: ReviewView | null;
@@ -134,6 +136,16 @@ export async function loadV2Today(supabase: ServerClient, t: TodayData): Promise
     });
   }
 
+  // Last time, short, for every lift in the plan (shown on Today's list).
+  const lasts: Record<string, string> = {};
+  for (const d of Object.values(t.days)) {
+    for (const e of d.exercises) {
+      const l = cx.lastBySlug[e.slug];
+      if (!l) continue;
+      lasts[e.slug] = e.kind === "timed" ? `${Math.max(...l.secs, 0)} s` : l.kg ? `${l.kg} kg` : l.reps.length ? `${Math.max(...l.reps)} reps` : "";
+    }
+  }
+
   // Nudges: the next session still to do, and whether it is already a light one.
   const next = t.strip.find((d) => d.sessionOrigin && d.date >= t.today && d.status !== "done" && d.status !== "skipped");
   const answered = new Set((answeredRes.data ?? []).map((r) => r.key));
@@ -153,5 +165,5 @@ export async function loadV2Today(supabase: ServerClient, t: TodayData): Promise
   const latest = reviews[0];
   const review = latest && latest.weekStart >= addDays(t.today, -13) ? latest : null;
 
-  return { briefing, nudges, review };
+  return { lasts, briefing, nudges, review };
 }

@@ -110,7 +110,7 @@ export function NudgeCard({ nudge, position, onDone }: { nudge: Nudge; position?
 export function ReviewTeaser({ review }: { review: ReviewView }) {
   return (
     <Link href="/progress" className="row-link" style={{ textDecoration: "none", color: "var(--text)" }}>
-      <span className="round round-accent"><Icon name="chart" /></span>
+      <span className="round round-subtle"><Icon name="chart" /></span>
       <span className="col" style={{ flex: 1, minWidth: 0 }}>
         <strong>Your weekly review</strong>
         <span className="t-small c-2" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{review.headline}</span>

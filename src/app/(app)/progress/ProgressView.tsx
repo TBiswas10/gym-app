@@ -24,6 +24,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
   const up = withChange.filter((r) => r.delta > 0).length;
   const best = ordered.find((r) => r.moved && r.delta > 0) ?? null;
 
+  const [tab, setTab] = useState<"strength" | "week" | "plan">("strength");
   const [sel, setSel] = useState(best ? best.i : 0);
   const [all, setAll] = useState(false);
   const chip = data.chips[sel];
@@ -64,6 +65,13 @@ export function ProgressView({ data }: { data: ProgressData }) {
         </div>
         <p className="t-body" style={{ fontWeight: 700 }}>{story}</p>
 
+        <div className="segmented" role="tablist" aria-label="Progress sections">
+          {([["strength", "Strength"], ["week", "This week"], ["plan", "12 weeks"]] as const).map(([id, label]) => (
+            <button key={id} type="button" className="seg" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>
+          ))}
+        </div>
+
+        <div hidden={tab !== "strength"} className="col g4" role="tabpanel">
         <section className="card" aria-label="Strength" ref={strengthRef}>
           {chip ? (
             <>
@@ -131,10 +139,29 @@ export function ProgressView({ data }: { data: ProgressData }) {
           )}
         </section>
 
-        <ReviewCard reviews={data.reviews ?? []} />
-
         <GoalsCard goals={data.goals ?? []} choices={data.chips.map((c) => ({ slug: c.slug, name: c.name, unit: c.unit }))} />
 
+        {data.records.length > 0 && (
+          <details className="card fold" aria-label="Records">
+            <summary><h2 className="t-heading">Records</h2><span className="t-small c-2">{data.records.length}</span></summary>
+            <div className="col g2">
+              {data.records.map((r) => (
+                <button key={r.name} type="button" className="rec-row" onClick={() => openLift(r.name)} aria-label={`${r.name}, best ${r.text}. Show its chart.`}>
+                  <span className="t-body">{r.name}</span>
+                  <span className="row g2">
+                    <span className="t-body" style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{r.text}</span>
+                    <span className="c-2"><Icon name="chevron-right" size={16} /></span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </details>
+        )}
+
+        <ReviewCard reviews={data.reviews ?? []} />
+        </div>
+
+        <div hidden={tab !== "week"} className="col g4" role="tabpanel">
         <section className="card">
           <h2 className="t-heading">This week</h2>
           <div className="grid3">
@@ -180,23 +207,9 @@ export function ProgressView({ data }: { data: ProgressData }) {
           )}
         </section>
 
-        {data.records.length > 0 && (
-          <details className="card fold" aria-label="Records">
-            <summary><h2 className="t-heading">Records</h2><span className="t-small c-2">{data.records.length}</span></summary>
-            <div className="col g2">
-              {data.records.map((r) => (
-                <button key={r.name} type="button" className="rec-row" onClick={() => openLift(r.name)} aria-label={`${r.name}, best ${r.text}. Show its chart.`}>
-                  <span className="t-body">{r.name}</span>
-                  <span className="row g2">
-                    <span className="t-body" style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{r.text}</span>
-                    <span className="c-2"><Icon name="chevron-right" size={16} /></span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </details>
-        )}
+        </div>
 
+        <div hidden={tab !== "plan"} className="col g4" role="tabpanel">
         <section className="card" aria-label="Consistency">
           <div className="row between baseline">
             <h2 className="t-heading">Consistency</h2>
@@ -237,6 +250,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
             </div>
           </details>
         </section>
+        </div>
       </div>
     </>
   );

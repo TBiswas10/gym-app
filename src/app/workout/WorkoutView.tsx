@@ -39,6 +39,14 @@ interface Toast {
 const targetLabel = (e: ExStep): string => `${e.range[0]}–${e.range[1]}${e.exKind === "timed" ? " s" : ""}`;
 const setText = (e: ExStep, v: { kg: number | null; reps: number | null; secs: number | null }): string =>
   e.exKind === "timed" ? `${v.secs} s` : e.exKind === "bodyweight" && !v.kg ? `BW × ${v.reps}` : `${fmtNum(v.kg ?? 0)} kg × ${v.reps}`;
+/** Last time's number for set `i`, shown faintly in the tile so you can see what you are trying to beat. */
+const ghostText = (e: ExStep, i: number): string | null => {
+  if (!e.last || e.swapped) return null;
+  if (e.exKind === "timed") return e.last.secs[i] != null ? `${e.last.secs[i]} s` : null;
+  const r = e.last.reps[i];
+  if (r == null) return null;
+  return e.exKind === "bodyweight" && !e.last.kg ? `BW × ${r}` : `${fmtNum(e.last.kg ?? 0)} kg × ${r}`;
+};
 const lastLabel = (e: ExStep): string => {
   if (!e.last) return "";
   if (e.exKind === "timed") return e.last.secs.map((s) => `${s} s`).join(", ");
@@ -531,7 +539,13 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                     <span className="set-n">Set {i + 1}</span><span className="set-v">{value}</span>
                   </button>
                 ) : (
-                  <div key={i} className={`set ${cls}`}><span className="set-n">Set {i + 1}</span><span className="set-v">{value}</span></div>
+                  <div key={i} className={`set ${cls}`}>
+                    <span className="set-n">Set {i + 1}</span>
+                    <span className="col" style={{ alignItems: "flex-end", gap: 0 }}>
+                      <span className="set-v">{value}</span>
+                      {ghostText(ex, i) && <span className="set-ghost">Last {ghostText(ex, i)}</span>}
+                    </span>
+                  </div>
                 );
               })}
             </div>

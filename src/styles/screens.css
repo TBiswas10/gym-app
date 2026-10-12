@@ -190,3 +190,5 @@
 .fold>summary::-webkit-details-marker,.fold-in>summary::-webkit-details-marker{display:none}
 .fold[open]>summary{margin-bottom:var(--space-2)}
 .fold-in>summary{min-height:var(--size-tap);display:flex;align-items:center;font:700 .9375rem/1.25rem var(--font-body);color:var(--accent);cursor:pointer;list-style:none}
+.set-ghost{font:600 .75rem/1rem var(--font-body);color:var(--text-2);white-space:nowrap}
+[hidden]{display:none!important}

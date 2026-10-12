@@ -33,12 +33,28 @@ function make(opts: { today: string; start: string; completed?: string[]; overri
   };
 }
 const html = (d: TodayData) => renderToStaticMarkup(<TodayView data={d} />);
+const htmlWith = (d: TodayData, v2: NonNullable<Parameters<typeof TodayView>[0]["v2"]>) => renderToStaticMarkup(<TodayView data={d} v2={v2} />);
+
+describe("Today header and list", () => {
+  const base = make({ today: "2026-10-08", start: "2026-09-21", completed: ["2026-10-05", "2026-10-07"], totalDone: 9, weekDone: 2, weekSets: 20 });
+  it("says it is a rest day on a rest day", () => {
+    expect(html(make({ today: "2026-10-09", start: "2026-09-21", completed: ["2026-10-05", "2026-10-07"], totalDone: 9 }))).toContain("Rest day.");
+  });
+  it("says it is done once today is ticked", () => {
+    expect(html(make({ today: "2026-10-08", start: "2026-09-21", completed: ["2026-10-05", "2026-10-07", "2026-10-08"], totalDone: 10 }))).toContain("Done for today. Nice work.");
+  });
+  it("shows last time's number under each lift when it has one", () => {
+    const out = htmlWith(base, { lasts: { chest: "30 kg", plank: "40 s" }, briefing: null, nudges: [], review: null });
+    expect(out).toContain("Last time 30 kg");
+    expect(out).not.toContain("Last time undefined");
+  });
+});
 
 describe("Today screen", () => {
   it("renders the week 3 example from the design", () => {
     const out = html(make({ today: "2026-10-08", start: "2026-09-21", completed: ["2026-10-05", "2026-10-07"], totalDone: 9, weekDone: 2, weekSets: 20, toGo: ["Thursday", "Saturday"] }));
     expect(out).toContain("Thursday 8 October · Week 3 of 12");
-    expect(out).toContain("Hey, nice work this week.");
+    expect(out).toContain("Upper (light) today"); // the header says what today is
     expect(out).toContain("Today · Thursday");
     expect(out).toContain("Upper (light)");
     expect(out).toContain("6 exercises · 2 sets each");
@@ -60,7 +76,7 @@ describe("Today screen", () => {
     const out = html(make({ today: "2026-10-08", start: "2026-10-08", toGo: ["Thursday", "Saturday"] }));
     expect(out).toContain("Welcome. Let’s find your weights.");
     expect(out).toContain("Setup mode · weeks 1 and 2");
-    expect(out).toContain("Your first one is today.");
+    expect(out).toContain("Your first session is today.");
     expect(out).toContain("Thursday and Saturday to go");
     expect(out).not.toContain("Missed workout");
     expect(out).not.toContain("didn’t happen");

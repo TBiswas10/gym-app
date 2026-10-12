@@ -265,8 +265,13 @@ export function PlanView({ data }: { data: PlanData }) {
           <Link className="list-row row-link" href="/install"><span className="col"><span className="t-body" style={{ fontWeight: 600 }}>Add to Home Screen guide</span><span className="t-small c-2">Install it like an app on iPhone</span></span><span className="c-2"><Icon name="chevron-right" /></span></Link>
                   </section>
 
-        <a className="btn btn-secondary btn-block" href="/api/export" download>Export data as CSV</a>
-        <a className="btn btn-secondary btn-block" href="/api/backup" download>Download full backup (JSON)</a>
+        <details className="card fold">
+          <summary><h2 className="t-heading">Your data</h2><span className="t-small c-2">Export and backup</span></summary>
+          <div className="col g2">
+            <a className="btn btn-secondary btn-block" href="/api/export" download>Export data as CSV</a>
+            <a className="btn btn-secondary btn-block" href="/api/backup" download>Download full backup (JSON)</a>
+          </div>
+        </details>
         <form action={logOut}><button type="submit" className="btn btn-tertiary btn-block">Log out{data.email ? ` (${data.email})` : ""}</button></form>
         {pending && <span className="sr" role="status">Saving</span>}
       </div>

@@ -79,12 +79,18 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
 
   // ----- header copy
   const weekDone = data.weekDone;
+  const tStrip = strip[todayIdx];
+  const tPlan = tStrip?.sessionOrigin ? data.days[weekdayOf(tStrip.sessionOrigin)] : null;
   const greeting =
     data.totalDone === 0 && data.setup
       ? "Welcome. Let’s find your weights."
-      : weekDone > 0
-        ? "Hey, nice work this week."
-        : "Ready when you are.";
+      : tStrip?.status === "done"
+        ? "Done for today. Nice work."
+        : tPlan && (tStrip.status === "today" || tStrip.status === "light")
+          ? `${tPlan.fullName} today`
+          : tPlan
+            ? "Rest day. Next up: " + tPlan.shortName
+            : "Rest day. Recover well.";
   const dateLine = `${formatLongDate(today)} · Week ${data.week} of 12`;
 
   // ----- selected day
@@ -402,7 +408,7 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
               </div>
             )}
             <div className="row between g2">
-              <span className="t-eyebrow c-accent">{when}</span>
+              <span className={`t-eyebrow ${d.status === "today" ? "c-accent" : "c-2"}`}>{when}</span>
               <span className="t-small c-2">{countLine(plan.exercises.length)}</span>
             </div>
             <div className="row between end g3">
@@ -424,7 +430,10 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
             <ol className="list" style={{ margin: 0, padding: 0, listStyle: "none" }}>
               {plan.exercises.map((e) => (
                 <li key={e.slug} className="list-row" style={{ minHeight: 40 }}>
-                  <span className="t-body" style={{ fontWeight: 600 }}>{e.name}</span>
+                  <span className="col" style={{ minWidth: 0 }}>
+                    <span className="t-body" style={{ fontWeight: 600 }}>{e.name}</span>
+                    {v2?.lasts?.[e.slug] && <span className="t-caption c-2" style={{ textTransform: "none", letterSpacing: 0 }}>Last time {v2.lasts[e.slug]}</span>}
+                  </span>
                   <span className="t-small c-2" style={{ whiteSpace: "nowrap" }}>
                     {formatTarget(e.sets, e.repLo, e.repHi, e.kind)}
                   </span>
@@ -537,16 +546,8 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
         )}
 
         {/* stats */}
-        <section className="grid2" style={{ gap: "var(--space-3)" }}>
-          <div className="card">
-            <span className="t-small c-2">Sessions done</span>
-            <div className="row baseline g2">
-              <span className="num-m">{data.totalDone}</span>
-              <span className="t-small c-2">so far</span>
-            </div>
-            <span className="t-small c-2">{data.totalDone === 0 ? "Your first one is today." : "Since week 1."}</span>
-          </div>
-          <Link className="card" href="/progress" style={{ gridColumn: "1 / -1" }} aria-label="This week, open progress">
+        <section className="col g3">
+          <Link className="card" href="/progress" aria-label="This week, open progress">
             <div className="row between baseline">
               <span className="t-small c-2">This week</span>
               <span className="t-small c-2">{data.toGo.length ? `${joinNames(data.toGo)} to go` : "All done this week"}</span>
@@ -558,6 +559,7 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
                 { label: "Cardio", done: data.weekCardioMin ?? 0, planned: data.weekCardioPlan ?? 0, unit: " min", color: "var(--success)" },
               ]}
             />
+            <span className="t-small c-2">{data.totalDone === 0 ? "Your first session is today." : `${data.totalDone} ${data.totalDone === 1 ? "session" : "sessions"} so far.`}</span>
           </Link>
         </section>
       </div>
