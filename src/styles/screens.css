@@ -194,3 +194,8 @@
 [hidden]{display:none!important}
 .sync-pill{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--safe-top) - var(--space-4));z-index:40;max-width:calc(100% - var(--space-8));padding:var(--space-2) var(--space-4);border-radius:var(--radius-full);background:var(--raised);border:1px solid var(--border-strong);color:var(--text);font:600 .8125rem/1.1rem var(--font-body);text-align:center;box-shadow:var(--shadow-pop);pointer-events:none}
 .update-bar{position:fixed;left:var(--space-4);right:var(--space-4);top:calc(var(--safe-top) - var(--space-4));z-index:60;display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);padding:var(--space-2) var(--space-2) var(--space-2) var(--space-4);border-radius:var(--radius-full);background:var(--raised);border:1px solid var(--border-strong);box-shadow:var(--shadow-pop);font:700 .9375rem/1.25rem var(--font-body)}
+/* Library: exercises that are in your current plan */
+.lib-in{border-color:var(--border-strong);box-shadow:inset 4px 0 0 var(--accent);background:var(--surface)}
+.lib-days{display:flex;flex-wrap:wrap;gap:var(--space-1);margin-top:var(--space-1)}
+.lib-day{font:700 .75rem/1rem var(--font-body);padding:0 var(--space-2);border-radius:var(--radius-full);background:var(--raised);color:var(--text-2)}
+.lib-day.is-today{background:var(--accent);color:var(--on-accent)}

@@ -61,6 +61,20 @@ describe("Library", () => {
     { slug: "chest", name: "Chest press", group: "Chest", kit: "Machine", muscles: ["Chest"], setup: ["Adjust the seat."], cues: ["Push."], mistakes: ["Locking."] },
     { slug: "lat", name: "Lat pulldown", group: "Back", kit: "Cable", muscles: ["Lats"], setup: ["Set the pad."], cues: ["Pull."], mistakes: ["Swinging."] },
   ];
+  it("marks the exercises that are in your plan, with their days and today", () => {
+    const out = renderToStaticMarkup(<LibraryView items={items} plan={{ chest: [1, 4] }} todayWeekday={4} />);
+    expect(out).toContain("lib-in"); // chest is highlighted
+    expect(out).toContain("My plan (1)");
+    expect(out).toContain("In your plan: Mon, Thu");
+    expect(out).toContain("Today");
+    // lat is not in the plan: it has no days
+    expect(out.match(/lib-in/g)?.length).toBe(1);
+  });
+  it("has no My plan filter and no marks when nothing is in the plan", () => {
+    const out = renderToStaticMarkup(<LibraryView items={items} plan={{}} />);
+    expect(out).not.toContain("My plan");
+    expect(out).not.toContain("lib-in");
+  });
   it("lists exercises with filters", () => {
     const out = renderToStaticMarkup(<LibraryView items={items} />);
     expect(out).toContain("2 exercises. Tap one for a quick guide.");

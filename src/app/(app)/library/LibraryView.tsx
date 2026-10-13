@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ExerciseMedia } from "@/components/ExerciseMedia";
 import { Icon } from "@/components/Icon";
 import { matchesQuery } from "@/lib/library-search";
+import { shortDay } from "@/lib/dates";
 
 export interface LibItem {
   slug: string;
@@ -18,16 +19,18 @@ export interface LibItem {
   mistakes: string[];
 }
 
-const GROUPS = ["All", "Chest", "Back", "Shoulders", "Arms", "Legs", "Core"];
+const GROUPS = ["All", "My plan", "Chest", "Back", "Shoulders", "Arms", "Legs", "Core"];
 const TABS = ["Setup", "How to do it", "Mistakes"];
 
-export function LibraryView({ items }: { items: LibItem[] }) {
+export function LibraryView({ items, plan = {}, todayWeekday }: { items: LibItem[]; plan?: Record<string, number[]>; todayWeekday?: number }) {
   const router = useRouter();
   const [filter, setFilter] = useState("All");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<LibItem | null>(null);
   const [tab, setTab] = useState(0);
-  const rows = items.filter((e) => (filter === "All" || e.group === filter) && matchesQuery(e, query));
+  const inPlan = (slug: string) => (plan[slug]?.length ?? 0) > 0;
+  const planCount = items.filter((e) => inPlan(e.slug)).length;
+  const rows = items.filter((e) => (filter === "All" || (filter === "My plan" ? inPlan(e.slug) : e.group === filter)) && matchesQuery(e, query));
   const list = open ? [open.setup, open.cues, open.mistakes][tab] : [];
 
   return (
@@ -58,8 +61,8 @@ export function LibraryView({ items }: { items: LibItem[] }) {
           )}
         </div>
         <div className="chip-row" role="tablist" aria-label="Filter by group">
-          {GROUPS.map((g) => (
-            <button key={g} type="button" className="chip" role="tab" aria-selected={filter === g} onClick={() => setFilter(g)}>{g}</button>
+          {GROUPS.filter((g) => g !== "My plan" || planCount > 0).map((g) => (
+            <button key={g} type="button" className="chip" role="tab" aria-selected={filter === g} onClick={() => setFilter(g)}>{g === "My plan" ? `My plan (${planCount})` : g}</button>
           ))}
         </div>
         <div className="col g2">
@@ -67,7 +70,7 @@ export function LibraryView({ items }: { items: LibItem[] }) {
             <button
               key={e.slug}
               type="button"
-              className="card"
+              className={`card${inPlan(e.slug) ? " lib-in" : ""}`}
               style={{ flexDirection: "row", alignItems: "center", gap: "var(--space-3)", textAlign: "left", color: "var(--text)", minHeight: 72, padding: "var(--space-3) var(--space-4)" }}
               aria-label={`Open guide for ${e.name}`}
               onPointerDown={() => router.prefetch(`/library/${e.slug}`)}
@@ -77,6 +80,13 @@ export function LibraryView({ items }: { items: LibItem[] }) {
               <span className="col" style={{ flex: 1, minWidth: 0 }}>
                 <strong className="t-heading">{e.name}</strong>
                 <span className="t-small c-2">{e.group} · {e.kit}</span>
+                {inPlan(e.slug) && (
+                  <span className="lib-days" aria-label={`In your plan: ${plan[e.slug].map((d) => shortDay(d)).join(", ")}`}>
+                    {plan[e.slug].map((d) => (
+                      <span key={d} className={`lib-day${d === todayWeekday ? " is-today" : ""}`}>{d === todayWeekday ? "Today" : shortDay(d)}</span>
+                    ))}
+                  </span>
+                )}
               </span>
               <span className="c-2"><Icon name="chevron-right" /></span>
             </button>
