@@ -124,6 +124,43 @@ export function isPB(kind: ExerciseKind, last: LastTime | null, sets: SetValue[]
   return sets.some((s) => (s.kg ?? 0) > lastKg || ((s.kg ?? 0) === lastKg && (s.reps ?? 0) > bestReps));
 }
 
+/**
+ * The set that counts when you describe a session: the longest hold, the most bodyweight reps, or the heaviest weight
+ * (then the most reps at it). NOT the last set: set 2 is often a little lower than set 1 and that is fine.
+ */
+export function bestSet(kind: ExerciseKind, sets: SetValue[]): SetValue | null {
+  let best: SetValue | null = null;
+  for (const s of sets) {
+    if (!best) {
+      best = s;
+      continue;
+    }
+    const better =
+      kind === "timed"
+        ? (s.secs ?? 0) > (best.secs ?? 0)
+        : kind === "bodyweight" && !(s.kg && s.kg > 0) && !(best.kg && best.kg > 0)
+          ? (s.reps ?? 0) > (best.reps ?? 0)
+          : (s.kg ?? 0) > (best.kg ?? 0) || ((s.kg ?? 0) === (best.kg ?? 0) && (s.reps ?? 0) > (best.reps ?? 0));
+    if (better) best = s;
+  }
+  return best;
+}
+
+/** The best set of the last session, from the per-set lists the app keeps. */
+export function bestOfLast(kind: ExerciseKind, last: LastTime): SetValue | null {
+  const n = Math.max(last.reps.length, last.secs.length);
+  const sets: SetValue[] = Array.from({ length: n }, (_, i) => ({ kg: last.kg, reps: last.reps[i] ?? null, secs: last.secs[i] ?? null }));
+  return bestSet(kind, sets);
+}
+
+/** "45 s", "Bodyweight × 14" or "30 kg × 12" (short = "BW × 14"). */
+export function describeSet(kind: ExerciseKind, v: SetValue | null, short = false): string {
+  if (!v) return "";
+  if (kind === "timed") return `${v.secs ?? 0} s`;
+  if (kind === "bodyweight" && !(v.kg && v.kg > 0)) return `${short ? "BW" : "Bodyweight"} × ${v.reps ?? 0}`;
+  return `${fmt(v.kg ?? 0)} kg × ${v.reps ?? 0}`;
+}
+
 export interface Verdict {
   up: boolean;
   title: string;

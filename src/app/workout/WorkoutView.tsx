@@ -10,7 +10,7 @@ import { NumField } from "@/components/NumField";
 import { useSwipeUp } from "@/components/useSwipeUp";
 import { haptic } from "@/lib/haptics";
 import { cardioGuard, extendRest, mmss, restPercent, restRemaining, restSecondsAfter, sessionClock } from "@/lib/timers";
-import { isPB, verdict as verdictFor } from "@/lib/progression";
+import { bestOfLast, bestSet, describeSet, isPB, verdict as verdictFor } from "@/lib/progression";
 import type { Op, Source } from "@/lib/ops";
 import { restoreState,
   addKg, adjust, adjustCardio, advance, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exSpec, exercises,
@@ -298,9 +298,9 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   useEffect(() => {
     if (!pbSlug || !ex || shownPb.current.has(pbSlug)) return;
     shownPb.current.add(pbSlug);
-    const v = ex.sets[ex.sets.length - 1];
-    const now = ex.exKind === "timed" ? `${v?.secs} s` : ex.exKind === "bodyweight" && !v?.kg ? `BW × ${v?.reps}` : `${fmtNum(v?.kg ?? 0)} kg × ${v?.reps}`;
-    setPbCard({ name: dispName(ex), text: ex.last ? `${lastLabel(ex)}  →  ${now}` : now });
+    const now = describeSet(ex.exKind, bestSet(ex.exKind, ex.sets), true);
+    const before = ex.last ? describeSet(ex.exKind, bestOfLast(ex.exKind, ex.last), true) : "";
+    setPbCard({ name: dispName(ex), text: before ? `${before}  →  ${now}` : now });
     haptic("success");
     const t = window.setTimeout(() => setPbCard(null), 2800);
     return () => window.clearTimeout(t);

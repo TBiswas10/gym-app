@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { stallCheck, bothAtTop, highSoreness, isPB, lighten, prefill, roundToStep, suggestNext, verdict, type LastTime, type Spec } from "./progression";
+import { bestOfLast, bestSet, describeSet, stallCheck, bothAtTop, highSoreness, isPB, lighten, prefill, roundToStep, suggestNext, verdict, type LastTime, type Spec } from "./progression";
 
 const upper: Spec = { kind: "weight", repLo: 8, repHi: 12, step: 2.5, increment: 2.5 };
 const legs: Spec = { kind: "weight", repLo: 8, repHi: 12, step: 5, increment: 5 };
@@ -170,5 +170,32 @@ describe("stallCheck", () => {
     expect(stallCheck(spec, [sess(40, [10, 10]), sess(40, [10, 10])])).toBeNull();
     expect(stallCheck(spec, [sess(40, [12, 12]), sess(40, [10, 10]), sess(40, [10, 10])])).toBeNull();
     expect(stallCheck({ ...spec, kind: "timed" }, [sess(40, [10, 10]), sess(40, [10, 10]), sess(40, [10, 10])])).toBeNull();
+  });
+});
+
+describe("the best set (what a personal best shows)", () => {
+  it("a hold of 45 s then 35 s is a 45 s best, not 35 s", () => {
+    const sets = [{ kg: null, reps: null, secs: 45 }, { kg: null, reps: null, secs: 35 }];
+    expect(bestSet("timed", sets)?.secs).toBe(45);
+    expect(describeSet("timed", bestSet("timed", sets))).toBe("45 s");
+    // against last time's 30 s and 30 s it is a PB, and the number to show is 45
+    expect(isPB("timed", { kg: null, reps: [], secs: [30, 30] }, sets)).toBe(true);
+  });
+  it("weighted lifts: the heaviest set, then the most reps at that weight", () => {
+    const sets = [{ kg: 30, reps: 12, secs: null }, { kg: 32.5, reps: 8, secs: null }, { kg: 32.5, reps: 9, secs: null }];
+    expect(describeSet("weight", bestSet("weight", sets))).toBe("32.5 kg × 9");
+  });
+  it("bodyweight lifts: the most reps", () => {
+    const sets = [{ kg: null, reps: 14, secs: null }, { kg: null, reps: 11, secs: null }];
+    expect(describeSet("bodyweight", bestSet("bodyweight", sets))).toBe("Bodyweight × 14");
+    expect(describeSet("bodyweight", bestSet("bodyweight", sets), true)).toBe("BW × 14");
+  });
+  it("last session's best comes from its per-set lists", () => {
+    expect(describeSet("timed", bestOfLast("timed", { kg: null, reps: [], secs: [40, 35] }))).toBe("40 s");
+    expect(describeSet("weight", bestOfLast("weight", { kg: 30, reps: [10, 12], secs: [] }))).toBe("30 kg × 12");
+  });
+  it("is empty for no sets", () => {
+    expect(bestSet("weight", [])).toBeNull();
+    expect(describeSet("weight", null)).toBe("");
   });
 });

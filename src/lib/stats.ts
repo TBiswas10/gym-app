@@ -1,7 +1,7 @@
 // Progress numbers. Pure functions over rows already loaded from the database.
 
 import { programmeWeek } from "./dates";
-import { isPB, type LastTime } from "./progression";
+import { bestSet, isPB, type LastTime } from "./progression";
 import type { ExerciseKind } from "./plan";
 
 export interface HistWorkout {
@@ -103,7 +103,7 @@ export function weekStats(
       if (!kind) continue;
       const rows = sets.filter((s) => s.workout_id === wid && s.exercise_slug === slug && !s.variant).sort((a, b) => a.set_number - b.set_number);
       const vals = rows.map((r) => ({ kg: r.weight_kg, reps: r.reps, secs: r.seconds }));
-      if (isPB(kind, lastBefore(workouts, sets, wid, slug), vals)) pbs.push({ slug, workoutId: wid, value: vals[vals.length - 1] });
+      if (isPB(kind, lastBefore(workouts, sets, wid, slug), vals)) pbs.push({ slug, workoutId: wid, value: bestSet(kind, vals) ?? vals[vals.length - 1] });
     }
   }
   return { sessions: weekWorkoutIds.length, sets: mine.length, groupSets, pbs };

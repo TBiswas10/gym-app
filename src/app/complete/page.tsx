@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isPB, type LastTime } from "@/lib/progression";
+import { bestSet, describeSet, isPB, type LastTime } from "@/lib/progression";
 import { lastTimes } from "@/lib/server/workout-data";
 import { encouragement } from "@/lib/encourage";
 import { consistency } from "@/lib/stats";
@@ -52,8 +52,7 @@ export default async function CompletePage({ searchParams }: { searchParams: Pro
     const kind = e.kind as ExerciseKind;
     const vals = rows.map((r) => ({ kg: r.weight_kg, reps: r.reps, secs: r.seconds }));
     if (!isPB(kind, last[slug] ?? null, vals)) continue;
-    const best = vals[vals.length - 1];
-    pbs.push({ name: e.name, text: kind === "timed" ? `${best.secs} s` : kind === "bodyweight" && !best.kg ? `Bodyweight × ${best.reps}` : `${fmtNum(best.kg ?? 0)} kg × ${best.reps}` });
+    pbs.push({ name: e.name, text: describeSet(kind, bestSet(kind, vals)) });
   }
 
   // The warm line: this week's sessions against the plan, and the run of full weeks.
