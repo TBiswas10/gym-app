@@ -29,9 +29,9 @@
 /* Exercise photos (Library, guides): two frames swapping. */
 .media{position:relative;display:block;overflow:hidden;aspect-ratio:3/2;width:100%;border-radius:var(--radius-sm);background:var(--raised)}
 .media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.media img+img{animation:media-flip 2s steps(1,end) infinite}
+.media img+img{animation:media-flip 2.6s ease-in-out infinite}
 .media-thumb{width:56px;height:56px;flex:none;aspect-ratio:1}
-@keyframes media-flip{0%{opacity:0}50%{opacity:1}}
+@keyframes media-flip{0%,30%{opacity:0}45%,80%{opacity:1}95%,100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.media img+img{animation:none;opacity:0}}
 /* Rest timer ring (workout). 2*pi*31 = 194.8 */
 .rest-ring{position:relative;width:72px;height:72px;flex:none;display:flex;align-items:center;justify-content:center}
@@ -199,3 +199,4 @@
 .lib-days{display:flex;flex-wrap:wrap;gap:var(--space-1);margin-top:var(--space-1)}
 .lib-day{font:700 .75rem/1rem var(--font-body);padding:0 var(--space-2);border-radius:var(--radius-full);background:var(--raised);color:var(--text-2)}
 .lib-day.is-today{background:var(--accent);color:var(--on-accent)}
+.key-cue{padding:var(--space-2) var(--space-3);border-left:3px solid var(--accent);background:var(--accent-subtle);border-radius:0 var(--radius-sm) var(--radius-sm) 0}

@@ -31,7 +31,7 @@ export interface Briefing {
 export function buildBriefing(i: BriefInput): Briefing {
   const n = i.lifts.length;
   const headline = `${i.sessionName}, about ${i.minutes} min`;
-  const sub = `Start with ${i.cardio.plan.toLowerCase()} (${i.cardio.label}), then ${n} ${n === 1 ? "lift" : "lifts"}.`;
+  const sub = `${n} ${n === 1 ? "lift" : "lifts"}, then ${i.cardio.plan.toLowerCase()} (${i.cardio.label}) to finish.`;
 
   const tries: string[] = [];
   if (i.setup) {

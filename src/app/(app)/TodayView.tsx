@@ -425,12 +425,12 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
               </div>
             </div>
             <div className="bar-split" aria-hidden="true">
-              <i style={{ flex: `${cardio} 1 0`, background: "var(--info)" }} />
               <i style={{ flex: `${lifts} 1 0`, background: "var(--accent)" }} />
+              <i style={{ flex: `${cardio} 1 0`, background: "var(--info)" }} />
             </div>
             <div className="plan-legend t-caption c-2">
-              <span><i style={{ background: "var(--info)" }} />Cardio warm-up {cardio}</span>
               <span><i style={{ background: "var(--accent)" }} />Lifts {lifts}</span>
+              <span><i style={{ background: "var(--info)" }} />Cardio at the end {cardio}</span>
             </div>
             {v2?.briefing && d.date === today && startable && <BriefingInline briefing={v2.briefing} />}
             <ol className="list" style={{ margin: 0, padding: 0, listStyle: "none" }}>

@@ -179,7 +179,7 @@ export function registerMoreTools(server: McpServer, { supabase, uid }: Ctx): vo
       if (!created) return errorResult("Couldn’t start that session. Start it in the app instead.");
       const plan = t.days[weekdayOf(origin)];
       const lines = plan ? plan.exercises.map((e) => `- ${e.name}: ${formatTarget(e.sets, e.repLo, e.repHi, e.kind)}`) : [];
-      return textResult([`Started ${created.day_name} for ${origin}.`, ...lines, "Cardio first, then the lifts."].join("\n"));
+      return textResult([`Started ${created.day_name} for ${origin}.`, ...lines, "The lifts first, then cardio to finish."].join("\n"));
     },
   );
 

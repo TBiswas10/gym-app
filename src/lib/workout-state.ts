@@ -114,9 +114,9 @@ export interface WorkoutInit {
 }
 
 export function buildState(init: WorkoutInit): WState {
-  // Cardio is the warm-up, so it comes first. The lifts follow, then the optional cool-down.
+  // The lifts come first, then cardio to finish, then the optional cool-down (owner decision: cardio at the end).
   const c = init.cardio;
-  const steps: Step[] = [{ kind: "cardio", status: c.logged ? "done" : "todo" }];
+  const steps: Step[] = [];
 
   for (const e of init.exercises) {
     const spec: Spec = { kind: e.kind, repLo: e.repLo, repHi: e.repHi, step: e.step, increment: e.increment };
@@ -138,6 +138,7 @@ export function buildState(init: WorkoutInit): WState {
   for (const m of MACHINES) {
     params[m.id] = initialParams(m.id, { last: c.logged?.kind === m.id ? c.logged.params : c.lastParams[m.id] ?? null, plannedMinutes: m.id === c.machine ? c.plannedMinutes : null });
   }
+  steps.push({ kind: "cardio", status: c.logged ? "done" : "todo" });
   steps.push({ kind: "cool", status: "todo" });
 
   const state: WState = {
@@ -274,7 +275,7 @@ export function skip(s: WState): WState {
 }
 
 /**
- * Do a lift sooner or later: swap it with the neighbouring lift. Cardio stays first and the cool-down last.
+ * Do a lift sooner or later: swap it with the neighbouring lift. Cardio and the cool-down stay at the end.
  * The current step stays the current step wherever it lands.
  */
 export function moveExercise(s: WState, i: number, dir: -1 | 1): WState {
@@ -289,10 +290,14 @@ export function moveExercise(s: WState, i: number, dir: -1 | 1): WState {
   return { ...s, steps, cur, editIdx: s.editIdx };
 }
 
-/** "Wrap up" at 50:00: every lift still to do is skipped and you land on the cool-down. */
+/**
+ * "Wrap up" at 50:00: every lift still to do is skipped. You land on cardio if it is still to do (it can be shortened
+ * or skipped there), otherwise on the cool-down.
+ */
 export function wrapUp(s: WState): WState {
-  const last = s.steps.length - 1;
-  return { ...s, steps: s.steps.map((x, i) => (i < last && x.kind === "ex" && x.status === "todo" ? ({ ...x, status: "skipped" } as Step) : x)), cur: last, editIdx: -1 };
+  const steps = s.steps.map((x) => (x.kind === "ex" && x.status === "todo" ? ({ ...x, status: "skipped" } as Step) : x));
+  const cardio = steps.findIndex((x) => x.kind === "cardio" && x.status === "todo");
+  return { ...s, steps, cur: cardio >= 0 ? cardio : steps.length - 1, editIdx: -1 };
 }
 
 /** Machine busy? Swap to the backup exercise (starts with no history, no sets); swapping back undoes it. */

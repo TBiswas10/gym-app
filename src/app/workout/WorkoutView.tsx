@@ -21,6 +21,7 @@ import type { Guide, WorkoutPage } from "@/lib/server/workout-data";
 import { CardioCard } from "./CardioCard";
 import { GuideSheet } from "./GuideSheet";
 import { SetTip } from "./SetTip";
+import { FormCheck, KeyCue } from "./FormCheck";
 import { ScalePick } from "@/components/ScalePick";
 import { ENERGY_WORDS, SORENESS_WORDS } from "@/lib/checkin-scale";
 import { sydneyDate } from "@/lib/dates";
@@ -256,9 +257,11 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const todoLifts = exs.filter((e) => e.status === "todo").length;
   const cardioMin = ws.cardio.params[ws.cardio.machine].min ?? 10;
   const [guardOff, setGuardOff] = useState(false);
-  const guard = cardioGuard({ elapsedS: clock.elapsed, todoLifts, cardioMinutes: cardioMin, cardioDone: cardioStep.status === "done", dismissed: true || guardOff }); // cardio is first now, so there is nothing to shorten late
+  const guard = cardioGuard({ elapsedS: clock.elapsed, todoLifts, cardioMinutes: cardioMin, cardioDone: cardioStep.status === "done", dismissed: guardOff }); // cardio is last: from 45:00 offer to shorten it so you finish by 50:00 is nothing to shorten late
   const showAmber = level === "warn" && !guard.show;
   const [guideOpen, setGuideOpen] = useState(false);
+  const formGuide = ex ? (ex.swapped ? page.backupGuides?.[ex.slug]?.guide ?? null : guides[ex.slug] ?? null) : null;
+  const formSlug = ex ? (ex.swapped ? page.backupGuides?.[ex.slug]?.slug ?? ex.slug : ex.slug) : "";
   const [finishing, setFinishing] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   // The set that was just logged gets a quick pop, so you can tell it registered without reading.
@@ -427,7 +430,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
             <span className={`timer ${level === "warn" ? "warn" : level === "over" ? "over" : ""}`} role="timer" aria-label="Elapsed time">{clock.label}</span>
           </div>
           <div className="col" style={{ width: 64, alignItems: "flex-end" }}>
-            <span className="t-caption c-2">{s.kind === "ex" ? "Lift" : s.kind === "warm" ? "Start" : s.kind === "cardio" ? "Warm-up" : "Last bit"}</span>
+            <span className="t-caption c-2">{s.kind === "ex" ? "Lift" : s.kind === "warm" ? "Start" : s.kind === "cardio" ? "Finish" : "Last bit"}</span>
             <span className="t-body bold tnum">
               {s.kind === "ex" ? `${exNo} of ${exs.length}` : s.kind === "warm" ? "Warm-up" : s.kind === "cardio" ? `Cardio ${cardioMin} min` : "Cool-down"}
             </span>
@@ -548,7 +551,9 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
               <button type="button" className="icon-btn" aria-label={`Form guide for ${dispName(ex)}`} onClick={() => setGuideOpen(true)}><Icon name="info" /></button>
             </div>
 
+            {formGuide && <KeyCue guide={formGuide} />}
             {ex.last && !ex.swapped && <p className="t-small c-2">Last time: <strong className="c-text">{lastLabel(ex)}</strong></p>}
+            {formGuide && (!complete || editing) && <FormCheck key={`form-${formSlug}`} guide={formGuide} slug={formSlug} showPhotos={!ex.swapped || formSlug !== ex.slug} onFullGuide={() => setGuideOpen(true)} />}
             {(!complete || editing) && <SetTip key={`${ex.slug}-${ex.swapped}`} range={ex.range} kind={ex.exKind} planned={ex.planned} swapped={ex.swapped} first={!ex.last} />}
 
             <div className="grid2">

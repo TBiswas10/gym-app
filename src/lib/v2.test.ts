@@ -18,7 +18,7 @@ describe("Today briefing", () => {
   it("names the session, the time and the order", () => {
     const b = buildBriefing(brief());
     expect(b.headline).toBe("Push, about 38 min");
-    expect(b.sub).toBe("Start with bike or cross-trainer (10 min), then 2 lifts.");
+    expect(b.sub).toBe("2 lifts, then bike or cross-trainer (10 min) to finish.");
   });
   it("lists only the lifts that go up, as things to try", () => {
     expect(buildBriefing(brief()).tries).toEqual(["Chest press: go up to 32.5 kg"]);

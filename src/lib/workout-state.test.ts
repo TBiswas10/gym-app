@@ -23,14 +23,14 @@ const fresh = (over?: Partial<WorkoutInit>): WState => buildState(init(over));
 const ids = (() => { let n = 0; return () => `id-${++n}`; })();
 const ex0 = (s: WState, slug: string) => exercises(s).find((e) => e.slug === slug) as ExStep;
 
-/** Go to the first exercise (past the cardio warm-up). */
-const start = (s = fresh()) => advance(s);
+/** The session opens on the first lift (cardio comes at the end). */
+const start = (s = fresh()) => s;
 
 describe("building the first state", () => {
-  it("starts on the cardio warm-up with every exercise to do", () => {
+  it("starts on the first lift, with cardio and the cool-down last", () => {
     const s = fresh();
-    expect(s.steps.map((x) => x.kind)).toEqual(["cardio", "ex", "ex", "ex", "cool"]);
-    expect(currentStep(s).kind).toBe("cardio");
+    expect(s.steps.map((x) => x.kind)).toEqual(["ex", "ex", "ex", "cardio", "cool"]);
+    expect(currentStep(s).kind).toBe("ex");
     expect(s.steps.every((x) => x.status === "todo")).toBe(true);
   });
   it("steps up the weight when the top of the range was hit on both sets last time", () => {
@@ -46,12 +46,12 @@ describe("building the first state", () => {
   });
   it("resumes where you left off", () => {
     const s = buildState(init({ exercises: [ex("chest", "Chest press", { logged: [{ id: "a", kg: 32.5, reps: 10, secs: null }, { id: "b", kg: 32.5, reps: 9, secs: null }] }), ex("lat", "Lat pulldown")], skipped: [] }));
-    expect(s.steps[0].status).toBe("todo"); // cardio (the warm-up) was not logged yet
-    expect(s.steps[1].status).toBe("done");
-    expect(currentStep(s).kind).toBe("cardio");
+    expect(s.steps[0].status).toBe("done"); // chest was finished
+    expect(s.steps[2].status).toBe("todo"); // cardio (at the end) was not logged yet
+    expect(currentStep(s)).toMatchObject({ kind: "ex", slug: "lat" });
   });
   it("marks skipped exercises", () => {
-    expect(buildState(init({ skipped: ["lat"] })).steps[2].status).toBe("skipped");
+    expect(buildState(init({ skipped: ["lat"] })).steps[1].status).toBe("skipped");
   });
 });
 
@@ -73,7 +73,7 @@ describe("logging sets", () => {
     expect(diffOps(b, a)).toEqual([{ t: "delset", workoutId: W, slug: "chest", n: 1 }]);
   });
   it("logs timed holds as seconds", () => {
-    let s = goTo(start(), 3);
+    let s = goTo(start(), 2);
     s = adjust(s, "secs", 1);
     s = logSet(s, "p1");
     expect(ex0(s, "plank").sets[0]).toEqual({ id: "p1", kg: null, reps: null, secs: 35 });
@@ -82,7 +82,7 @@ describe("logging sets", () => {
     let s = start();
     for (let i = 0; i < 30; i++) s = adjust(s, "kg", -1);
     expect(ex0(s, "chest").kg).toBe(0);
-    s = goTo(s, 3);
+    s = goTo(s, 2);
     for (let i = 0; i < 20; i++) s = adjust(s, "secs", -1);
     expect(ex0(s, "plank").secs).toBe(5);
   });
@@ -108,7 +108,7 @@ describe("edit and delete", () => {
   it("deletes a set, reopens a finished exercise, and undo brings it back", () => {
     let a = twoSets();
     a = advance(a);
-    a = goTo(a, 1);
+    a = goTo(a, 0);
     expect(ex0(a, "chest").status).toBe("done");
     const b = deleteSet(startEdit(a, 1));
     expect(ex0(b, "chest").sets).toHaveLength(1);
@@ -143,14 +143,16 @@ describe("moving between steps", () => {
     const s = fresh();
     expect(nextIndex(s.steps.map((x) => ({ ...x, status: "done" as const })), 0)).toBe(s.steps.length - 1);
   });
-  it("wraps up: skips lifts still to do and lands on the cool-down (50:00)", () => {
+  it("wraps up: skips lifts still to do and lands on cardio, then the cool-down (50:00)", () => {
     let s = start();
     s = advance(logSet(logSet(s, "a"), "b")); // chest done
     s = wrapUp(s);
     expect(ex0(s, "chest").status).toBe("done");
     expect(ex0(s, "lat").status).toBe("skipped");
     expect(ex0(s, "plank").status).toBe("skipped");
-    expect(currentStep(s).kind).toBe("cool");
+    expect(currentStep(s).kind).toBe("cardio"); // cardio is still to do: it can be shortened or skipped there
+    const done = wrapUp(finishCardio(s));
+    expect(currentStep(done).kind).toBe("cool");
   });
 });
 
@@ -277,24 +279,25 @@ describe("reordering and finishing a skipped lift", () => {
     const s = fresh();
     const names = (x: WState) => x.steps.map((t) => (t.kind === "ex" ? t.slug : t.kind));
     const before = names(s);
-    const moved = moveExercise(s, 2, -1);
-    expect(names(moved)[1]).toBe(before[2]);
-    expect(names(moved)[2]).toBe(before[1]);
-    expect(names(moved)[0]).toBe("cardio");
-    expect(names(moveExercise(s, 1, -1))).toEqual(before); // cardio is not a lift: no move
+    const moved = moveExercise(s, 1, -1);
+    expect(names(moved)[0]).toBe(before[1]);
+    expect(names(moved)[1]).toBe(before[0]);
+    expect(names(moved)[3]).toBe("cardio");
+    expect(names(moveExercise(s, 0, -1))).toEqual(before); // nothing before the first lift: no move
+    expect(names(moveExercise(s, 2, 1))).toEqual(before); // cardio is not a lift: the last lift stays put
     expect(names(moveExercise(s, s.steps.length - 2, 1))).toEqual(before); // cool-down is last
   });
   it("keeps the current step current after a move", () => {
-    const s = goTo(fresh(), 2);
+    const s = goTo(fresh(), 1);
     const cur = currentStep(s);
-    expect(currentStep(moveExercise(s, 2, -1))).toBe(cur);
+    expect(currentStep(moveExercise(s, 1, -1))).toBe(cur);
   });
   it("a skipped lift that is finished later shows done, not skipped", () => {
     let s = start();
     s = skip(s); // skip the first lift
-    const skippedSlug = (s.steps[1] as ExStep).slug;
-    expect(s.steps[1].status).toBe("skipped");
-    s = goTo(s, 1);
+    const skippedSlug = (s.steps[0] as ExStep).slug;
+    expect(s.steps[0].status).toBe("skipped");
+    s = goTo(s, 0);
     s = logSet(logSet(s, "x1"), "x2");
     expect(s.steps.find((t) => t.kind === "ex" && t.slug === skippedSlug)?.status).toBe("done");
   });

@@ -42,7 +42,7 @@ export const setSets = (rows: Row[], i: number, sets: number): Row[] =>
 
 export const setRange = (rows: Row[], i: number, lo: number, hi: number): Row[] => rows.map((r, k) => (k === i ? { ...r, repLo: lo, repHi: hi } : r));
 
-/** "About N min with cardio first. Cap is 50." or the red version with a fix hint. */
+/** "About N min including cardio at the end. Cap is 50." or the red version with a fix hint. */
 export function estimateNote(minutes: number): { over: boolean; text: string } {
   return overCap(minutes)
     ? { over: true, text: `About ${minutes} min. Over ${CAP_MIN}. Remove a set or an exercise.` }

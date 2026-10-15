@@ -1,4 +1,4 @@
-// Session length and display helpers. Sessions are capped at 45-50 min. Cardio comes first and IS the warm-up.
+// Session length and display helpers. Sessions are capped at 45-50 min. Cardio comes at the end of the session.
 // Estimate rule: 5 min per exercise (3 for plank) plus the cardio block.
 // The optional cool-down does not count.
 
