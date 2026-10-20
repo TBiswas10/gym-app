@@ -22,6 +22,7 @@ import { CardioCard } from "./CardioCard";
 import { GuideSheet } from "./GuideSheet";
 import { SetTip } from "./SetTip";
 import { FormCheck, KeyCue } from "./FormCheck";
+import { cueFor, playCue, primeAudio } from "@/lib/audio-cues";
 import { saveFormNote } from "@/app/library/[slug]/actions";
 import { ScalePick } from "@/components/ScalePick";
 import { ENERGY_WORDS, SORENESS_WORDS } from "@/lib/checkin-scale";
@@ -122,6 +123,39 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const clock = sessionClock(startMs, nowMs);
   const restLeft = rest ? restRemaining(rest.end, nowMs) : 0;
   const resting = !!rest && restLeft > 0;
+
+  // Countdown sounds (opt-in, per phone): a tick at 3, 2, 1 and a chime at 0, so you can time the next set without looking.
+  const [soundOn, setSoundOn] = useState(false);
+  useEffect(() => {
+    try {
+      setSoundOn(window.localStorage.getItem("wt.sound") === "1");
+    } catch {
+      /* storage blocked: sounds stay off */
+    }
+  }, []);
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    try {
+      window.localStorage.setItem("wt.sound", next ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+    if (next) {
+      primeAudio(); // this tap is what unlocks sound on iPhone
+      window.setTimeout(() => playCue("tick"), 60); // so you hear what it sounds like
+    }
+  };
+  const prevLeft = useRef<number | null>(null);
+  useEffect(() => {
+    if (!rest) {
+      prevLeft.current = null;
+      return;
+    }
+    const cue = soundOn ? cueFor(prevLeft.current, restLeft) : null;
+    prevLeft.current = restLeft;
+    if (cue) playCue(cue);
+  }, [restLeft, rest, soundOn]);
 
   // Rest finished while you're looking at the app: a tap on the haptic engine.
   const wasResting = useRef(false);
@@ -381,6 +415,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     if (!ex) return;
     const n = ex.sets.length + 1;
     haptic("tap");
+    if (soundOn) primeAudio();
     run(logSet(ws, crypto.randomUUID()), { toast: `Nice work. Set ${n} logged.`, undoable: true });
     setJust(n - 1);
     window.setTimeout(() => setJust(-1), 700);
@@ -502,6 +537,9 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                 <strong className="t-body">{restNext}</strong>
                 <span className="t-caption c-2" style={{ fontWeight: 600 }}>{notify ? "Alert when rest ends: on" : "Alert when rest ends: off"}</span>
               </div>
+              <button type="button" className={`icon-btn ${soundOn ? "is-on" : ""}`} aria-pressed={soundOn} aria-label="Countdown sounds for the last 3 seconds" onClick={toggleSound}>
+                <Icon name={soundOn ? "volume-2" : "volume-x"} />
+              </button>
               <button type="button" className={`icon-btn ${notify ? "is-on" : ""}`} aria-pressed={notify} aria-label="Notify me when rest ends" onClick={toggleNotify}>
                 <Icon name={notify ? "bell" : "bell-off"} />
               </button>

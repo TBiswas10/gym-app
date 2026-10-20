@@ -56,6 +56,22 @@ describe("Progress", () => {
   });
 });
 
+describe("Progress: muscle balance", () => {
+  it("shows push against pull, front against back and upper against lower, with a note when lopsided", () => {
+    const out = renderToStaticMarkup(<ProgressView data={progress({ balance: { total: 24, push: 16, pull: 4, front: 18, back: 6, upper: 20, lower: 4, notes: ["You push more than you pull. Add a row or pulldown to keep your shoulders happy."], enough: true } })} />);
+    for (const t of ["Muscle balance", "last 4 weeks", "Push", "Pull", "80%", "Front", "Back", "Upper", "Lower", "You push more than you pull"]) expect(out).toContain(t);
+  });
+  it("waits for a few sessions before saying anything", () => {
+    const out = renderToStaticMarkup(<ProgressView data={progress({ balance: { total: 3, push: 2, pull: 1, front: 2, back: 1, upper: 3, lower: 0, notes: [], enough: false } })} />);
+    expect(out).toContain("A few more sessions");
+    expect(out).not.toContain("Nicely balanced");
+  });
+  it("says it is balanced when nothing is off", () => {
+    const out = renderToStaticMarkup(<ProgressView data={progress({ balance: { total: 20, push: 5, pull: 5, front: 8, back: 8, upper: 10, lower: 8, notes: [], enough: true } })} />);
+    expect(out).toContain("Nicely balanced");
+  });
+});
+
 describe("Library", () => {
   const items = [
     { slug: "chest", name: "Chest press", group: "Chest", kit: "Machine", muscles: ["Chest"], setup: ["Adjust the seat."], cues: ["Push."], mistakes: ["Locking."] },

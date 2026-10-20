@@ -1,8 +1,9 @@
 import type { ServerClient } from "../supabase/server";
-import { programmeWeek, sydneyDate, weekDates } from "../dates";
+import { addDays, programmeWeek, sydneyDate, weekDates } from "../dates";
 import type { ExerciseKind } from "../plan";
 import { checkInDue, consistency, records, exercisesWithData, nextCheckIn, topSeries, weekCells, volumeSamePoint, weeklyVolume, weekStats, type VolumeWeek, type WeekCell } from "../stats";
 import { fmtNum } from "../format";
+import { balance, type Balance } from "../balance";
 import { loadGoals, loadReviews, type GoalView, type ReviewView } from "./v2-data";
 
 export interface ProgressData {
@@ -20,6 +21,8 @@ export interface ProgressData {
   reviews?: ReviewView[];
   volume?: VolumeWeek[];
   volumeNow?: { now: number; lastSame: number; lastWeek: number };
+  /** push/pull, front/back and upper/lower sets over the last 4 weeks */
+  balance?: Balance;
 }
 
 const GROUPS = ["Legs", "Chest", "Shoulders", "Arms", "Back", "Core"];
@@ -32,7 +35,7 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
 
   const [workoutsRes, exRes, checkRes, reviewRes, tplRes] = await Promise.all([
     supabase.from("workouts").select("id, planned_date").eq("status", "completed").order("planned_date"),
-    supabase.from("exercises").select("slug, name, kind, muscle_group"),
+    supabase.from("exercises").select("slug, name, kind, muscle_group, muscles"),
     supabase.from("checkins").select("soreness, energy").not("soreness", "is", null).not("energy", "is", null).order("created_at", { ascending: false }).limit(8),
     supabase.from("reviews").select("week").not("applied_at", "is", null),
     supabase.from("program_templates").select("template_days(weekday)").not("user_id", "is", null).limit(2),
@@ -71,6 +74,11 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
     reviews,
     volume: weeklyVolume(workouts, sets, today),
     volumeNow: volumeSamePoint(workouts, sets, today),
+    balance: (() => {
+      const since = addDays(today, -27);
+      const recent = new Set(workouts.filter((w) => w.planned_date >= since).map((w) => w.id));
+      return balance(sets.filter((s) => recent.has(s.workout_id) && !s.variant).map((s) => ({ muscles: (info.get(s.exercise_slug)?.muscles as string[] | undefined) ?? [] })));
+    })(),
     week,
     empty: workouts.length === 0,
     chips,

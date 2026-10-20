@@ -5,6 +5,8 @@ import { useRef, useState, type CSSProperties } from "react";
 import { Icon } from "@/components/Icon";
 import { LineChart } from "@/components/LineChart";
 import { GoalsCard, ReviewCard } from "@/components/V2Cards";
+import type { Balance } from "@/lib/balance";
+import { shareOf } from "@/lib/balance";
 import { direction, wordFor } from "@/lib/checkin-scale";
 import { fmtNum } from "@/lib/format";
 import type { ProgressData } from "@/lib/server/progress-data";
@@ -163,6 +165,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
 
         <div hidden={tab !== "week"} className="col g4" role="tabpanel">
         {data.volume && data.volume.some((v) => v.kg > 0) && <VolumeCard weeks={data.volume} point={data.volumeNow} />}
+        {data.balance && data.balance.total > 0 && <BalanceCard b={data.balance} />}
         <section className="card">
           <h2 className="t-heading">This week</h2>
           <div className="grid3">
@@ -340,6 +343,47 @@ function VolumeCard({ weeks, point }: { weeks: { weekStart: string; kg: number }
         ))}
       </div>
       <p className="t-small c-2">Weeks start on Monday ({long(from)} to {long(to)}). Progressive overload is doing a little more over time: more weight, or more reps at the same weight. The bars are the total of both.</p>
+    </section>
+  );
+}
+
+/** Push against pull, front against back, upper against lower: sets over the last four weeks, so a lopsided week stands out. */
+function BalanceCard({ b }: { b: Balance }) {
+  const rows: { label: [string, string]; a: number; c: number }[] = [
+    { label: ["Push", "Pull"], a: b.push, c: b.pull },
+    { label: ["Front", "Back"], a: b.front, c: b.back },
+    { label: ["Upper", "Lower"], a: b.upper, c: b.lower },
+  ];
+  return (
+    <section className="card" aria-label="Muscle balance">
+      <div className="row between baseline g2">
+        <h2 className="t-heading">Muscle balance</h2>
+        <span className="t-small c-2">last 4 weeks</span>
+      </div>
+      {!b.enough ? (
+        <p className="t-small c-2">A few more sessions and this shows push against pull, front against back, and upper against lower.</p>
+      ) : (
+        <>
+          <div className="col g3">
+            {rows.map((r) => {
+              const pa = Math.round(shareOf(r.a, r.c) * 100);
+              return (
+                <div key={r.label[0]} className="col g1" role="img" aria-label={`${r.label[0]} ${pa} percent, ${r.label[1]} ${100 - pa} percent`}>
+                  <div className="row between t-small">
+                    <span><strong>{r.label[0]}</strong> <span className="c-2">{pa}%</span></span>
+                    <span><span className="c-2">{100 - pa}%</span> <strong>{r.label[1]}</strong></span>
+                  </div>
+                  <div className="bar-split" aria-hidden="true">
+                    <i style={{ flex: `${Math.max(1, pa)} 1 0`, background: "var(--accent)" }} />
+                    <i style={{ flex: `${Math.max(1, 100 - pa)} 1 0`, background: "var(--info)" }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="t-small c-2">{b.notes.length ? b.notes.join(" ") : "Nicely balanced. Keep it up."}</p>
+        </>
+      )}
     </section>
   );
 }
