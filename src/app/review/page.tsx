@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loadReview } from "@/lib/server/review-data";
@@ -16,7 +17,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
     return (
       <div className="screen fill">
         <div className="scroll"><div className="empty" style={{ paddingTop: "var(--space-12)" }}><h1 className="t-title">Can’t load your check-in</h1><p className="t-body c-2">Check your connection and try again.</p></div></div>
-        <div className="bottom-bar"><a className="btn btn-primary btn-cta" href="/progress">Back to Progress</a></div>
+        <div className="bottom-bar"><Link className="btn btn-primary btn-cta" href="/progress">Back to Progress</Link></div>
       </div>
     );
   }

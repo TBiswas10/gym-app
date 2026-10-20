@@ -555,19 +555,25 @@ export function registerPowerTools(server: McpServer, { supabase, uid }: Ctx): v
         weight_jump_kg: z.number().min(0.5).max(20).optional(),
         start_weight_kg: z.number().min(0).max(400).optional(),
         notes: z.string().max(200).optional(),
+        form_note: z.string().max(140).optional().describe("Your personal form cue for this lift (what you keep getting wrong); shown under the exercise name in the workout. Empty string clears it."),
         backup: z.string().max(60).optional().describe("The substitute the Swap button offers for this exercise (a library exercise name works best, so its form guide shows). Pass an empty string to go back to the built-in backup."),
       },
       annotations: CHANGE,
     },
-    async ({ exercise, weight_jump_kg, start_weight_kg, notes, backup }) => {
+    async ({ exercise, weight_jump_kg, start_weight_kg, notes, backup, form_note }) => {
       const cx = await loadCx(supabase);
       if (!cx) return errorResult(NO_PROGRAM);
       const m = findExercises(exercise, cx.catalog);
       if (m.length !== 1) return errorResult(m.length === 0 ? `I don’t know an exercise called “${exercise}”.` : `“${exercise}” could be ${m.map((x) => x.name).join(" or ")}. Which one?`);
-      const row: { exercise_slug: string; increment_kg?: number; start_weight_kg?: number; notes?: string | null; backup_name?: string | null } = { exercise_slug: m[0].slug };
+      const row: { exercise_slug: string; increment_kg?: number; start_weight_kg?: number; notes?: string | null; backup_name?: string | null; form_note?: string | null } = { exercise_slug: m[0].slug };
       if (weight_jump_kg !== undefined) row.increment_kg = weight_jump_kg;
       if (start_weight_kg !== undefined) row.start_weight_kg = start_weight_kg;
       if (notes !== undefined) row.notes = notes.trim() || null;
+      if (form_note !== undefined) {
+        const f = form_note.trim();
+        if (f && f.length < 2) return errorResult("form_note needs at least 2 characters (or an empty string to clear it).");
+        row.form_note = f || null;
+      }
       if (backup !== undefined) {
         const b = backup.trim();
         if (!b) row.backup_name = null;
@@ -579,11 +585,11 @@ export function registerPowerTools(server: McpServer, { supabase, uid }: Ctx): v
           row.backup_name = hit.length === 1 ? hit[0].name : b; // a library name keeps the form guide working
         }
       }
-      if (Object.keys(row).length === 1) return errorResult("Nothing to change: give weight_jump_kg, start_weight_kg, notes or backup.");
+      if (Object.keys(row).length === 1) return errorResult("Nothing to change: give weight_jump_kg, start_weight_kg, notes, form_note or backup.");
       const { data: prev } = await supabase.from("user_exercise_settings").select("*").eq("exercise_slug", m[0].slug).maybeSingle();
       const { error } = await supabase.from("user_exercise_settings").upsert(row, { onConflict: "user_id,exercise_slug" });
       if (error) return errorResult(FRIENDLY);
-      const what = Object.entries(row).filter(([k]) => k !== "exercise_slug").map(([k, v]) => `${k === "backup_name" ? "swap substitute" : k.replace(/_/g, " ")} = ${v ?? "cleared (built-in backup)"}`).join("; ");
+      const what = Object.entries(row).filter(([k]) => k !== "exercise_slug").map(([k, v]) => `${k === "backup_name" ? "swap substitute" : k === "form_note" ? "form cue" : k.replace(/_/g, " ")} = ${v ?? "cleared (built-in backup)"}`).join("; ");
       const previous = prev ? (({ user_id: _u, ...r }) => (void _u, r))(prev) : null;
       await recordChange(supabase, { source: "claude", action: "exercise_settings", undoable: true, summary: `${m[0].name}: ${what}`, before: { kind: "exercise_settings", exercise_slug: m[0].slug, previous } });
       return textResult(`${m[0].name} updated: ${what}. ${UNDO_NOTE}`);

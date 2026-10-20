@@ -29,6 +29,12 @@ export type Database = {
         Update: { undone_at?: string | null };
         Relationships: [];
       };
+      client_errors: {
+        Row: { agent: string; build: string; created_at: string; id: string; message: string; path: string; stack: string | null; user_id: string };
+        Insert: { agent?: string; build?: string; created_at?: string; id?: string; message: string; path?: string; stack?: string | null; user_id?: string };
+        Update: { agent?: string; build?: string; created_at?: string; id?: string; message?: string; path?: string; stack?: string | null; user_id?: string };
+        Relationships: [];
+      };
       nudge_responses: {
         Row: { created_at: string; key: string; response: string; user_id: string };
         Insert: { created_at?: string; key: string; response: string; user_id?: string };
@@ -120,9 +126,9 @@ export type Database = {
         ];
       };
       user_exercise_settings: {
-        Row: { backup_name: string | null; exercise_slug: string; increment_kg: number | null; notes: string | null; start_weight_kg: number | null; user_id: string };
-        Insert: { backup_name?: string | null; exercise_slug: string; increment_kg?: number | null; notes?: string | null; start_weight_kg?: number | null; user_id?: string };
-        Update: { backup_name?: string | null; exercise_slug?: string; increment_kg?: number | null; notes?: string | null; start_weight_kg?: number | null; user_id?: string };
+        Row: { backup_name: string | null; form_note: string | null; exercise_slug: string; increment_kg: number | null; notes: string | null; start_weight_kg: number | null; user_id: string };
+        Insert: { backup_name?: string | null; form_note?: string | null; exercise_slug: string; increment_kg?: number | null; notes?: string | null; start_weight_kg?: number | null; user_id?: string };
+        Update: { backup_name?: string | null; form_note?: string | null; exercise_slug?: string; increment_kg?: number | null; notes?: string | null; start_weight_kg?: number | null; user_id?: string };
         Relationships: [{ foreignKeyName: "user_exercise_settings_exercise_slug_fkey"; columns: ["exercise_slug"]; isOneToOne: false; referencedRelation: "exercises"; referencedColumns: ["slug"] }];
       };
       workouts: {

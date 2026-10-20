@@ -6,8 +6,9 @@ export const dynamic = "force-dynamic";
 
 export default async function ProgressPage() {
   const supabase = await createClient();
+  let data;
   try {
-    return <ProgressView data={await loadProgress(supabase)} />;
+    data = await loadProgress(supabase);
   } catch {
     return (
       <div className="scroll">
@@ -18,4 +19,5 @@ export default async function ProgressPage() {
       </div>
     );
   }
+  return <ProgressView data={data} />;
 }

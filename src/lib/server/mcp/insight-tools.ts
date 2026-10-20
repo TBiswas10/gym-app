@@ -139,6 +139,36 @@ export function registerInsightTools(server: McpServer, { supabase, uid }: Ctx):
     },
   );
 
+  // ---------------------------------------------------------------- get_app_errors
+  server.registerTool(
+    "get_app_errors",
+    {
+      title: "Errors the app hit on your phone",
+      description:
+        "Errors the phone reported (a screen that crashed, a failed action), grouped by message with how often, when last, on which screen, and which build. Use it to diagnose \"the app glitched\". Read-only. Network blips are not logged.",
+      inputSchema: { days: z.number().int().min(1).max(60).default(7).describe("How many days back (default 7)") },
+      annotations: READ,
+    },
+    async ({ days }) => {
+      const since = new Date(Date.now() - days * 86_400_000).toISOString();
+      const { data, error } = await supabase.from("client_errors").select("message, stack, path, build, agent, created_at").gte("created_at", since).order("created_at", { ascending: false }).limit(200);
+      if (error) return errorResult("I couldn’t read the error log. Try again in a moment.");
+      if (!data?.length) return textResult(`No errors reported in the last ${days} days.`);
+      const groups = new Map<string, { count: number; last: string; path: string; build: string; agent: string; stack: string | null }>();
+      for (const r of data) {
+        const g = groups.get(r.message);
+        if (g) g.count++;
+        else groups.set(r.message, { count: 1, last: r.created_at, path: r.path, build: r.build, agent: r.agent, stack: r.stack });
+      }
+      return textResult(
+        json({
+          total: data.length,
+          errors: [...groups].map(([message, g]) => ({ message, times: g.count, last_seen: g.last, screen: g.path, build: g.build.slice(0, 7), device: g.agent, stack_top: g.stack ? g.stack.split("\n").slice(0, 4).join("\n") : undefined })),
+        }),
+      );
+    },
+  );
+
   // ---------------------------------------------------------------- get_bodyweight
   server.registerTool(
     "get_bodyweight",

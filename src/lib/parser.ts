@@ -60,7 +60,7 @@ export const lbToKg = (lb: number): number => Math.round(lb * LB_TO_KG * 10) / 1
 // ---------------------------------------------------------------- matching
 
 const nameWords = (item: CatalogItem): string[][] =>
-  [item.name, ...(item.aliases ?? [])].map((n) => n.toLowerCase().replace(/[/\-]/g, " ").split(/\s+/).filter(Boolean));
+  [item.name, ...(item.aliases ?? [])].map((n) => n.toLowerCase().replace(/[/-]/g, " ").split(/\s+/).filter(Boolean));
 
 /** Every typed word must start a word of the name (or be a plural of one: "planks", "laterals"). */
 function matches(typed: string[], item: CatalogItem): boolean {
@@ -118,7 +118,7 @@ export function findExercises(text: string, catalog: CatalogItem[]): CatalogItem
   const t = text.trim().toLowerCase();
   const exact = catalog.filter((c) => c.slug === t || c.name.toLowerCase() === t);
   if (exact.length === 1) return exact;
-  const typed = t.split(/[\s/\-]+/).filter(Boolean);
+  const typed = t.split(/[\s/-]+/).filter(Boolean);
   return typed.length ? catalog.filter((c) => matches(typed, c)) : [];
 }
 
@@ -142,7 +142,7 @@ function numbers(s: string): number[] {
 }
 
 function pick(name: string, tail: string, ctx: ParseContext): { item: CatalogItem } | { error: ParseError } {
-  const typed = name.split(/[\s/\-]+/).filter(Boolean);
+  const typed = name.split(/[\s/-]+/).filter(Boolean);
   const found = typed.length ? ctx.catalog.filter((c) => matches(typed, c)) : [];
   if (found.length === 1) return { item: found[0] };
   if (found.length > 1) {
@@ -192,7 +192,7 @@ export function parseQuickLog(text: string, ctx: ParseContext): ParseResult {
   const cut = s.search(/[\d+]/);
   const name = (cut === -1 ? s : s.slice(0, cut)).trim();
   const tail = cut === -1 ? "" : s.slice(cut).trim();
-  if (!/^[a-z][a-z /\-]*$/.test(name)) return fail({ code: "generic" });
+  if (!/^[a-z][a-z /-]*$/.test(name)) return fail({ code: "generic" });
 
   const picked = pick(name, tail, ctx);
   if ("error" in picked) return fail(picked.error);

@@ -9,7 +9,7 @@ import type { MachineId } from "@/lib/cardio";
 import { NumField } from "@/components/NumField";
 import { useSwipeUp } from "@/components/useSwipeUp";
 import { haptic } from "@/lib/haptics";
-import { cardioGuard, extendRest, mmss, restPercent, restRemaining, restSecondsAfter, sessionClock } from "@/lib/timers";
+import { cardioGuard, extendRest, mmss, restRemaining, restSecondsAfter, sessionClock } from "@/lib/timers";
 import { bestOfLast, bestSet, describeSet, goalText, isPB, lighten, overloadTarget, verdict as verdictFor } from "@/lib/progression";
 import type { Op, Source } from "@/lib/ops";
 import { restoreState,
@@ -22,6 +22,7 @@ import { CardioCard } from "./CardioCard";
 import { GuideSheet } from "./GuideSheet";
 import { SetTip } from "./SetTip";
 import { FormCheck, KeyCue } from "./FormCheck";
+import { saveFormNote } from "@/app/library/[slug]/actions";
 import { ScalePick } from "@/components/ScalePick";
 import { ENERGY_WORDS, SORENESS_WORDS } from "@/lib/checkin-scale";
 import { sydneyDate } from "@/lib/dates";
@@ -264,6 +265,14 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const overload = ex && !ex.swapped && ex.last ? overloadTarget(exSpec(ex), ex.last, { setup: meta.setup, highSoreness: meta.highSoreness, hold: meta.hold }) : null;
   const goalKg = overload && overload.kg !== null ? (ex?.light ? lighten(overload.kg, ex.step) : overload.kg) : null;
   const goalLine = ex && overload ? goalText(ex.exKind, { ...overload, kg: goalKg }) : "";
+  // Your own form cues, editable from the form check (saved straight away).
+  const [myCues, setMyCues] = useState<Record<string, string>>(page.formNotes ?? {});
+  const saveCue = (slug: string, text: string) => {
+    const clean = text.trim();
+    if ((myCues[slug] ?? "") === clean) return;
+    setMyCues((c) => ({ ...c, [slug]: clean }));
+    void saveFormNote(slug, clean);
+  };
   const formGuide = ex ? (ex.swapped ? page.backupGuides?.[ex.slug]?.guide ?? null : guides[ex.slug] ?? null) : null;
   const formSlug = ex ? (ex.swapped ? page.backupGuides?.[ex.slug]?.slug ?? ex.slug : ex.slug) : "";
   const [finishing, setFinishing] = useState(false);
@@ -555,7 +564,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
               <button type="button" className="icon-btn" aria-label={`Form guide for ${dispName(ex)}`} onClick={() => setGuideOpen(true)}><Icon name="info" /></button>
             </div>
 
-            {formGuide && <KeyCue guide={formGuide} />}
+            {formGuide && <KeyCue guide={formGuide} mine={ex.swapped ? "" : myCues[ex.slug] ?? ""} />}
             {overload && goalLine && (
               <p className="t-small goal-line">
                 <strong>Goal today:</strong> {goalLine}
@@ -563,7 +572,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
               </p>
             )}
             {ex.last && !ex.swapped && <p className="t-small c-2">Last time: <strong className="c-text">{lastLabel(ex)}</strong></p>}
-            {formGuide && (!complete || editing) && <FormCheck key={`form-${formSlug}`} guide={formGuide} slug={formSlug} showPhotos={!ex.swapped || formSlug !== ex.slug} onFullGuide={() => setGuideOpen(true)} />}
+            {formGuide && (!complete || editing) && <FormCheck key={`form-${formSlug}`} guide={formGuide} slug={formSlug} showPhotos={!ex.swapped || formSlug !== ex.slug} onFullGuide={() => setGuideOpen(true)} note={ex.swapped ? "" : myCues[ex.slug] ?? ""} onSaveNote={ex.swapped ? undefined : (t) => saveCue(ex.slug, t)} />}
             {(!complete || editing) && <SetTip key={`${ex.slug}-${ex.swapped}`} range={ex.range} kind={ex.exKind} planned={ex.planned} swapped={ex.swapped} first={!ex.last} />}
 
             <div className="grid2">

@@ -25,3 +25,14 @@ export async function saveIncrement(slug: string, increment: number | null): Pro
   revalidatePath("/", "layout");
   return { ok: true };
 }
+
+/** Your own cue for this lift: the one thing you personally keep getting wrong. Shown under the exercise name in the workout. */
+export async function saveFormNote(slug: string, text: string): Promise<Result> {
+  const clean = typeof text === "string" ? text.trim() : "";
+  if (!SLUG.test(slug) || clean.length > 140 || (clean !== "" && clean.length < 2)) return { ok: false, error: FRIENDLY };
+  const supabase = await createClient();
+  const { error } = await supabase.from("user_exercise_settings").upsert({ exercise_slug: slug, form_note: clean || null }, { onConflict: "user_id,exercise_slug" });
+  if (error) return { ok: false, error: FRIENDLY };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}

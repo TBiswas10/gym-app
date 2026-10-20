@@ -37,6 +37,8 @@ export interface WorkoutPage {
   guides: Record<string, Guide>;
   /** Per plan slug: the guide of its backup exercise when the library has one (null = no guide for it). */
   backupGuides?: Record<string, { slug: string; guide: Guide } | null>;
+  /** Per plan slug: your own form cue (what you keep getting wrong). */
+  formNotes?: Record<string, string>;
   catalog: CatalogItem[];
   lastBySlug: Record<string, LastTime>;
   lastCardio: Partial<Record<MachineId, { params: Params; min: number }>>;
@@ -166,7 +168,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
       .select("position, sets, rep_lo, rep_hi, exercise_slug, exercises(name, kind, muscle_group, muscles, setup, cues, mistakes, weight_step_kg, default_increment_kg, default_notes, backup_name)")
       .eq("template_id", tpl.id).eq("weekday", w.weekday).order("position"),
     supabase.from("workouts").select("id").eq("status", "completed").neq("id", w.id).order("planned_date", { ascending: false }).limit(12),
-    supabase.from("user_exercise_settings").select("exercise_slug, increment_kg, start_weight_kg, notes, backup_name"),
+    supabase.from("user_exercise_settings").select("exercise_slug, increment_kg, start_weight_kg, notes, backup_name, form_note"),
     supabase.from("sets").select("id, exercise_slug, set_number, variant, weight_kg, reps, seconds").eq("workout_id", w.id).order("set_number"),
     supabase.from("cardio_entries").select("id, kind, params, feel").eq("workout_id", w.id).limit(1),
     supabase.from("cardio_entries").select("kind, params, minutes").not("kind", "in", "(walk,stretch)").order("logged_at", { ascending: false }).limit(40),
@@ -230,6 +232,12 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
       : null;
   }
 
+  const formNotes: Record<string, string> = {};
+  for (const e of exRes.data ?? []) {
+    const fn = settings.get(e.exercise_slug)?.form_note;
+    if (fn) formNotes[e.exercise_slug] = fn;
+  }
+
   // Exercises logged by chat that are not in today's plan.
   const planSlugs = new Set(exercises.map((e) => e.slug));
   const catalog: CatalogItem[] = (catalogRes.data ?? []).map((c) => ({ slug: c.slug, name: c.name, kind: asKind(c.kind), aliases: c.slug === "glute" ? ["hip thrust machine"] : undefined }));
@@ -275,7 +283,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
         workoutId: w.id, sessionName: w.day_name, startedAt: w.started_at, cardioName: day.cardio_name, cardioLabel: day.cardio_label,
         week, deload, restAlerts: state.rest_alerts ?? true, light, setup, highSoreness: sore, hold: reviewHold,
       },
-      guides, backupGuides, catalog, lastBySlug, lastCardio,
+      guides, backupGuides, formNotes, catalog, lastBySlug, lastCardio,
     },
   };
 }

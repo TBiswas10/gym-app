@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { Icon } from "@/components/Icon";
+import { reportError } from "@/lib/report-error";
 
 // The workout screen failed to draw. Your sets are safe (they are saved on the phone and on the server). The saved
 // copy of this screen's state is the usual suspect, so it is cleared here and the screen is rebuilt from the server.
-export default function WorkoutError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function WorkoutError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
+    reportError(error, "workout");
     try {
       for (let i = window.localStorage.length - 1; i >= 0; i--) {
         const k = window.localStorage.key(i);
@@ -16,7 +18,7 @@ export default function WorkoutError({ reset }: { error: Error & { digest?: stri
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [error]);
   return (
     <div className="screen fill">
       <div className="scroll">

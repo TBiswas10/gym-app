@@ -6,7 +6,6 @@ import { encouragement } from "@/lib/encourage";
 import { consistency } from "@/lib/stats";
 import { weekDates } from "@/lib/dates";
 import { mmss } from "@/lib/timers";
-import { fmtNum } from "@/lib/format";
 import type { ExerciseKind } from "@/lib/plan";
 import { CompleteView } from "./CompleteView";
 

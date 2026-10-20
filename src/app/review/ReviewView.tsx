@@ -89,7 +89,7 @@ export function ReviewView({ data }: { data: ReviewData }) {
           <p className="t-body c-2">{why}</p>
           <div className="segmented" role="radiogroup" aria-label="Choose a different recommendation">
             {OPTIONS.map((o) => (
-              <button key={o} type="button" className="seg" role="radio" aria-checked={o === rec} aria-selected={o === rec} onClick={() => { setPick(o); setAppliedText(null); }}>{REC_LABEL[o]}</button>
+              <button key={o} type="button" className="seg" role="radio" aria-checked={o === rec} onClick={() => { setPick(o); setAppliedText(null); }}>{REC_LABEL[o]}</button>
             ))}
           </div>
         </section>

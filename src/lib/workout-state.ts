@@ -159,7 +159,6 @@ export function buildState(init: WorkoutInit): WState {
 
 export const currentStep = (s: WState): Step => s.steps[s.cur];
 export const exercises = (s: WState): ExStep[] => s.steps.filter(isEx);
-const cardioIndex = (s: WState): number => s.steps.findIndex((x) => x.kind === "cardio");
 
 /** Next step that still has something to do, after `from`. Falls back to the last step. */
 export function nextIndex(steps: Step[], from: number): number {

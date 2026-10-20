@@ -32,6 +32,7 @@ Lets Claude read and write your workout data. The server lives inside this app a
 | prompt `weekly_review` | Starts a weekly review: gather the numbers, then save it |
 | `edit_checkin` | Fix a past check-in (soreness, energy, notes, bodyweight) for the session on a date | shows before and after; `confirm`; undoable |
 | `edit_plan_cardio` | Change a day's cardio machine text, label and planned minutes | shows before and after; `confirm`; undoable |
+| `get_app_errors` | Errors the phone reported (grouped: how often, when, which screen and build). Read-only |
 | `get_cardio` | Cardio entries with machine numbers and feel, a per-machine summary and minutes per week (includes rest-day walks) |
 | `log_sets` | Log or correct up to 2 sets of one exercise in today's session; starts the session if needed |
 | `log_cardio` | Log a machine cardio block, or a rest-day walk or stretch |

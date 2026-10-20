@@ -111,7 +111,7 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
 
     const onMove = (e: TouchEvent) => {
       if (mode === "idle" || mode === "skip") return;
-      if (mode === "h" || mode === "v") e.cancelable && e.preventDefault(); // we own the gesture: no native bounce on top
+      if ((mode === "h" || mode === "v") && e.cancelable) e.preventDefault(); // we own the gesture: no native bounce on top
       const t = e.touches[0];
       const dx = t.clientX - sx;
       const dy = t.clientY - sy;

@@ -84,7 +84,6 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
     });
 
   // ----- header copy
-  const weekDone = data.weekDone;
   const tStrip = strip[todayIdx];
   const tPlan = tStrip?.sessionOrigin ? data.days[weekdayOf(tStrip.sessionOrigin)] : null;
   const greeting =

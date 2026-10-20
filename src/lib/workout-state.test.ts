@@ -20,7 +20,6 @@ const init = (over: Partial<WorkoutInit> = {}): WorkoutInit => ({
   ...over,
 });
 const fresh = (over?: Partial<WorkoutInit>): WState => buildState(init(over));
-const ids = (() => { let n = 0; return () => `id-${++n}`; })();
 const ex0 = (s: WState, slug: string) => exercises(s).find((e) => e.slug === slug) as ExStep;
 
 /** The session opens on the first lift (cardio comes at the end). */

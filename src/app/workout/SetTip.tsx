@@ -3,7 +3,7 @@ import { Icon } from "@/components/Icon";
 /**
  * How to do the sets of an exercise. Always collapsed until you tap it. The rep range is the exercise's own, so a plank reads in seconds and a calf raise in 12-15.
  */
-export function SetTip({ range, kind, planned, swapped, first }: { range: [number, number]; kind: "weight" | "timed" | "bodyweight"; planned: number; swapped: boolean; first: boolean }) {
+export function SetTip({ range, kind, planned, swapped }: { range: [number, number]; kind: "weight" | "timed" | "bodyweight"; planned: number; swapped: boolean; first?: boolean }) {
   const [lo, hi] = range;
   const timed = kind === "timed";
   const r = `${lo}-${hi} ${timed ? "seconds" : "reps"}`;

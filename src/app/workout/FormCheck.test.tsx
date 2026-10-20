@@ -33,4 +33,15 @@ describe("form help in the workout", () => {
   it("shows nothing for an exercise with no cues", () => {
     expect(renderToStaticMarkup(<KeyCue guide={{ ...guide, cues: [] }} />)).toBe("");
   });
+  it("shows your own cue first, above the lift's main cue", () => {
+    const out = renderToStaticMarkup(<KeyCue guide={guide} mine="Elbows in, don’t flare" />);
+    expect(out).toContain("My cue:");
+    expect(out.indexOf("My cue:")).toBeLessThan(out.indexOf("Cue:</strong> Push"));
+  });
+  it("lets you set your cue from the form check", () => {
+    const withField = renderToStaticMarkup(<FormCheck guide={guide} slug="chest" note="Elbows in" onFullGuide={() => {}} onSaveNote={() => {}} />);
+    expect(withField).toContain("MY CUE FOR THIS LIFT");
+    expect(withField).toContain("Elbows in");
+    expect(renderToStaticMarkup(<FormCheck guide={guide} slug="chest" onFullGuide={() => {}} />)).not.toContain("MY CUE FOR THIS LIFT");
+  });
 });

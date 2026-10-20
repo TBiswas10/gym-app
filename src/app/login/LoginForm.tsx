@@ -24,7 +24,7 @@ function friendly(message: string): string {
 
 export function LoginForm({ initialProblem, deleted = false, next = "/" }: { initialProblem: string | null; deleted?: boolean; next?: string }) {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("login");
+  const [mode] = useState<Mode>("login");
   const [method, setMethod] = useState<Method>("password");
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");

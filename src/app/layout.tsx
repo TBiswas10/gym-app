@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { ErrorReporter } from "@/components/ErrorReporter";
 import { KeyboardFit } from "@/components/KeyboardFit";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { SplashScreen } from "@/components/SplashScreen";
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorker />
         <KeyboardFit />
         <UpdateWatcher />
+        <ErrorReporter />
         <SplashScreen />
         {children}
       </body>

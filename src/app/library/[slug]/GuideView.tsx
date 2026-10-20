@@ -8,7 +8,7 @@ import { Icon } from "@/components/Icon";
 import { LineChart } from "@/components/LineChart";
 import { fmtNum } from "@/lib/format";
 import type { ExerciseKind } from "@/lib/plan";
-import { saveIncrement, saveMachineNotes } from "./actions";
+import { saveIncrement, saveFormNote, saveMachineNotes } from "./actions";
 
 const TABS = ["Setup", "How to do it", "Mistakes"];
 
@@ -24,12 +24,14 @@ interface Props {
   defaultIncrement: number;
   increment: number | null;
   notes: string;
+  formNote?: string;
   hasActive: boolean;
 }
 
-export function GuideView({ slug, name, kit, kind, muscles, tabs, series, step, defaultIncrement, increment, notes, hasActive }: Props) {
+export function GuideView({ slug, name, kit, kind, muscles, tabs, series, step, defaultIncrement, increment, notes, formNote = "", hasActive }: Props) {
   const [tab, setTab] = useState(0);
   const [note, setNote] = useState(notes);
+  const [cue, setCue] = useState(formNote);
   const [jump, setJump] = useState<number | null>(increment);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -113,6 +115,16 @@ export function GuideView({ slug, name, kit, kind, muscles, tabs, series, step, 
           {jump !== null && <button type="button" className="btn btn-tertiary" style={{ alignSelf: "flex-start" }} onClick={() => saveJump(null)}>Back to default ({fmtNum(defaultIncrement)} {jumpUnit})</button>}
           {error && <div className="banner banner-danger" role="alert"><Icon name="circle-alert" /><span>{error}</span></div>}
           {pending && <span className="t-small c-2">Saving…</span>}
+        </section>
+
+        <section className="card">
+          <label className="t-heading" htmlFor="fnote">My form cue</label>
+          <input
+            id="fnote" className="input" type="text" maxLength={140} value={cue} placeholder="e.g. Elbows in, don’t flare"
+            onChange={(e) => setCue(e.target.value)}
+            onBlur={() => startTransition(async () => { const r = await saveFormNote(slug, cue); setError(r.ok ? null : r.error); })}
+          />
+          <span className="t-small c-2">The one thing you keep getting wrong. It shows under this lift in your workout.</span>
         </section>
 
         <section className="card">

@@ -151,8 +151,8 @@ export function PlanView({ data }: { data: PlanData }) {
       <div className="scroll">
         <h1 className="t-title">Plan</h1>
         <div className="segmented" role="radiogroup" aria-label="Programme">
-          <button type="button" className="seg" role="radio" aria-checked={is5} aria-selected={is5} onClick={() => pickPlan("5day")}>5-day split</button>
-          <button type="button" className="seg" role="radio" aria-checked={!is5} aria-selected={!is5} onClick={() => pickPlan("3day")}>3-day full body</button>
+          <button type="button" className="seg" role="radio" aria-checked={is5} onClick={() => pickPlan("5day")}>5-day split</button>
+          <button type="button" className="seg" role="radio" aria-checked={!is5} onClick={() => pickPlan("3day")}>3-day full body</button>
         </div>
         <p className="t-small c-2" style={{ marginTop: "calc(var(--space-2) * -1)" }}>
           {is5 ? "Mon to Thu and Sat. Fri and Sun are rest days." : "Mon, Wed and Sat. Everything else is rest."}

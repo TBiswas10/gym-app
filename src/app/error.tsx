@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { reportError } from "@/lib/report-error";
 import { Icon } from "@/components/Icon";
 
 // A friendly screen for anything unexpected. The technical error is never shown.
-export default function Error({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => reportError(error, "screen"), [error]);
   return (
     <div className="screen fill">
       <div className="scroll">

@@ -4,7 +4,7 @@ import { buildStrip, freeDays, missedCard, remainingSessions, type Override } fr
 // The design's week 3 example: Thursday 8 October 2026. Mon done, Tue missed, Wed done, Thu today.
 const FIVE_DAY = [1, 2, 3, 4, 6];
 const MON = "2026-10-05", TUE = "2026-10-06", WED = "2026-10-07", THU = "2026-10-08";
-const FRI = "2026-10-09", SAT = "2026-10-10", SUN = "2026-10-11";
+const FRI = "2026-10-09", SUN = "2026-10-11";
 const base = { today: THU, startDate: "2026-09-21", liftWeekdays: FIVE_DAY, completed: new Set([MON, WED]), overrides: [] as Override[] };
 const statuses = (s: ReturnType<typeof buildStrip>) => s.map((d) => d.status);
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loadWorkout } from "@/lib/server/workout-data";
@@ -25,7 +26,7 @@ export default async function WorkoutPage({ searchParams }: { searchParams: Prom
             <p className="t-body c-2">Check your connection and try again. Anything you logged is safe.</p>
           </div>
         </div>
-        <div className="bottom-bar"><a className="btn btn-primary btn-cta" href="/">Back to Today</a></div>
+        <div className="bottom-bar"><Link className="btn btn-primary btn-cta" href="/">Back to Today</Link></div>
       </div>
     );
   }
