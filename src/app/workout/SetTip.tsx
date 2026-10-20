@@ -8,7 +8,7 @@ export function SetTip({ range, kind, planned, swapped }: { range: [number, numb
   const timed = kind === "timed";
   const r = `${lo}-${hi} ${timed ? "seconds" : "reps"}`;
   return (
-    <details className="banner banner-info tip">
+    <details className="tip tip-pill">
       <summary><Icon name="info" size={20} />How to do your sets</summary>
       <div className="tip-body">
         {swapped && <p className="t-small">No history for this one. Start light and use the steppers.</p>}

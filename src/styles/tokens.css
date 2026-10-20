@@ -72,3 +72,27 @@
     --info-edge: color-mix(in srgb, var(--info) 45%, transparent);
   }
 }
+
+/* ---- Themes (owner-supplied palettes, 2026-10-20). The default (lime) is :root above. Each theme changes the neutrals
+   and the accent family only; success / warning / danger / info stay the same. Every pairing is contrast-tested
+   (src/lib/themes.test.ts). A swatch can use [data-theme] on any element to preview a palette. */
+[data-theme="teal"]{
+  --bg:#0A1015; --surface:#101821; --raised:#17212C; --border:#1F2B38; --border-strong:#5F7185;
+  --text:#F2F7FA; --text-2:#9FB0BF; --text-3:#6A7B8B;
+  --accent:#14B8A6; --accent-pressed:#0E9486; --accent-subtle:rgba(20,184,166,0.14); --on-accent:#04100E;
+}
+[data-theme="amber"]{
+  --bg:#0C0A09; --surface:#151211; --raised:#1E1A18; --border:#2B2522; --border-strong:#8A7C6E;
+  --text:#FAF6F0; --text-2:#B7AB9D; --text-3:#7E7468;
+  --accent:#F59E0B; --accent-pressed:#D98708; --accent-subtle:rgba(245,158,11,0.14); --on-accent:#1A1100;
+}
+[data-theme="amethyst"]{
+  --bg:#08060C; --surface:#100D17; --raised:#181422; --border:#251F33; --border-strong:#6F6585;
+  --text:#F6F3FB; --text-2:#A9A0BC; --text-3:#766C8A;
+  --accent:#8B5CF6; --accent-pressed:#9A72F7; --accent-subtle:rgba(139,92,246,0.16); --on-accent:#0A0612;
+}
+[data-theme="stealth"]{
+  --bg:#000000; --surface:#0B0B0C; --raised:#141415; --border:#232325; --border-strong:#6B6B70;
+  --text:#FFFFFF; --text-2:#A8A8AD; --text-3:#77777C;
+  --accent:#E8E8EA; --accent-pressed:#C4C4C8; --accent-subtle:rgba(232,232,234,0.12); --on-accent:#000000;
+}

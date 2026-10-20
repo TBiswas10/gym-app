@@ -4,6 +4,7 @@ import { KeyboardFit } from "@/components/KeyboardFit";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { SplashScreen } from "@/components/SplashScreen";
 import { UpdateWatcher } from "@/components/UpdateWatcher";
+import { EARLY_THEME_SCRIPT } from "@/lib/themes";
 import { SPLASH_SIZES, splashKey, splashMedia } from "@/lib/splash";
 import { BG } from "@/lib/tokens";
 import "./globals.css";
@@ -37,8 +38,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-AU" style={{ background: BG }}>
-      <body style={{ background: BG }}>
+    <html lang="en-AU" style={{ background: "var(--bg)" }} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: EARLY_THEME_SCRIPT }} />
+      </head>
+      <body style={{ background: "var(--bg)" }}>
         <ServiceWorker />
         <KeyboardFit />
         <UpdateWatcher />

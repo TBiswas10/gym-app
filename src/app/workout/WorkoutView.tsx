@@ -574,7 +574,10 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
             <span><b>You’ve been signed out.</b> Your sets are safe on this phone. <Link className="link" href="/login">Log in</Link> to sync them.</span>
           </div>
         )}
-        <div className="banner banner-warning"><Icon name="triangle-alert" /><span>Sharp or joint pain? Stop and tell someone.</span></div>
+        <details className="safety-pill">
+          <summary><Icon name="triangle-alert" size={16} />Pain? Stop.</summary>
+          <p className="t-small">Sharp or joint pain? Stop and tell someone.</p>
+        </details>
 
         {s.kind === "warm" && (
           <section className="card anim-in" style={{ padding: "var(--space-6)" }}>
@@ -602,16 +605,22 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
               <button type="button" className="icon-btn" aria-label={`Form guide for ${dispName(ex)}`} onClick={() => setGuideOpen(true)}><Icon name="info" /></button>
             </div>
 
-            {formGuide && <KeyCue guide={formGuide} mine={ex.swapped ? "" : myCues[ex.slug] ?? ""} />}
-            {overload && goalLine && (
-              <p className="t-small goal-line">
-                <strong>Goal today:</strong> {goalLine}
-                <span className="c-2"> · {overload.note}</span>
-              </p>
+            {((formGuide && (formGuide.cues[0] || (!ex.swapped && myCues[ex.slug]))) || (overload && goalLine) || (ex.last && !ex.swapped)) && (
+              <div className="briefing">
+                {formGuide && <KeyCue guide={formGuide} mine={ex.swapped ? "" : myCues[ex.slug] ?? ""} />}
+                {overload && goalLine && (
+                  <p className="t-small goal-line">
+                    <strong>Goal today:</strong> {goalLine}
+                    <span className="c-2"> · {overload.note}</span>
+                  </p>
+                )}
+                {ex.last && !ex.swapped && <p className="t-small c-2">Last time: <strong className="c-text">{lastLabel(ex)}</strong></p>}
+              </div>
             )}
-            {ex.last && !ex.swapped && <p className="t-small c-2">Last time: <strong className="c-text">{lastLabel(ex)}</strong></p>}
+            <div className="pill-row">
             {formGuide && (!complete || editing) && <FormCheck key={`form-${formSlug}`} guide={formGuide} slug={formSlug} showPhotos={!ex.swapped || formSlug !== ex.slug} onFullGuide={() => setGuideOpen(true)} note={ex.swapped ? "" : myCues[ex.slug] ?? ""} onSaveNote={ex.swapped ? undefined : (t) => saveCue(ex.slug, t)} />}
             {(!complete || editing) && <SetTip key={`${ex.slug}-${ex.swapped}`} range={ex.range} kind={ex.exKind} planned={ex.planned} swapped={ex.swapped} first={!ex.last} />}
+            </div>
 
             <div className="grid2">
               {Array.from({ length: ex.planned }, (_, i) => {
@@ -855,7 +864,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
       )}
 
       <footer className="bottom-bar">
-        <button type="button" className={`btn btn-primary btn-cta ${finishing ? "is-loading" : ""}`} onClick={primaryAct} disabled={finishing}>{primaryLabel}</button>
+        <button type="button" className={`btn btn-primary btn-cta btn-log ${finishing ? "is-loading" : ""}`} onClick={primaryAct} disabled={finishing}>{primaryLabel}</button>
       </footer>
 
       {pbCard && (

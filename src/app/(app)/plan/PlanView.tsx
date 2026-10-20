@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
+import { ThemePicker } from "@/components/ThemePicker";
 import { logOut } from "@/lib/auth-actions";
 import { shortDay } from "@/lib/dates";
 import { defaultMachine, MACHINES, machineLabel, type MachineId } from "@/lib/cardio";
@@ -257,6 +258,11 @@ export function PlanView({ data }: { data: PlanData }) {
           </div>
           <p className="t-small c-2">Every session is your lifts first, then cardio to finish, with an optional 2 to 3 min cool-down.</p>
           <button type="button" className="btn btn-secondary btn-block" disabled={rows.length >= 8 || available.length === 0} onClick={() => setAdding(true)}>Add exercise</button>
+        </section>
+
+        <section className="card" aria-label="Appearance">
+          <h2 className="t-heading">Appearance</h2>
+          <ThemePicker />
         </section>
 
         <section className="card" style={{ gap: 0, padding: "var(--space-1) var(--space-4)" }}>

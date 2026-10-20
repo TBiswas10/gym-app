@@ -15,7 +15,7 @@ export function FormCheck({ guide, slug, showPhotos = true, onFullGuide, note = 
   const cues = guide.cues.slice(0, 3);
   const mistakes = guide.mistakes.slice(0, 2);
   return (
-    <details className="banner banner-info tip">
+    <details className="tip tip-pill">
       <summary><Icon name="book" size={20} />Form check</summary>
       <div className="tip-body">
         {showPhotos && <ExerciseMedia slug={slug} name={guide.name} />}

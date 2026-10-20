@@ -240,3 +240,52 @@ a.verdict{transition:transform var(--dur-spring) var(--ease-spring)}
 a.verdict:active{transform:scale(.985);transition-duration:var(--dur-press)}
 .goal-x:active{opacity:.6}
 .switch:active .switch-knob{transform:scale(.94)}
+/* Theme picker: the swatch scopes its own palette with data-theme, so it always shows the theme it names. */
+.theme-row{appearance:none;width:100%;display:flex;align-items:center;gap:var(--space-3);min-height:var(--size-tap);padding:var(--space-2) var(--space-3);border-radius:var(--radius-md);border:1px solid var(--hairline);background:var(--surface);color:var(--text);text-align:left;transition:transform var(--dur-spring) var(--ease-spring),border-color var(--dur-press) var(--ease-out)}
+.theme-row:active{transform:scale(.985);transition-duration:var(--dur-press)}
+.theme-row[aria-checked="true"]{border-color:var(--accent)}
+.theme-swatch{flex:none;width:44px;height:44px;border-radius:var(--radius-sm);background:var(--bg);border:1px solid var(--border-strong);display:grid;place-items:center}
+.theme-swatch>i{display:block;width:20px;height:20px;border-radius:50%;background:var(--accent)}
+.theme-check{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--border-strong)}
+.theme-row[aria-checked="true"] .theme-check{border-color:var(--accent);background:radial-gradient(circle,var(--accent) 45%,transparent 50%)}
+
+/* Workout overhaul (owner brief 2026-10-20). Tokens only; motion is transform and opacity. */
+/* Clock-face timer: tabular figures so the digits never jitter, a soft inner glass plate. */
+.head .timer{font-size:2.5rem;line-height:2.75rem;letter-spacing:-0.01em;padding:0 var(--space-3);border-radius:var(--radius-md);background:var(--glass);border:1px solid var(--hairline);box-shadow:inset 0 1px 0 0 var(--highlight)}
+/* Segment bar: glass pills; the done ones fill with the accent, the current one glows. */
+.segs{gap:var(--space-1)}
+.segs>i{height:8px;border-radius:var(--radius-full);background:var(--glass);border:1px solid var(--hairline);box-shadow:inset 0 1px 0 0 var(--highlight);transition:background var(--dur-press) var(--ease-out),transform var(--dur-spring) var(--ease-spring)}
+.segs>i.done{background:var(--accent);border-color:var(--accent-edge)}
+.segs>i.skip{background:var(--border-strong);border-color:var(--hairline)}
+.segs>i.now{background:var(--accent-subtle);border-color:var(--accent);box-shadow:0 0 8px 0 var(--accent-edge);transform:scaleY(1.25)}
+/* Safety reminder: one line until you ask. */
+.safety-pill{align-self:flex-start;border-radius:var(--radius-full);border:1px solid var(--warning-edge);background:var(--warning-subtle);color:var(--text-2)}
+.safety-pill summary{display:inline-flex;align-items:center;gap:var(--space-2);min-height:var(--size-tap);padding:0 var(--space-3);font:700 .8125rem/1rem var(--font-body);color:var(--warning);cursor:pointer;list-style:none}
+.safety-pill summary::-webkit-details-marker{display:none}
+.safety-pill[open]{border-radius:var(--radius-md)}
+.safety-pill p{padding:0 var(--space-3) var(--space-3)}
+/* One glass briefing card: cue, goal, last time. */
+.briefing{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-3);border-radius:var(--radius-md);background:var(--glass);border:1px solid var(--hairline);box-shadow:inset 0 1px 0 0 var(--highlight)}
+.briefing .key-cue,.briefing .goal-line{padding:0;border-left:0;background:none;border-radius:0}
+.briefing .goal-line{padding-top:var(--space-2);border-top:1px solid var(--hairline)}
+/* Form check and How-to-sets: borderless inline pills with a glass icon, open in place. */
+.pill-row{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.tip-pill{background:none;border:0;padding:0;border-radius:0}
+.tip-pill[open]{flex:1 1 100%}
+.tip-pill summary{display:inline-flex;min-height:var(--size-tap);padding:0 var(--space-3) 0 var(--space-2);border-radius:var(--radius-full);color:var(--text-2);font:700 .8125rem/1rem var(--font-body)}
+.tip-pill summary .ic,.tip-pill summary svg{flex:none;padding:6px;box-sizing:content-box;width:20px;height:20px;border-radius:50%;background:var(--glass);border:1px solid var(--hairline);box-shadow:inset 0 1px 0 0 var(--highlight);color:var(--accent)}
+.tip-pill .tip-body{padding:var(--space-2) var(--space-3) var(--space-3);border-radius:var(--radius-md);background:var(--glass);border:1px solid var(--hairline)}
+/* Set tiles: the one you are on is raised glass with an accent glow; the next one recedes. */
+.set{border-color:var(--hairline);border-style:solid;box-shadow:inset 0 1px 0 0 var(--highlight)}
+.set.now{background:var(--glass);border-color:var(--accent);box-shadow:inset 0 1px 0 0 var(--highlight),0 0 14px 0 var(--accent-edge)}
+.set.todo{opacity:.55;border-style:solid}
+.set.now .set-v{color:var(--accent)}
+/* Steppers: hairline plates, bold high-contrast number. */
+.card-raised{border-color:var(--hairline)}
+.step-btn{border-color:var(--hairline);box-shadow:inset 0 1px 0 0 var(--highlight)}
+.num-hero{color:var(--text)}
+.card-raised .divider{border-color:var(--hairline)}
+/* Log button: lit top edge, compresses fast and springs back. */
+.btn-log{box-shadow:inset 0 1px 0 0 var(--highlight),0 0 18px 0 var(--accent-edge);transition:transform var(--dur-spring) var(--ease-spring),box-shadow var(--dur-press) var(--ease-out),background var(--dur-press) var(--ease-out)}
+.btn-log:active{transform:scale(.985);transition-duration:var(--dur-press)}
+@media (prefers-reduced-motion:reduce){.segs>i.now{transform:none}}
