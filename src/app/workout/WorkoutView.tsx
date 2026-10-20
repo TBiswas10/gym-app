@@ -14,7 +14,7 @@ import { bestOfLast, bestSet, describeSet, goalText, isPB, lighten, overloadTarg
 import type { Op, Source } from "@/lib/ops";
 import { restoreState,
   addKg, adjust, adjustCardio, advance, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exSpec, exercises,
-  finishCardio, goTo, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setNotes, setValue, skip, startEdit, swap,
+  finishCardio, goTo, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setNotes, setValue, skip, startEdit, swap, swapTo,
   moveExercise, updateSet, restoreLast, wrapUp, type ExStep, type Step, type WState,
 } from "@/lib/workout-state";
 import type { Guide, WorkoutPage } from "@/lib/server/workout-data";
@@ -23,6 +23,7 @@ import { GuideSheet } from "./GuideSheet";
 import { SetTip } from "./SetTip";
 import { FormCheck, KeyCue } from "./FormCheck";
 import { cueFor, playCue, primeAudio } from "@/lib/audio-cues";
+import { MATCH_LABEL } from "@/lib/alternatives";
 import { saveFormNote } from "@/app/library/[slug]/actions";
 import { ScalePick } from "@/components/ScalePick";
 import { ENERGY_WORDS, SORENESS_WORDS } from "@/lib/checkin-scale";
@@ -199,6 +200,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   };
 
   const lastAlert = useRef<{ title: string; body: string } | null>(null);
+  const [restOpen, setRestOpen] = useState(false);
   const startRest = (seconds: number, alert?: { title: string; body: string }) => {
     lastAlert.current = alert ?? null;
     const r = { end: Date.now() + seconds * 1000, total: seconds };
@@ -307,10 +309,14 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     setMyCues((c) => ({ ...c, [slug]: clean }));
     void saveFormNote(slug, clean).catch(() => undefined);
   };
-  const formGuide = ex ? (ex.swapped ? page.backupGuides?.[ex.slug]?.guide ?? null : guides[ex.slug] ?? null) : null;
-  const formSlug = ex ? (ex.swapped ? page.backupGuides?.[ex.slug]?.slug ?? ex.slug : ex.slug) : "";
+  // After a swap the form help follows the exercise you chose (from the drawer), else the plan's usual backup.
+  const pickedAlt = ex?.swapped ? page.alternatives?.[ex.slug]?.find((a) => a.name === ex.backup) : undefined;
+  const swapGuide = ex?.swapped ? (pickedAlt ? { slug: pickedAlt.slug, guide: pickedAlt.guide } : page.backupGuides?.[ex.slug] ?? null) : null;
+  const formGuide = ex ? (ex.swapped ? swapGuide?.guide ?? null : guides[ex.slug] ?? null) : null;
+  const formSlug = ex ? (ex.swapped ? swapGuide?.slug ?? ex.slug : ex.slug) : "";
   const [finishing, setFinishing] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [swapOpen, setSwapOpen] = useState(false);
   // The set that was just logged gets a quick pop, so you can tell it registered without reading.
   const [just, setJust] = useState(-1);
 
@@ -490,6 +496,10 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
           ))}
         </div>
 
+        <details className="safety-pill">
+          <summary><Icon name="triangle-alert" size={16} />Pain? Stop.</summary>
+          <p className="t-small">Sharp or joint pain? Stop and tell someone.</p>
+        </details>
         {showAmber && (
           <div className="timer-note warn" role="status"><Icon name="clock" size={16} />40 min in. Aim to wrap up by 50:00.</div>
         )}
@@ -522,36 +532,6 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
           </div>
         )}
 
-        {resting && rest && (
-          <div className="col g2 anim-in">
-            <div className="row g3">
-              <div className={`rest-ring ${restLeft <= 5 ? "is-final" : ""}`} role="progressbar" aria-label="Rest remaining" aria-valuenow={restLeft} aria-valuemin={0} aria-valuemax={rest.total}>
-                <svg viewBox="0 0 72 72" aria-hidden="true">
-                  <circle className="rest-ring-track" cx="36" cy="36" r="31" />
-                  <circle className="rest-ring-fill" cx="36" cy="36" r="31" style={{ strokeDashoffset: `${(1 - Math.min(1, restLeft / Math.max(1, rest.total))) * 194.8}` }} />
-                </svg>
-                <span className="num-m">{mmss(restLeft)}</span>
-              </div>
-              <div className="col grow g1">
-                <span className="t-eyebrow c-accent">Rest</span>
-                <strong className="t-body">{restNext}</strong>
-                <span className="t-caption c-2" style={{ fontWeight: 600 }}>{notify ? "Alert when rest ends: on" : "Alert when rest ends: off"}</span>
-              </div>
-              <button type="button" className={`icon-btn ${soundOn ? "is-on" : ""}`} aria-pressed={soundOn} aria-label="Countdown sounds for the last 3 seconds" onClick={toggleSound}>
-                <Icon name={soundOn ? "volume-2" : "volume-x"} />
-              </button>
-              <button type="button" className={`icon-btn ${notify ? "is-on" : ""}`} aria-pressed={notify} aria-label="Notify me when rest ends" onClick={toggleNotify}>
-                <Icon name={notify ? "bell" : "bell-off"} />
-              </button>
-            </div>
-            <div className="row g2">
-              <button type="button" className="btn btn-secondary grow" onClick={() => nudgeRest(-15)}>−15 s</button>
-              <button type="button" className="btn btn-secondary grow" onClick={() => nudgeRest(15)}>+15 s</button>
-              <button type="button" className="btn btn-tertiary" onClick={stopRest}>Skip</button>
-            </div>
-            {notifyNote && <div className="banner banner-info" role="status"><Icon name="info" /><span>{notifyNote}</span></div>}
-          </div>
-        )}
         {autoAt !== null && next && nextLabel && (
           <div className="banner banner-info anim-in" role="status" style={{ alignItems: "center" }}>
             <Icon name="skip-forward" size={16} />
@@ -561,7 +541,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
         )}
       </header>
 
-      <main ref={mainRef} className="scroll under-bar" style={{ paddingTop: "var(--space-1)" }}>
+      <main ref={mainRef} className={`scroll under-bar${resting ? " has-rest-pill" : ""}`} style={{ paddingTop: "var(--space-1)" }}>
         {!online && pending > 0 && (
           <div className="banner banner-warning" role="status">
             <Icon name="triangle-alert" />
@@ -574,10 +554,6 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
             <span><b>You’ve been signed out.</b> Your sets are safe on this phone. <Link className="link" href="/login">Log in</Link> to sync them.</span>
           </div>
         )}
-        <details className="safety-pill">
-          <summary><Icon name="triangle-alert" size={16} />Pain? Stop.</summary>
-          <p className="t-small">Sharp or joint pain? Stop and tell someone.</p>
-        </details>
 
         {s.kind === "warm" && (
           <section className="card anim-in" style={{ padding: "var(--space-6)" }}>
@@ -714,7 +690,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
             )}
 
             <div className="grid2">
-              <button type="button" className="btn btn-secondary" onClick={() => run(swap(ws), { toast: ex.swapped ? "Swap undone." : `Swapped to ${ex.backup}.`, undoable: true })}>
+              <button type="button" className="btn btn-secondary" onClick={() => (ex.swapped ? run(swap(ws), { toast: "Swap undone.", undoable: true }) : setSwapOpen(true))}>
                 <Icon name="repeat" />{ex.swapped ? "Undo swap" : "Swap"}
               </button>
               <button type="button" className="btn btn-secondary" onClick={onSkip}><Icon name="skip-forward" />Skip</button>
@@ -864,6 +840,40 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
       )}
 
       <footer className="bottom-bar">
+        {resting && rest && (
+          <div className={`rest-pill anim-in ${restOpen ? "is-open" : ""}`} role="group" aria-label="Rest timer">
+            <div className="rest-pill-main">
+              <div className={`rest-ring ${restLeft <= 5 ? "is-final" : ""}`} role="progressbar" aria-label="Rest remaining" aria-valuenow={restLeft} aria-valuemin={0} aria-valuemax={rest.total}>
+                <svg viewBox="0 0 72 72" aria-hidden="true">
+                  <circle className="rest-ring-track" cx="36" cy="36" r="31" />
+                  <circle className="rest-ring-fill" cx="36" cy="36" r="31" style={{ strokeDashoffset: `${(1 - Math.min(1, restLeft / Math.max(1, rest.total))) * 194.8}` }} />
+                </svg>
+                <span className="num-m">{mmss(restLeft)}</span>
+              </div>
+              <button type="button" className="rest-pill-info" aria-expanded={restOpen} aria-label="Rest options" onClick={() => setRestOpen((o) => !o)}>
+                <span className="t-eyebrow c-accent">Rest</span>
+                <strong className="t-small">{restNext}</strong>
+              </button>
+              <button type="button" className="btn btn-tertiary" onClick={stopRest}>Skip</button>
+            </div>
+            {restOpen && (
+              <div className="rest-pill-more anim-in">
+                <div className="row g2">
+                  <button type="button" className="btn btn-secondary grow" onClick={() => nudgeRest(-15)}>−15 s</button>
+                  <button type="button" className="btn btn-secondary grow" onClick={() => nudgeRest(15)}>+15 s</button>
+                  <button type="button" className={`icon-btn ${soundOn ? "is-on" : ""}`} aria-pressed={soundOn} aria-label="Countdown sounds for the last 3 seconds" onClick={toggleSound}>
+                    <Icon name={soundOn ? "volume-2" : "volume-x"} />
+                  </button>
+                  <button type="button" className={`icon-btn ${notify ? "is-on" : ""}`} aria-pressed={notify} aria-label="Notify me when rest ends" onClick={toggleNotify}>
+                    <Icon name={notify ? "bell" : "bell-off"} />
+                  </button>
+                </div>
+                <span className="t-caption c-2" style={{ fontWeight: 600 }}>{notify ? "Alert when rest ends: on" : "Alert when rest ends: off"}</span>
+                {notifyNote && <div className="banner banner-info" role="status"><Icon name="info" /><span>{notifyNote}</span></div>}
+              </div>
+            )}
+          </div>
+        )}
         <button type="button" className={`btn btn-primary btn-cta btn-log ${finishing ? "is-loading" : ""}`} onClick={primaryAct} disabled={finishing}>{primaryLabel}</button>
       </footer>
 
@@ -929,10 +939,51 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
         </>
       )}
 
+      {swapOpen && ex && (() => {
+        const alts = page.alternatives?.[ex.slug] ?? [];
+        const usual = ex.backup;
+        const inList = alts.some((a) => a.name.trim().toLowerCase() === usual.trim().toLowerCase());
+        const choose = (name: string) => {
+          setSwapOpen(false);
+          run(swapTo(ws, name), { toast: `Swapped to ${name}.`, undoable: true });
+        };
+        return (
+          <>
+            <div className="scrim" onClick={() => setSwapOpen(false)} />
+            <div className="sheet-wrap">
+              <div className="sheet" role="dialog" aria-label={`Swap ${ex.name}`}>
+                <span className="sheet-grab" />
+                <h2 className="t-title">Swap {ex.name}</h2>
+                <p className="t-small c-2">Machine busy? Pick a stand-in. Closest match first. It starts with no history, so go light.</p>
+                <div className="col g2">
+                  {!inList && usual !== "a similar exercise" && (
+                    <button type="button" className="swap-row" onClick={() => choose(usual)}>
+                      <strong className="t-body">{usual}</strong>
+                      <span className="t-small c-2">Your usual backup</span>
+                    </button>
+                  )}
+                  {alts.map((a) => (
+                    <button key={a.slug} type="button" className="swap-row" onClick={() => choose(a.name)}>
+                      <strong className="t-body">{a.name}</strong>
+                      <span className="row g2 wrap">
+                        <span className="tag">{a.kit}</span>
+                        <span className="tag tag-accent">{MATCH_LABEL[a.match]}</span>
+                      </span>
+                    </button>
+                  ))}
+                  {alts.length === 0 && usual === "a similar exercise" && <p className="t-small c-2">No close matches in the library for this one.</p>}
+                </div>
+                <button type="button" className="btn btn-tertiary btn-block" onClick={() => setSwapOpen(false)}>Keep {ex.name}</button>
+              </div>
+            </div>
+          </>
+        );
+      })()}
+
       {guideOpen && ex && guides[ex.slug] && (() => {
         // After a swap the info button shows the exercise you are actually doing (its library guide if there is one).
         const base = guides[ex.slug];
-        const sw = ex.swapped ? page.backupGuides?.[ex.slug] ?? null : null;
+        const sw = swapGuide;
         if (!ex.swapped) return <GuideSheet guide={base} slug={ex.slug} onClose={() => setGuideOpen(false)} />;
         if (sw) return <GuideSheet guide={sw.guide} slug={sw.slug} onClose={() => setGuideOpen(false)} />;
         const plain: Guide = {

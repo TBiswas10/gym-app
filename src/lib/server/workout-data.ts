@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { alternativesFor, type Alternative, type LibraryItem } from "../alternatives";
 import type { ServerClient } from "../supabase/server";
 import type { Database } from "../database.types";
 import { isSetupWeek, programmeWeek, sydneyDate, weekDates, weekdayOf } from "../dates";
@@ -37,6 +38,8 @@ export interface WorkoutPage {
   guides: Record<string, Guide>;
   /** Per plan slug: the guide of its backup exercise when the library has one (null = no guide for it). */
   backupGuides?: Record<string, { slug: string; guide: Guide } | null>;
+  /** Per plan slug: stand-ins for the Swap drawer, closest match first, each with its guide. */
+  alternatives?: Record<string, (Alternative & { guide: Guide })[]>;
   /** Per plan slug: your own form cue (what you keep getting wrong). */
   formNotes?: Record<string, string>;
   catalog: CatalogItem[];
@@ -173,7 +176,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
     supabase.from("cardio_entries").select("id, kind, params, feel").eq("workout_id", w.id).limit(1),
     supabase.from("cardio_entries").select("kind, params, minutes").not("kind", "in", "(walk,stretch)").order("logged_at", { ascending: false }).limit(40),
     supabase.from("checkins").select("soreness").not("soreness", "is", null).order("created_at", { ascending: false }).limit(3),
-    supabase.from("exercises").select("slug, name, kind, muscle_group, muscles, setup, cues, mistakes").order("sort_order"),
+    supabase.from("exercises").select("slug, name, kind, kit, muscle_group, muscles, setup, cues, mistakes").order("sort_order"),
   ]);
   for (const r of [daysRes, exRes, recentRes, settingsRes, mySetsRes, cardioRes, cardioHistRes, soreRes, catalogRes]) if (r.error) throw r.error;
   const day = daysRes.data;
@@ -232,6 +235,19 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
       : null;
   }
 
+  const library: LibraryItem[] = (catalogRes.data ?? []).map((c) => ({ slug: c.slug, name: c.name, kit: c.kit, group: c.muscle_group, muscles: c.muscles }));
+  const todaySlugs = (exRes.data ?? []).map((e) => e.exercise_slug);
+  const alternatives: Record<string, (Alternative & { guide: Guide })[]> = {};
+  for (const e of exRes.data ?? []) {
+    const x = e.exercises as unknown as { name: string; muscle_group: string; muscles: string[]; backup_name: string | null };
+    const backup = settings.get(e.exercise_slug)?.backup_name ?? x.backup_name;
+    const list = alternativesFor({ slug: e.exercise_slug, name: x.name, kit: "", group: x.muscle_group, muscles: x.muscles }, library, backup, todaySlugs);
+    alternatives[e.exercise_slug] = list.map((a) => {
+      const c = byName.get(a.name.trim().toLowerCase())!;
+      return { ...a, guide: { name: c.name, group: c.muscle_group, muscles: c.muscles, setup: c.setup, cues: c.cues, mistakes: c.mistakes } };
+    });
+  }
+
   const formNotes: Record<string, string> = {};
   for (const e of exRes.data ?? []) {
     const fn = settings.get(e.exercise_slug)?.form_note;
@@ -283,7 +299,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
         workoutId: w.id, sessionName: w.day_name, startedAt: w.started_at, cardioName: day.cardio_name, cardioLabel: day.cardio_label,
         week, deload, restAlerts: state.rest_alerts ?? true, light, setup, highSoreness: sore, hold: reviewHold,
       },
-      guides, backupGuides, formNotes, catalog, lastBySlug, lastCardio,
+      guides, backupGuides, alternatives, formNotes, catalog, lastBySlug, lastCardio,
     },
   };
 }

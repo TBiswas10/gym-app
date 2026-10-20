@@ -306,6 +306,13 @@ export function swap(s: WState): WState {
   return replaceStep(s, s.cur, { swapped: !e.swapped, sets: [], status: "todo", editIdx: -1 } as Partial<ExStep>);
 }
 
+/** Swap to a chosen stand-in from the Swap drawer: the same as `swap`, but the exercise you now do is the one you picked. */
+export function swapTo(s: WState, name: string): WState {
+  const e = currentStep(s);
+  if (!isEx(e)) return s;
+  return replaceStep(s, s.cur, { backup: name, swapped: true, sets: [], status: "todo", editIdx: -1 } as Partial<ExStep>);
+}
+
 export const setNotes = (s: WState, notes: string): WState => {
   const e = currentStep(s);
   return isEx(e) ? replaceStep(s, s.cur, { notes }) : s;

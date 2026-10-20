@@ -289,3 +289,22 @@ a.verdict:active{transform:scale(.985);transition-duration:var(--dur-press)}
 .btn-log{box-shadow:inset 0 1px 0 0 var(--highlight),0 0 18px 0 var(--accent-edge);transition:transform var(--dur-spring) var(--ease-spring),box-shadow var(--dur-press) var(--ease-out),background var(--dur-press) var(--ease-out)}
 .btn-log:active{transform:scale(.985);transition-duration:var(--dur-press)}
 @media (prefers-reduced-motion:reduce){.segs>i.now{transform:none}}
+
+/* Floating rest pill: glass, sits just above the Log button, ring + next lift + Skip; tap it for the options. */
+.bottom-bar{position:relative}
+.rest-pill{position:absolute;left:var(--space-4);right:var(--space-4);bottom:calc(100% + var(--space-2));z-index:4;display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-2) var(--space-3);border-radius:var(--radius-lg);background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(1.4);backdrop-filter:blur(20px) saturate(1.4);border:1px solid var(--hairline);box-shadow:inset 0 1px 0 0 var(--highlight)}
+.rest-pill-main{display:flex;align-items:center;gap:var(--space-3)}
+.rest-pill .rest-ring{width:56px;height:56px}
+.rest-pill .rest-ring .num-m{font-size:.9375rem;line-height:1.25rem}
+.rest-pill-info{appearance:none;flex:1;min-width:0;min-height:var(--size-tap);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;background:none;border:0;padding:0;color:var(--text)}
+.rest-pill-info strong{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rest-pill-more{display:flex;flex-direction:column;gap:var(--space-2)}
+.scroll.has-rest-pill{padding-bottom:calc(var(--space-6) + 72px)}
+
+/* Swap drawer rows */
+.swap-row{appearance:none;width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:var(--space-1);min-height:var(--size-tap);padding:var(--space-3);border-radius:var(--radius-md);background:var(--surface);border:1px solid var(--hairline);box-shadow:inset 0 1px 0 0 var(--highlight);color:var(--text);text-align:left;transition:transform var(--dur-spring) var(--ease-spring),border-color var(--dur-press) var(--ease-out)}
+.swap-row:active{transform:scale(.985);border-color:var(--accent);transition-duration:var(--dur-press)}
+.safety-pill{align-self:center}
+.head .safety-pill[open]{align-self:stretch}
+.t-title{letter-spacing:-0.025em}
+.scroll.under-bar{padding-bottom:calc(var(--space-6) + env(safe-area-inset-bottom))}
