@@ -676,7 +676,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
 
             <div className="field">
               <label className="field-label" htmlFor="notes">Machine notes</label>
-              <input
+              <input autoComplete="off"
                 className="input" id="notes" value={ex.notes} placeholder="Seat height, pad position…"
                 onChange={(e) => local(setNotes(ws, e.target.value))}
                 onBlur={() => enqueue([{ t: "notes", slug: ex.slug, notes: ex.notes.slice(0, 200) }])}
@@ -844,7 +844,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                   <ScalePick label="How much energy do you have?" hint="1 is drained, 5 is buzzing." words={ENERGY_WORDS} value={offEnergy} onChange={setOffEnergy} />
                   <div className="field">
                     <label className="field-label" htmlFor="offnotes">Notes</label>
-                    <textarea id="offnotes" className="input" rows={2} maxLength={500} value={offNotes} onChange={(e) => setOffNotes(e.target.value)} placeholder="Anything to remember for next time?" />
+                    <textarea autoComplete="off" id="offnotes" className="input" rows={2} maxLength={500} value={offNotes} onChange={(e) => setOffNotes(e.target.value)} placeholder="Anything to remember for next time?" />
                   </div>
                   <button type="button" className="btn btn-primary btn-cta" onClick={saveOffline}>Save and finish</button>
                   <button type="button" className="btn btn-tertiary btn-block" onClick={() => setOfflineFinish(false)}>Keep training</button>

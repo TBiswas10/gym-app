@@ -205,6 +205,19 @@ export function ReviewCard({ reviews }: { reviews: ReviewView[] }) {
 /** Progress: targets you set, with how far you have come. */
 export function GoalsCard({ goals, choices }: { goals: GoalView[]; choices: { slug: string; name: string; unit: string }[] }) {
   const [adding, setAdding] = useState(false);
+  // Removing is a two-tap action: the first tap asks, the second (within 3 s) removes.
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const askRemove = (id: string) => {
+    if (confirmId === id) {
+      setConfirmId(null);
+      start(async () => {
+        await removeGoal(id);
+      });
+      return;
+    }
+    setConfirmId(id);
+    window.setTimeout(() => setConfirmId((c) => (c === id ? null : c)), 3000);
+  };
   const [slug, setSlug] = useState(choices[0]?.slug ?? "");
   const [target, setTarget] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -250,7 +263,7 @@ export function GoalsCard({ goals, choices }: { goals: GoalView[]; choices: { sl
             </div>
             <div className="row between t-small c-2">
               <span>{g.reached ? "Nice work." : `${g.toGo} ${g.unit} to go`}</span>
-              <button type="button" className="goal-x" aria-label={`Remove the ${g.name} goal`} disabled={pending} onClick={() => start(async () => { await removeGoal(g.id); })}>Remove</button>
+              <button type="button" className="goal-x" aria-label={confirmId === g.id ? `Tap again to remove the ${g.name} goal` : `Remove the ${g.name} goal`} disabled={pending} onClick={() => askRemove(g.id)}>{confirmId === g.id ? "Tap again to remove" : "Remove"}</button>
             </div>
           </div>
         ))}
@@ -264,7 +277,7 @@ export function GoalsCard({ goals, choices }: { goals: GoalView[]; choices: { sl
             ))}
           </select>
           <label className="field-label" htmlFor="goal-target">Target ({unit})</label>
-          <input id="goal-target" className="input" type="number" inputMode="decimal" min="1" step="0.5" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="e.g. 100" />
+          <input autoComplete="off" id="goal-target" className="input" type="number" inputMode="decimal" min="1" step="0.5" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="e.g. 100" />
           {error && <p className="t-small c-warning" role="alert">{error}</p>}
           <div className="grid2">
             <button type="button" className="btn btn-secondary" onClick={() => { setAdding(false); setError(null); }}>Cancel</button>

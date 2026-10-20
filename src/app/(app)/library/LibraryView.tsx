@@ -42,12 +42,12 @@ export function LibraryView({ items, plan = {}, todayWeekday }: { items: LibItem
         </div>
         <div className="search" role="search">
           <Icon name="search" />
-          <input
+          <input autoComplete="off"
             type="search"
             className="search-input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search exercises, muscles, machines"
+            placeholder="Search exercises, muscles, machines…"
             aria-label="Search exercises"
             enterKeyHint="search"
             autoCapitalize="none"

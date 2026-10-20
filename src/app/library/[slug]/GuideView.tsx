@@ -119,7 +119,7 @@ export function GuideView({ slug, name, kit, kind, muscles, tabs, series, step, 
 
         <section className="card">
           <label className="t-heading" htmlFor="fnote">My form cue</label>
-          <input
+          <input autoComplete="off"
             id="fnote" className="input" type="text" maxLength={140} value={cue} placeholder="e.g. Elbows in, don’t flare"
             onChange={(e) => setCue(e.target.value)}
             onBlur={() => startTransition(async () => { const r = await saveFormNote(slug, cue); setError(r.ok ? null : r.error); })}
@@ -129,7 +129,7 @@ export function GuideView({ slug, name, kit, kind, muscles, tabs, series, step, 
 
         <section className="card">
           <label className="t-heading" htmlFor="mnotes">Machine notes</label>
-          <input
+          <input autoComplete="off"
             id="mnotes" className="input" type="text" maxLength={200} value={note} placeholder="Seat height, pad position…"
             onChange={(e) => setNote(e.target.value)}
             onBlur={() => startTransition(async () => { const r = await saveMachineNotes(slug, note); setError(r.ok ? null : r.error); })}

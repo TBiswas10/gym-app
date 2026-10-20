@@ -4,10 +4,10 @@ export function ExerciseMedia({ slug, name, thumb = false }: { slug: string; nam
   return (
     <span className={`media ${thumb ? "media-thumb" : ""}`} role="img" aria-label={`${name}: start and finish positions`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`/exercises/${slug}/0.jpg`} alt="" loading="lazy" decoding="async" draggable={false} />
+      <img src={`/exercises/${slug}/0.jpg`} width={600} height={400} alt="" loading="lazy" decoding="async" draggable={false} />
       {!thumb && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={`/exercises/${slug}/1.jpg`} alt="" loading="lazy" decoding="async" draggable={false} />
+        <img src={`/exercises/${slug}/1.jpg`} width={600} height={400} alt="" loading="lazy" decoding="async" draggable={false} />
       )}
     </span>
   );

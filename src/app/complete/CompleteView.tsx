@@ -110,12 +110,12 @@ export function CompleteView({ workoutId, data, problem, initialStage }: { worko
           {data.trackBodyweight && (
             <div className="field">
               <label className="field-label" htmlFor="bw">Bodyweight (kg), once a week</label>
-              <input id="bw" name="bodyweight" className="input" type="number" inputMode="decimal" step="0.1" min="20" max="400" defaultValue={data.bodyweight} placeholder="Optional" />
+              <input autoComplete="off" id="bw" name="bodyweight" className="input" type="number" inputMode="decimal" step="0.1" min="20" max="400" defaultValue={data.bodyweight} placeholder="Optional" />
             </div>
           )}
           <div className="field">
             <label className="field-label" htmlFor="cnotes">Notes</label>
-            <textarea id="cnotes" name="notes" className="input" rows={3} value={notesText} onChange={(e) => setNotesText(e.target.value)} maxLength={500} placeholder="Anything to remember for next time?" />
+            <textarea autoComplete="off" id="cnotes" name="notes" className="input" rows={3} value={notesText} onChange={(e) => setNotesText(e.target.value)} maxLength={500} placeholder="Anything to remember for next time?" />
           </div>
           {local && (
             <div className="banner banner-success" role="status">

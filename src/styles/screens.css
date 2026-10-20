@@ -226,3 +226,9 @@
 .has-tabs .scroll{padding-bottom:calc(var(--space-6) + var(--tabbar-h))}
 .has-tabs .scroll:has(~ .bottom-bar.above-tabs){padding-bottom:var(--space-6)}
 .has-tabs .bottom-bar.above-tabs{margin-bottom:var(--tabbar-h)}
+/* Guidelines pass: sheets never scroll the page behind them; every row you can tap presses. */
+.sheet{overscroll-behavior:contain}
+.check-row,.day{transition:transform var(--dur-spring) var(--ease-spring),background var(--dur-press) var(--ease-out)}
+.check-row:active,.day:active{transition-duration:var(--dur-press)}
+.check-row:active{transform:scale(.985);background:var(--surface)}
+.day:active{transform:scale(.96)}

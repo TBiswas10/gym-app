@@ -42,7 +42,7 @@ export function FormCheck({ guide, slug, showPhotos = true, onFullGuide, note = 
         {onSaveNote && (
           <div className="col g1">
             <label className="t-caption c-2" htmlFor={`cue-${slug}`}>MY CUE FOR THIS LIFT</label>
-            <input id={`cue-${slug}`} className="input" type="text" maxLength={140} value={text} placeholder="The one thing you keep getting wrong" onChange={(e) => setText(e.target.value)} onBlur={() => onSaveNote(text)} />
+            <input autoComplete="off" id={`cue-${slug}`} className="input" type="text" maxLength={140} value={text} placeholder="e.g. Elbows in, don’t flare…" onChange={(e) => setText(e.target.value)} onBlur={() => onSaveNote(text)} />
           </div>
         )}
         <button type="button" className="btn btn-secondary btn-block" onClick={onFullGuide}>Full guide, setup and all cues</button>

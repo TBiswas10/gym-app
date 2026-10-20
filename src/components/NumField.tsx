@@ -36,7 +36,7 @@ export function NumField({
   };
 
   return (
-    <input
+    <input autoComplete="off"
       className={`${hero ? "num-hero" : "num-l"} step-val num-input ${onScrub ? "is-scrubbable" : ""}`}
       aria-label={label}
       inputMode={decimal ? "decimal" : "numeric"}
