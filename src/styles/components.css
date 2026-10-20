@@ -129,10 +129,10 @@ textarea.input{padding:var(--space-3) var(--space-4);min-height:96px;resize:none
 /* ----- cards ----- */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);min-width:0}
 .card-raised{background:var(--raised)}
-.card-accent{background:var(--accent-subtle);border-color:rgba(198,244,50,.35)}
-.card-warning{background:var(--warning-subtle);border-color:rgba(255,178,36,.45)}
-.card-danger{background:var(--danger-subtle);border-color:rgba(255,107,94,.45)}
-.card-success{background:var(--success-subtle);border-color:rgba(52,211,153,.4)}
+.card-accent{background:var(--accent-subtle);border-color:var(--accent-edge)}
+.card-warning{background:var(--warning-subtle);border-color:var(--warning-edge)}
+.card-danger{background:var(--danger-subtle);border-color:var(--danger-edge)}
+.card-success{background:var(--success-subtle);border-color:var(--success-edge)}
 .card-dashed{background:transparent;border:1px dashed var(--border-strong)}
 a.card{text-decoration:none;color:inherit}
 .inset{background:var(--raised);border-radius:var(--radius-sm);padding:var(--space-3);display:flex;flex-direction:column;gap:var(--space-1)}
@@ -160,16 +160,16 @@ a.card{text-decoration:none;color:inherit}
 .streak-dot{width:12px;height:12px;border-radius:50%;background:var(--raised);border:1px solid var(--border-strong)}
 .streak-dot.on{background:var(--accent);border-color:var(--accent)}
 .verdict{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);background:var(--raised)}
-.verdict-up{background:var(--accent-subtle);border:1px solid rgba(198,244,50,.35)}
+.verdict-up{background:var(--accent-subtle);border:1px solid var(--accent-edge)}
 .verdict .round{width:40px;height:40px}
 
 /* ----- feedback ----- */
 .banner{display:flex;gap:var(--space-3);align-items:flex-start;padding:var(--space-3) var(--space-4);border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--surface);font:500 .875rem/1.25rem var(--font-body);color:var(--text);min-width:0}
 .banner .ic{margin-top:-2px}
-.banner-warning{background:var(--warning-subtle);border-color:rgba(255,178,36,.5)}.banner-warning .ic{color:var(--warning)}
-.banner-danger{background:var(--danger-subtle);border-color:rgba(255,107,94,.5)}.banner-danger .ic{color:var(--danger)}
-.banner-info{background:var(--info-subtle);border-color:rgba(108,182,255,.45)}.banner-info .ic{color:var(--info)}
-.banner-success{background:var(--success-subtle);border-color:rgba(52,211,153,.45)}.banner-success .ic{color:var(--success)}
+.banner-warning{background:var(--warning-subtle);border-color:var(--warning-edge)}.banner-warning .ic{color:var(--warning)}
+.banner-danger{background:var(--danger-subtle);border-color:var(--danger-edge)}.banner-danger .ic{color:var(--danger)}
+.banner-info{background:var(--info-subtle);border-color:var(--info-edge)}.banner-info .ic{color:var(--info)}
+.banner-success{background:var(--success-subtle);border-color:var(--success-edge)}.banner-success .ic{color:var(--success)}
 .banner b{font-weight:800}
 .bar{height:8px;border-radius:4px;background:var(--raised);overflow:hidden}
 .bar>i{display:block;width:100%;height:100%;border-radius:4px;background:var(--accent);transform-origin:left center;transition:transform 1s linear}
@@ -244,7 +244,7 @@ a,button,[role="tab"],input,select,textarea{touch-action:manipulation}
 .set{appearance:none;min-height:56px;width:100%;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:transparent;color:var(--text);padding:var(--space-2) var(--space-3);display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:var(--space-2);text-align:left;font:600 1rem/1.25rem var(--font-body);transition:background var(--dur-press) var(--ease-out),border-color var(--dur-press) var(--ease-out),transform var(--dur-press) var(--ease-out)}
 .set .set-n{display:flex;flex-direction:column;gap:0}.set .set-n small{font:600 .8125rem/1rem var(--font-body);color:var(--text-2)}
 .set .set-v{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
-.set.logged{background:var(--accent-subtle);border-color:rgba(198,244,50,.35)}
+.set.logged{background:var(--accent-subtle);border-color:var(--accent-edge)}
 .set.logged .set-n{color:var(--accent)}
 .set.now{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .set.todo{color:var(--text-2);border-style:dashed}

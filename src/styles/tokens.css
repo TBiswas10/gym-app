@@ -49,6 +49,11 @@
   /* Owner-approved finish tokens (2026-10-20), derived from --text and --bg. Fallbacks below are the old solid values. */
   --hairline: var(--border);
   --highlight: transparent;
+  --accent-edge: var(--accent);
+  --warning-edge: var(--warning);
+  --danger-edge: var(--danger);
+  --success-edge: var(--success);
+  --info-edge: var(--info);
   --glass: var(--bg);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.45);
@@ -60,5 +65,10 @@
     --hairline: color-mix(in srgb, var(--text) 8%, transparent);
     --highlight: color-mix(in srgb, var(--text) 6%, transparent);
     --glass: color-mix(in srgb, var(--bg) 80%, transparent);
+    --accent-edge: color-mix(in srgb, var(--accent) 40%, transparent);
+    --warning-edge: color-mix(in srgb, var(--warning) 45%, transparent);
+    --danger-edge: color-mix(in srgb, var(--danger) 45%, transparent);
+    --success-edge: color-mix(in srgb, var(--success) 40%, transparent);
+    --info-edge: color-mix(in srgb, var(--info) 45%, transparent);
   }
 }

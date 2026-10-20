@@ -156,12 +156,12 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const [notifyNote, setNotifyNote] = useState<string | null>(null);
   const pushId = useRef<string | null>(null);
   useEffect(() => {
-    void pushState().then((st) => st === "on" && meta.restAlerts && setNotify(true));
+    void pushState().then((st) => st === "on" && meta.restAlerts && setNotify(true)).catch(() => undefined);
   }, [meta.restAlerts]);
   const cancelPush = () => {
     const p = pushId.current;
     pushId.current = null;
-    if (p) void cancelRestPush(p);
+    if (p) void cancelRestPush(p).catch(() => undefined);
   };
 
   const lastAlert = useRef<{ title: string; body: string } | null>(null);
@@ -175,7 +175,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
       /* ignore */
     }
     cancelPush();
-    if (notify && alert) void scheduleRestPush(seconds, alert.title, alert.body).then((pid) => { pushId.current = pid; });
+    if (notify && alert) void scheduleRestPush(seconds, alert.title, alert.body).then((pid) => { pushId.current = pid; }).catch(() => undefined);
   };
   // +15 s / -15 s on a running rest; the phone alert moves with it.
   const nudgeRest = (seconds: number) => {
@@ -190,7 +190,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     }
     cancelPush();
     const left = Math.ceil((r.end - Date.now()) / 1000);
-    if (notify && lastAlert.current && left >= 10) void scheduleRestPush(left, lastAlert.current.title, lastAlert.current.body).then((pid) => { pushId.current = pid; });
+    if (notify && lastAlert.current && left >= 10) void scheduleRestPush(left, lastAlert.current.title, lastAlert.current.body).then((pid) => { pushId.current = pid; }).catch(() => undefined);
   };
   const stopRest = () => {
     setRest(null);
@@ -206,14 +206,14 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     if (notify) {
       setNotify(false);
       cancelPush();
-      void saveSettings({ restAlerts: false });
-      void disableRestAlerts();
+      void saveSettings({ restAlerts: false }).catch(() => undefined);
+      void disableRestAlerts().catch(() => undefined);
       return;
     }
     const r = await enableRestAlerts();
     if (r === "on") {
       setNotify(true);
-      void saveSettings({ restAlerts: true });
+      void saveSettings({ restAlerts: true }).catch(() => undefined);
     } else setNotifyNote(PUSH_MESSAGE[r]);
   };
 
@@ -271,7 +271,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
     const clean = text.trim();
     if ((myCues[slug] ?? "") === clean) return;
     setMyCues((c) => ({ ...c, [slug]: clean }));
-    void saveFormNote(slug, clean);
+    void saveFormNote(slug, clean).catch(() => undefined);
   };
   const formGuide = ex ? (ex.swapped ? page.backupGuides?.[ex.slug]?.guide ?? null : guides[ex.slug] ?? null) : null;
   const formSlug = ex ? (ex.swapped ? page.backupGuides?.[ex.slug]?.slug ?? ex.slug : ex.slug) : "";

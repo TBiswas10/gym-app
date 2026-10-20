@@ -101,7 +101,7 @@ export function PlanView({ data }: { data: PlanData }) {
     if (!value) {
       setRestAlerts(false);
       run(() => saveSettings({ restAlerts: false }), () => setRestAlerts(true));
-      void disableRestAlerts();
+      void disableRestAlerts().catch(() => undefined);
       return;
     }
     startTransition(async () => {

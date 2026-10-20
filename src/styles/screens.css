@@ -11,7 +11,7 @@
 .plan-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
 
 /* Today: missed-day card options */
-.opt{appearance:none;width:100%;text-align:left;min-height:60px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);padding:var(--space-2) var(--space-4);border:1px solid rgba(255,178,36,.5);background:transparent;color:var(--text);cursor:pointer;text-decoration:none}
+.opt{appearance:none;width:100%;text-align:left;min-height:60px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);padding:var(--space-2) var(--space-4);border:1px solid var(--warning-edge);background:transparent;color:var(--text);cursor:pointer;text-decoration:none}
 .opt:active{background:var(--warning-subtle)}
 .opt.main{background:var(--warning);border-color:var(--warning);color:var(--on-accent)}
 .opt.main .t-small{color:var(--on-accent);opacity:.85}
@@ -232,3 +232,11 @@
 .check-row:active,.day:active{transition-duration:var(--dur-press)}
 .check-row:active{transform:scale(.985);background:var(--surface)}
 .day:active{transform:scale(.96)}
+/* Deep pass: the pressables the audit found without a press state. */
+.vol-day{letter-spacing:0;text-transform:none}
+.msel,.search-clear,.test-bar,.pb-card,.ch-pt,.grip{transition:transform var(--dur-spring) var(--ease-spring),opacity var(--dur-press) var(--ease-out)}
+.msel:active,.search-clear:active,.test-bar:active,.pb-card:active{transform:scale(.985);transition-duration:var(--dur-press)}
+a.verdict{transition:transform var(--dur-spring) var(--ease-spring)}
+a.verdict:active{transform:scale(.985);transition-duration:var(--dur-press)}
+.goal-x:active{opacity:.6}
+.switch:active .switch-knob{transform:scale(.94)}

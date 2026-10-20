@@ -218,3 +218,27 @@ export function weeklyVolume(workouts: HistWorkout[], sets: HistSet[], today: st
   }
   return out;
 }
+
+/**
+ * This week so far against the SAME POINT of last week (Monday to today's weekday), so a Tuesday is not compared with a
+ * whole finished week. `lastWeek` is last week in full, for reference.
+ */
+export function volumeSamePoint(workouts: HistWorkout[], sets: HistSet[], today: string): { now: number; lastSame: number; lastWeek: number } {
+  const week = weekDates(today);
+  const idx = week.indexOf(today);
+  const lastMonday = addDays(week[0], -7);
+  const lastCut = addDays(lastMonday, idx);
+  const date = new Map(workouts.map((w) => [w.id, w.planned_date]));
+  let now = 0;
+  let lastSame = 0;
+  let lastWeek = 0;
+  for (const s of sets) {
+    const d = date.get(s.workout_id);
+    if (!d || !s.weight_kg || !s.reps) continue;
+    const v = s.weight_kg * s.reps;
+    if (d >= week[0] && d <= today) now += v;
+    if (d >= lastMonday && d <= addDays(lastMonday, 6)) lastWeek += v;
+    if (d >= lastMonday && d <= lastCut) lastSame += v;
+  }
+  return { now: Math.round(now), lastSame: Math.round(lastSame), lastWeek: Math.round(lastWeek) };
+}

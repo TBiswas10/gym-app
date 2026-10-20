@@ -162,7 +162,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
         </div>
 
         <div hidden={tab !== "week"} className="col g4" role="tabpanel">
-        {data.volume && data.volume.some((v) => v.kg > 0) && <VolumeCard weeks={data.volume} />}
+        {data.volume && data.volume.some((v) => v.kg > 0) && <VolumeCard weeks={data.volume} point={data.volumeNow} />}
         <section className="card">
           <h2 className="t-heading">This week</h2>
           <div className="grid3">
@@ -185,7 +185,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
           {data.thisWeek.pbs.length > 0 && (
             <div className="col g2">
               {data.thisWeek.pbs.map((p) => (
-                <div key={p.name} className="list-row" style={{ padding: "var(--space-2) var(--space-3)", borderRadius: "var(--radius-sm)", background: "var(--accent-subtle)", border: "1px solid rgba(198,244,50,.35)" }}>
+                <div key={p.name} className="list-row" style={{ padding: "var(--space-2) var(--space-3)", borderRadius: "var(--radius-sm)", background: "var(--accent-subtle)", border: "1px solid var(--accent-edge)" }}>
                   <span className="badge-pb">PB</span>
                   <span className="t-body" style={{ flex: 1, fontWeight: 700 }}>{p.name}</span>
                   <span className="t-body" style={{ fontWeight: 700 }}>{p.text}</span>
@@ -311,32 +311,35 @@ function Trend5({ label, kind, values, tone }: { label: string; kind: "soreness"
 }
 
 /** Total kg lifted per week: the plainest measure of progressive overload. More over time is the point. */
-function VolumeCard({ weeks }: { weeks: { weekStart: string; kg: number }[] }) {
-  const now = weeks[weeks.length - 1];
-  const before = weeks[weeks.length - 2];
+function VolumeCard({ weeks, point }: { weeks: { weekStart: string; kg: number }[]; point?: { now: number; lastSame: number; lastWeek: number } }) {
+  const now = point?.now ?? weeks[weeks.length - 1].kg;
   const max = Math.max(1, ...weeks.map((w) => w.kg));
-  const pct = before && before.kg > 0 ? Math.round(((now.kg - before.kg) / before.kg) * 100) : null;
-  const label = (iso: string) => `${Number(iso.slice(8, 10))}/${Number(iso.slice(5, 7))}`;
+  // Like with like: this week so far against the same point of last week, never against a whole finished week.
+  const pct = point && point.lastSame > 0 ? Math.round(((now - point.lastSame) / point.lastSame) * 100) : null;
+  const day = (iso: string) => String(Number(iso.slice(8, 10)));
   const kg = (n: number) => `${n.toLocaleString("en-AU")} kg`;
+  const from = weeks[0].weekStart;
+  const to = weeks[weeks.length - 1].weekStart;
+  const long = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-AU", { timeZone: "UTC", day: "numeric", month: "short" });
   return (
     <section className="card" aria-label="Training volume">
-      <div className="row between baseline">
+      <div className="row between baseline g2">
         <h2 className="t-heading">Training volume</h2>
-        {pct !== null && <span className={`tag ${pct >= 0 ? "tag-accent" : ""}`}>{pct >= 0 ? "+" : "−"}{Math.abs(pct)}% vs last week</span>}
+        {pct !== null && <span className={`tag ${pct >= 0 ? "tag-accent" : ""}`}>{pct >= 0 ? "+" : "−"}{Math.abs(pct)}% vs same point last week</span>}
       </div>
       <div className="col g1">
-        <span className="num-m">{kg(now.kg)}</span>
-        <span className="t-small c-2">weight × reps so far this week{before ? `. Last week: ${kg(before.kg)}.` : "."}</span>
+        <span className="num-m">{kg(now)}</span>
+        <span className="t-small c-2">weight × reps so far this week{point ? `. Last week in full: ${kg(point.lastWeek)}.` : "."}</span>
       </div>
-      <div className="consistency" role="img" aria-label={`Kilograms lifted per week: ${weeks.map((w) => `${label(w.weekStart)} ${w.kg}`).join(", ")}`}>
+      <div className="consistency" role="img" aria-label={`Kilograms lifted per week, weeks starting ${weeks.map((w) => `${long(w.weekStart)} ${w.kg}`).join(", ")}`}>
         {weeks.map((w, i) => (
           <span key={w.weekStart} className={`consistency-col ${i === weeks.length - 1 ? "is-now" : ""}`}>
             <span className="consistency-track"><i style={{ height: `${Math.round((w.kg / max) * 100)}%` }} className={i === weeks.length - 1 ? "is-full" : ""} /></span>
-            <span className="t-caption c-2">{label(w.weekStart)}</span>
+            <span className="t-caption c-2 vol-day">{day(w.weekStart)}</span>
           </span>
         ))}
       </div>
-      <p className="t-small c-2">Progressive overload is doing a little more over time: more weight, or more reps at the same weight. This bar is the total of both.</p>
+      <p className="t-small c-2">Weeks start on Monday ({long(from)} to {long(to)}). Progressive overload is doing a little more over time: more weight, or more reps at the same weight. The bars are the total of both.</p>
     </section>
   );
 }
