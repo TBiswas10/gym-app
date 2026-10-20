@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bestOfLast, bestSet, describeSet, stallCheck, bothAtTop, highSoreness, isPB, lighten, prefill, roundToStep, suggestNext, verdict, type LastTime, type Spec } from "./progression";
+import { bestOfLast, bestSet, describeSet, goalText, overloadTarget, stallCheck, bothAtTop, highSoreness, isPB, lighten, prefill, roundToStep, suggestNext, verdict, type LastTime, type Spec } from "./progression";
 
 const upper: Spec = { kind: "weight", repLo: 8, repHi: 12, step: 2.5, increment: 2.5 };
 const legs: Spec = { kind: "weight", repLo: 8, repHi: 12, step: 5, increment: 5 };
@@ -197,5 +197,44 @@ describe("the best set (what a personal best shows)", () => {
   it("is empty for no sets", () => {
     expect(bestSet("weight", [])).toBeNull();
     expect(describeSet("weight", null)).toBe("");
+  });
+});
+
+describe("progressive overload: today's goal", () => {
+  it("first time: no numbers, just how to pick a weight", () => {
+    const o = overloadTarget(upper, null);
+    expect(o.kind).toBe("first");
+    expect(goalText("weight", o)).toBe("");
+  });
+  it("top of the range on both sets: add weight and aim for 10 reps", () => {
+    const o = overloadTarget(upper, { kg: 30, reps: [12, 12], secs: [] });
+    expect(o).toMatchObject({ kind: "add-weight", kg: 32.5, targets: [10, 10] });
+    expect(goalText("weight", o)).toBe("32.5 kg × 10");
+    expect(o.note).toContain("add 3 kg");
+  });
+  it("not at the top yet: same weight, one more rep on each set, never past the top", () => {
+    const o = overloadTarget(upper, { kg: 30, reps: [10, 9], secs: [] });
+    expect(o).toMatchObject({ kind: "add-rep", kg: 30, targets: [11, 10] });
+    expect(goalText("weight", o)).toBe("30 kg × 11, 10");
+    expect(overloadTarget(upper, { kg: 30, reps: [12, 10], secs: [] }).targets).toEqual([12, 11]); // set 1 is already at the top
+  });
+  it("weeks 1-2, high soreness and a chosen hold match last time", () => {
+    const last = { kg: 30, reps: [12, 12], secs: [] };
+    expect(overloadTarget(upper, last, { setup: true })).toMatchObject({ kind: "hold", targets: [12, 12] });
+    expect(overloadTarget(upper, last, { highSoreness: true }).kind).toBe("hold");
+    expect(overloadTarget(upper, last, { hold: true }).kind).toBe("hold");
+  });
+  it("holds: add seconds on each set, and a jump once both are at the top", () => {
+    expect(goalText("timed", overloadTarget(plank, { kg: null, reps: [], secs: [30, 25] }))).toBe("35, 30 s");
+    expect(overloadTarget(plank, { kg: null, reps: [], secs: [40, 40] })).toMatchObject({ kind: "add-weight", targets: [45, 45] });
+  });
+  it("bodyweight lifts name Bodyweight when there is no added load", () => {
+    expect(goalText("bodyweight", overloadTarget(backExt, { kg: null, reps: [10, 9], secs: [] }))).toBe("Bodyweight × 11, 10");
+  });
+  it("never changes the weight rule: it only goes up when suggestNext says so", () => {
+    for (const reps of [[12, 12], [12, 11], [11, 11], [8, 8]]) {
+      const last = { kg: 30, reps, secs: [] };
+      expect(overloadTarget(upper, last).kind === "add-weight").toBe(suggestNext(upper, last).action === "up");
+    }
   });
 });

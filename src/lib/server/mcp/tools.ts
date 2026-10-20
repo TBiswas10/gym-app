@@ -15,12 +15,13 @@ import { loadProgress } from "../progress-data";
 import { loadReview } from "../review-data";
 import { loadToday } from "../today-data";
 import { startSession } from "../workout-data";
-import { loadCx, reasonText, suggestionFor, type Cx } from "./context";
+import { loadCx, overloadFor, reasonText, suggestionFor, type Cx } from "./context";
 import { registerCoachTools } from "./coach-tools";
 import { registerInsightTools } from "./insight-tools";
 import { registerMoreTools } from "./more-tools";
 import { registerPowerTools } from "./power-tools";
 import { cardioLine, cardioSettings, errorResult, json, lastTimeLine, nextLine, setLine, textResult } from "./format";
+import { goalText } from "../../progression";
 
 export interface McpContext {
   supabase: ServerClient;
@@ -74,7 +75,8 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
         estimated_minutes: estimateMinutes(plan.exercises.map((e) => e.kind), plan.cardioMinutes, d.light),
         exercises: plan.exercises.map((e) => {
           const s = suggestionFor(cx, e.slug, [e.repLo, e.repHi]);
-          return { exercise: e.name, slug: e.slug, target: formatTarget(e.sets, e.repLo, e.repHi, e.kind), last_time: lastTimeLine(e.kind, s.last), next: nextLine(e.kind, s.suggestion) };
+          const o = overloadFor(cx, e.slug, [e.repLo, e.repHi]);
+          return { exercise: e.name, slug: e.slug, target: formatTarget(e.sets, e.repLo, e.repHi, e.kind), last_time: lastTimeLine(e.kind, s.last), next: nextLine(e.kind, s.suggestion), goal_today: goalText(e.kind, o) || undefined, goal_why: o.note };
         }),
         cardio: { plan: plan.cardioName, length: plan.cardioLabel, last_time: lastC ? `${cardioLine(lastC)} on ${lastC.logged_on}` : null },
       };
@@ -442,7 +444,8 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
       return textResult(json(slugs.map(({ slug, range }) => {
         const info = cx.exercises.get(slug)!;
         const s = suggestionFor(cx, slug, range);
-        return { exercise: info.name, last_time: lastTimeLine(info.kind, s.last) ?? "none yet", next: nextLine(info.kind, s.suggestion), why: reasonText(s.suggestion.reason), weight_jump_kg: s.spec.increment, step_kg: s.spec.step };
+        const o = overloadFor(cx, slug, range);
+        return { exercise: info.name, last_time: lastTimeLine(info.kind, s.last) ?? "none yet", next: nextLine(info.kind, s.suggestion), goal_today: goalText(info.kind, o) || undefined, goal_why: o.note, why: reasonText(s.suggestion.reason), weight_jump_kg: s.spec.increment, step_kg: s.spec.step };
       })));
     },
   );

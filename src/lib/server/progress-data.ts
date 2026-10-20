@@ -1,7 +1,7 @@
 import type { ServerClient } from "../supabase/server";
 import { programmeWeek, sydneyDate, weekDates } from "../dates";
 import type { ExerciseKind } from "../plan";
-import { checkInDue, consistency, records, exercisesWithData, nextCheckIn, topSeries, weekCells, weekStats, type WeekCell } from "../stats";
+import { checkInDue, consistency, records, exercisesWithData, nextCheckIn, topSeries, weekCells, weeklyVolume, weekStats, type VolumeWeek, type WeekCell } from "../stats";
 import { fmtNum } from "../format";
 import { loadGoals, loadReviews, type GoalView, type ReviewView } from "./v2-data";
 
@@ -18,6 +18,7 @@ export interface ProgressData {
   due: number | null;
   goals?: GoalView[];
   reviews?: ReviewView[];
+  volume?: VolumeWeek[];
 }
 
 const GROUPS = ["Legs", "Chest", "Shoulders", "Arms", "Back", "Core"];
@@ -67,6 +68,7 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
   return {
     goals,
     reviews,
+    volume: weeklyVolume(workouts, sets, today),
     week,
     empty: workouts.length === 0,
     chips,

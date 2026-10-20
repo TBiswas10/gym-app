@@ -6,6 +6,9 @@ export interface BriefLift {
   next: string;
   up: boolean;
   first: boolean; // no history yet
+  /** progressive overload: what kind of step today is, and the goal ("30 kg × 11") */
+  kind?: "first" | "add-weight" | "add-rep" | "hold";
+  goal?: string;
 }
 
 export interface BriefInput {
@@ -37,7 +40,11 @@ export function buildBriefing(i: BriefInput): Briefing {
   if (i.setup) {
     tries.push("Weeks 1 and 2: pick a weight you can lift about 10 times with 1 or 2 left.");
   } else {
-    for (const l of i.lifts) if (l.up && tries.length < 3) tries.push(`${l.name}: ${l.next.charAt(0).toLowerCase()}${l.next.slice(1)}`);
+    // Weight jumps first, then the lifts where the goal is one more rep; both name the number to aim for.
+    for (const l of i.lifts) if (l.kind === "add-weight" && l.goal && tries.length < 3) tries.push(`${l.name}: add weight, aim for ${l.goal}`);
+    for (const l of i.lifts) if (l.kind === "add-rep" && l.goal && tries.length < 3) tries.push(`${l.name}: beat last time, aim for ${l.goal}`);
+    // Without the overload fields: the older "go up" line.
+    for (const l of i.lifts) if (!l.kind && l.up && tries.length < 3) tries.push(`${l.name}: ${l.next.charAt(0).toLowerCase()}${l.next.slice(1)}`);
     const fresh = i.lifts.filter((l) => l.first).map((l) => l.name);
     if (fresh.length && tries.length < 3) tries.push(`First time on ${fresh.slice(0, 2).join(" and ")}. Start light.`);
   }

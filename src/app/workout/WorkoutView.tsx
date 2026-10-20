@@ -10,7 +10,7 @@ import { NumField } from "@/components/NumField";
 import { useSwipeUp } from "@/components/useSwipeUp";
 import { haptic } from "@/lib/haptics";
 import { cardioGuard, extendRest, mmss, restPercent, restRemaining, restSecondsAfter, sessionClock } from "@/lib/timers";
-import { bestOfLast, bestSet, describeSet, isPB, verdict as verdictFor } from "@/lib/progression";
+import { bestOfLast, bestSet, describeSet, goalText, isPB, lighten, overloadTarget, verdict as verdictFor } from "@/lib/progression";
 import type { Op, Source } from "@/lib/ops";
 import { restoreState,
   addKg, adjust, adjustCardio, advance, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exSpec, exercises,
@@ -260,6 +260,10 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const guard = cardioGuard({ elapsedS: clock.elapsed, todoLifts, cardioMinutes: cardioMin, cardioDone: cardioStep.status === "done", dismissed: guardOff }); // cardio is last: from 45:00 offer to shorten it so you finish by 50:00 is nothing to shorten late
   const showAmber = level === "warn" && !guard.show;
   const [guideOpen, setGuideOpen] = useState(false);
+  // Progressive overload: today's goal for this lift (what to aim for to beat last time).
+  const overload = ex && !ex.swapped && ex.last ? overloadTarget(exSpec(ex), ex.last, { setup: meta.setup, highSoreness: meta.highSoreness, hold: meta.hold }) : null;
+  const goalKg = overload && overload.kg !== null ? (ex?.light ? lighten(overload.kg, ex.step) : overload.kg) : null;
+  const goalLine = ex && overload ? goalText(ex.exKind, { ...overload, kg: goalKg }) : "";
   const formGuide = ex ? (ex.swapped ? page.backupGuides?.[ex.slug]?.guide ?? null : guides[ex.slug] ?? null) : null;
   const formSlug = ex ? (ex.swapped ? page.backupGuides?.[ex.slug]?.slug ?? ex.slug : ex.slug) : "";
   const [finishing, setFinishing] = useState(false);
@@ -552,6 +556,12 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
             </div>
 
             {formGuide && <KeyCue guide={formGuide} />}
+            {overload && goalLine && (
+              <p className="t-small goal-line">
+                <strong>Goal today:</strong> {goalLine}
+                <span className="c-2"> · {overload.note}</span>
+              </p>
+            )}
             {ex.last && !ex.swapped && <p className="t-small c-2">Last time: <strong className="c-text">{lastLabel(ex)}</strong></p>}
             {formGuide && (!complete || editing) && <FormCheck key={`form-${formSlug}`} guide={formGuide} slug={formSlug} showPhotos={!ex.swapped || formSlug !== ex.slug} onFullGuide={() => setGuideOpen(true)} />}
             {(!complete || editing) && <SetTip key={`${ex.slug}-${ex.swapped}`} range={ex.range} kind={ex.exKind} planned={ex.planned} swapped={ex.swapped} first={!ex.last} />}
@@ -572,7 +582,11 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                     <span className="set-n">Set {i + 1}</span>
                     <span className="col" style={{ alignItems: "flex-end", gap: 0 }}>
                       <span className="set-v">{value}</span>
-                      {ghostText(ex, i) && <span className="set-ghost">Last {ghostText(ex, i)}</span>}
+                      {overload && goalLine && overload.targets[i] != null ? (
+                        <span className="set-ghost">Aim {overload.kg !== null && overload.kg > 0 ? `${fmtNum(goalKg ?? overload.kg)} kg × ` : ""}{overload.targets[i]}{overload.unit === "s" ? " s" : ""}</span>
+                      ) : (
+                        ghostText(ex, i) && <span className="set-ghost">Last {ghostText(ex, i)}</span>
+                      )}
                     </span>
                   </div>
                 );

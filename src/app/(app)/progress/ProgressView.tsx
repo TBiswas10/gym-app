@@ -162,6 +162,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
         </div>
 
         <div hidden={tab !== "week"} className="col g4" role="tabpanel">
+        {data.volume && data.volume.some((v) => v.kg > 0) && <VolumeCard weeks={data.volume} />}
         <section className="card">
           <h2 className="t-heading">This week</h2>
           <div className="grid3">
@@ -306,5 +307,36 @@ function Trend5({ label, kind, values, tone }: { label: string; kind: "soreness"
         <span>{phrase}</span>
       </div>
     </div>
+  );
+}
+
+/** Total kg lifted per week: the plainest measure of progressive overload. More over time is the point. */
+function VolumeCard({ weeks }: { weeks: { weekStart: string; kg: number }[] }) {
+  const now = weeks[weeks.length - 1];
+  const before = weeks[weeks.length - 2];
+  const max = Math.max(1, ...weeks.map((w) => w.kg));
+  const pct = before && before.kg > 0 ? Math.round(((now.kg - before.kg) / before.kg) * 100) : null;
+  const label = (iso: string) => `${Number(iso.slice(8, 10))}/${Number(iso.slice(5, 7))}`;
+  const kg = (n: number) => `${n.toLocaleString("en-AU")} kg`;
+  return (
+    <section className="card" aria-label="Training volume">
+      <div className="row between baseline">
+        <h2 className="t-heading">Training volume</h2>
+        {pct !== null && <span className={`tag ${pct >= 0 ? "tag-accent" : ""}`}>{pct >= 0 ? "+" : "−"}{Math.abs(pct)}% vs last week</span>}
+      </div>
+      <div className="col g1">
+        <span className="num-m">{kg(now.kg)}</span>
+        <span className="t-small c-2">weight × reps so far this week{before ? `. Last week: ${kg(before.kg)}.` : "."}</span>
+      </div>
+      <div className="consistency" role="img" aria-label={`Kilograms lifted per week: ${weeks.map((w) => `${label(w.weekStart)} ${w.kg}`).join(", ")}`}>
+        {weeks.map((w, i) => (
+          <span key={w.weekStart} className={`consistency-col ${i === weeks.length - 1 ? "is-now" : ""}`}>
+            <span className="consistency-track"><i style={{ height: `${Math.round((w.kg / max) * 100)}%` }} className={i === weeks.length - 1 ? "is-full" : ""} /></span>
+            <span className="t-caption c-2">{label(w.weekStart)}</span>
+          </span>
+        ))}
+      </div>
+      <p className="t-small c-2">Progressive overload is doing a little more over time: more weight, or more reps at the same weight. This bar is the total of both.</p>
+    </section>
   );
 }

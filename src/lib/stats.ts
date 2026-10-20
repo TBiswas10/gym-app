@@ -1,6 +1,6 @@
 // Progress numbers. Pure functions over rows already loaded from the database.
 
-import { programmeWeek } from "./dates";
+import { addDays, programmeWeek, weekDates } from "./dates";
 import { bestSet, isPB, type LastTime } from "./progression";
 import type { ExerciseKind } from "./plan";
 
@@ -191,4 +191,30 @@ export function records(sets: HistSet[], kinds: Record<string, ExerciseKind>): R
     if (better) best.set(s.exercise_slug, v);
   }
   return [...best].map(([slug, value]) => ({ slug, value }));
+}
+
+export interface VolumeWeek {
+  /** Monday of the week, YYYY-MM-DD */
+  weekStart: string;
+  /** total kg lifted: sum of weight x reps over your sets (holds and bodyweight-only sets count 0) */
+  kg: number;
+}
+
+/** Volume load per week for the last `weeks` weeks (oldest first, empty weeks are 0). A classic overload measure. */
+export function weeklyVolume(workouts: HistWorkout[], sets: HistSet[], today: string, weeks = 8): VolumeWeek[] {
+  const monday = (d: string) => weekDates(d)[0];
+  const date = new Map(workouts.map((w) => [w.id, w.planned_date]));
+  const totals = new Map<string, number>();
+  for (const s of sets) {
+    const d = date.get(s.workout_id);
+    if (!d || !s.weight_kg || !s.reps) continue;
+    totals.set(monday(d), (totals.get(monday(d)) ?? 0) + s.weight_kg * s.reps);
+  }
+  const start = monday(today);
+  const out: VolumeWeek[] = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    const w = addDays(start, -7 * i);
+    out.push({ weekStart: w, kg: Math.round(totals.get(w) ?? 0) });
+  }
+  return out;
 }

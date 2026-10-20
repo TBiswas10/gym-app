@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkInDue, consistency, records, exercisesWithData, nextCheckIn, strengthChange, topSeries, topValue, weekCells, weekStats, type HistSet, type HistWorkout } from "./stats";
+import { checkInDue, consistency, records, exercisesWithData, nextCheckIn, strengthChange, topSeries, topValue, weekCells, weeklyVolume, weekStats, type HistSet, type HistWorkout } from "./stats";
 import { average, effectOf, reasonFor, recommend, suggestDeload } from "./review";
 
 const W = (id: string, d: string): HistWorkout => ({ id, planned_date: d });
@@ -166,5 +166,21 @@ describe("records", () => {
     expect(r.find((x) => x.slug === "plank")?.value.secs).toBe(55);
     expect(r.find((x) => x.slug === "back")?.value.reps).toBe(15);
     expect(r.find((x) => x.slug === "chest")).toBeUndefined();
+  });
+});
+
+describe("weeklyVolume (kg x reps per week)", () => {
+  const workouts = [W("a", "2026-09-28"), W("b", "2026-10-05"), W("c", "2026-10-07")];
+  const sets = [S("a", "chest", 1, 30, 10), S("a", "chest", 2, 30, 8), S("b", "chest", 1, 30, 12), S("c", "plank", 1, null, null, 40), S("c", "back", 1, null, 12)];
+  it("adds weight x reps by week (Monday start), ignoring holds and bodyweight sets", () => {
+    const v = weeklyVolume(workouts, sets, "2026-10-08", 3);
+    expect(v.map((x) => x.weekStart)).toEqual(["2026-09-21", "2026-09-28", "2026-10-05"]);
+    expect(v.map((x) => x.kg)).toEqual([0, 540, 360]);
+  });
+  it("fills empty weeks with 0 and keeps the current week last", () => {
+    const v = weeklyVolume([], [], "2026-10-08", 4);
+    expect(v).toHaveLength(4);
+    expect(v.every((x) => x.kg === 0)).toBe(true);
+    expect(v[3].weekStart).toBe("2026-10-05");
   });
 });

@@ -439,7 +439,11 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
                   <span className="t-body" style={{ fontWeight: 600, minWidth: 0 }}>{e.name}</span>
                   <span className="col" style={{ alignItems: "flex-end", flex: "none", gap: 0 }}>
                     <span className="t-small c-2" style={{ whiteSpace: "nowrap" }}>{formatTarget(e.sets, e.repLo, e.repHi, e.kind)}</span>
-                    {v2?.lasts?.[e.slug] && <span className="t-caption c-accent" style={{ textTransform: "none", letterSpacing: 0, whiteSpace: "nowrap" }}>Last {v2.lasts[e.slug]}</span>}
+                    {(v2?.goals?.[e.slug] || v2?.lasts?.[e.slug]) && (
+                      <span className="t-caption c-accent" style={{ textTransform: "none", letterSpacing: 0, whiteSpace: "nowrap" }}>
+                        {v2?.goals?.[e.slug] ? `Goal ${v2.goals[e.slug]}` : `Last ${v2?.lasts?.[e.slug]}`}
+                      </span>
+                    )}
                   </span>
                 </li>
               ))}

@@ -43,6 +43,11 @@ describe("Today header and list", () => {
   it("says it is done once today is ticked", () => {
     expect(html(make({ today: "2026-10-08", start: "2026-09-21", completed: ["2026-10-05", "2026-10-07", "2026-10-08"], totalDone: 10 }))).toContain("Done for today. Nice work.");
   });
+  it("shows today's goal under a lift, and falls back to last time", () => {
+    const out = htmlWith(base, { lasts: { chest: "30 kg", lat: "35 kg" }, goals: { chest: "30 kg × 11" }, briefing: null, nudges: [], review: null });
+    expect(out).toContain("Goal 30 kg × 11");
+    expect(out).toContain("Last 35 kg"); // lat has no goal: shows last time
+  });
   it("shows last time's number under each lift when it has one", () => {
     const out = htmlWith(base, { lasts: { chest: "30 kg", plank: "40 s" }, briefing: null, nudges: [], review: null });
     expect(out).toContain("Last 30 kg");

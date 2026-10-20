@@ -2,7 +2,7 @@ import type { ServerClient } from "../../supabase/server";
 import { isSetupWeek, programmeWeek, sydneyDate } from "../../dates";
 import type { ExerciseKind } from "../../plan";
 import type { CatalogItem } from "../../parser";
-import { highSoreness, suggestNext, type LastTime, type Reason, type Spec, type Suggestion } from "../../progression";
+import { highSoreness, overloadTarget, suggestNext, type LastTime, type Overload, type Reason, type Spec, type Suggestion } from "../../progression";
 import { effectOf } from "../../review";
 import { lastTimes } from "../workout-data";
 
@@ -79,6 +79,12 @@ export function suggestionFor(cx: Cx, slug: string, range?: [number, number]): {
   const spec = specFor(cx, slug, range);
   const last = cx.lastBySlug[slug] ?? null;
   return { spec, last, suggestion: suggestNext(spec, last, { setup: cx.setup, highSoreness: cx.highSoreness, hold: cx.hold }) };
+}
+
+/** Today's goal for one exercise: what to aim for to beat last time (progressive overload). */
+export function overloadFor(cx: Cx, slug: string, range?: [number, number]): Overload {
+  const spec = specFor(cx, slug, range);
+  return overloadTarget(spec, cx.lastBySlug[slug] ?? null, { setup: cx.setup, highSoreness: cx.highSoreness, hold: cx.hold });
 }
 
 const REASONS: Record<Reason, string> = {

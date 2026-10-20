@@ -4,9 +4,9 @@ import { buildBriefing, type Briefing } from "../briefing";
 import { goalProgress, goalUnit, recordNumber, type GoalUnit } from "../goals";
 import { computeNudges, type Nudge } from "../nudges";
 import { estimateMinutes, type ExerciseKind } from "../plan";
-import { stallCheck } from "../progression";
+import { goalText, stallCheck } from "../progression";
 import { records } from "../stats";
-import { loadCx, suggestionFor, type Cx } from "./mcp/context";
+import { loadCx, overloadFor, suggestionFor, type Cx } from "./mcp/context";
 import { cardioLine, nextLine } from "./mcp/format";
 import type { TodayData } from "./today-data";
 import { recentSessions } from "./workout-data";
@@ -42,6 +42,8 @@ export interface ReviewView {
 export interface V2Today {
   /** slug -> a short "last time" like "30 kg" or "40 s" */
   lasts?: Record<string, string>;
+  /** slug -> today's goal, e.g. "30 kg × 11" (what to aim for to beat last time) */
+  goals?: Record<string, string>;
   briefing: Briefing | null;
   nudges: Nudge[];
   review: ReviewView | null;
@@ -149,7 +151,8 @@ export async function loadV2Today(supabase: ServerClient, t: TodayData, pre: Ret
       highSoreness: t.highSoreness,
       lifts: plan.exercises.map((e) => {
         const s = suggestionFor(cx, e.slug, [e.repLo, e.repHi]);
-        return { name: e.name, next: nextLine(e.kind, s.suggestion), up: s.suggestion.action === "up", first: !s.last };
+        const o = overloadFor(cx, e.slug, [e.repLo, e.repHi]);
+        return { name: e.name, next: nextLine(e.kind, s.suggestion), up: s.suggestion.action === "up", first: !s.last, kind: o.kind, goal: goalText(e.kind, o) || undefined };
       }),
       cardio: { plan: plan.cardioName, label: plan.cardioLabel, last: cardioRes.data ? cardioLine(cardioRes.data) : null },
       feel: feel[0] ?? null,
@@ -159,10 +162,13 @@ export async function loadV2Today(supabase: ServerClient, t: TodayData, pre: Ret
 
   // Last time, short, for every lift in the plan (shown on Today's list).
   const lasts: Record<string, string> = {};
+  const goalMap: Record<string, string> = {};
   for (const d of Object.values(t.days)) {
     for (const e of d.exercises) {
       const l = cx.lastBySlug[e.slug];
       if (!l) continue;
+      const g = goalText(e.kind, overloadFor(cx, e.slug, [e.repLo, e.repHi]));
+      if (g) goalMap[e.slug] = g;
       lasts[e.slug] = e.kind === "timed" ? `${Math.max(...l.secs, 0)} s` : l.kg ? `${l.kg} kg` : l.reps.length ? `${Math.max(...l.reps)} reps` : "";
     }
   }
@@ -186,5 +192,5 @@ export async function loadV2Today(supabase: ServerClient, t: TodayData, pre: Ret
   const latest = reviews[0];
   const review = latest && latest.weekStart >= addDays(t.today, -13) ? latest : null;
 
-  return { lasts, briefing, nudges, review };
+  return { lasts, goals: goalMap, briefing, nudges, review };
 }

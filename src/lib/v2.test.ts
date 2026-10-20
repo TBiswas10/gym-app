@@ -23,6 +23,13 @@ describe("Today briefing", () => {
   it("lists only the lifts that go up, as things to try", () => {
     expect(buildBriefing(brief()).tries).toEqual(["Chest press: go up to 32.5 kg"]);
   });
+  it("names the number to aim for: weight jumps first, then one more rep", () => {
+    const b = buildBriefing(brief({ lifts: [
+      { name: "Lat pulldown", next: "Hold at 35 kg", up: false, first: false, kind: "add-rep", goal: "35 kg × 11, 10" },
+      { name: "Chest press", next: "Go up to 32.5 kg", up: true, first: false, kind: "add-weight", goal: "32.5 kg × 10" },
+    ] }));
+    expect(b.tries).toEqual(["Chest press: add weight, aim for 32.5 kg × 10", "Lat pulldown: beat last time, aim for 35 kg × 11, 10"]);
+  });
   it("in setup weeks asks for finding a weight instead of suggesting jumps", () => {
     const b = buildBriefing(brief({ setup: true }));
     expect(b.tries).toHaveLength(1);

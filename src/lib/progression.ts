@@ -68,6 +68,76 @@ export function suggestNext(spec: Spec, last: LastTime | null, ctx: Context = {}
   return { action: "up", kg: roundToStep(base + spec.increment, spec.step), secs: null, reason: "top-hit" };
 }
 
+/**
+ * Progressive overload as one explicit goal for the day (double progression):
+ *  - top of the range on BOTH sets last time  -> add weight, and aim for ~10 reps at the new weight;
+ *  - otherwise                                 -> same weight, beat last time by one rep (or 5 s) on each set, never past the top;
+ *  - weeks 1-2, high soreness, or a "hold" at a check-in -> match last time, nothing more.
+ * It never changes the weight rule above; it only says what to aim for so every session has something to beat.
+ */
+export interface Overload {
+  kind: "first" | "add-weight" | "add-rep" | "hold";
+  /** the weight to use (null for holds and when there is no history) */
+  kg: number | null;
+  /** per set: reps, or seconds for holds */
+  targets: number[];
+  unit: "reps" | "s";
+  /** one plain sentence: why this is the goal */
+  note: string;
+}
+
+export function overloadTarget(spec: Spec, last: LastTime | null, ctx: Context = {}, sets = 2): Overload {
+  const timed = spec.kind === "timed";
+  const unit: Overload["unit"] = timed ? "s" : "reps";
+  if (!last) {
+    return { kind: "first", kg: null, targets: [], unit, note: timed ? "First time: hold as long as you can with good form." : "First time: pick a weight you can lift cleanly for about 10, with 2 left." };
+  }
+  const lastVals = (timed ? last.secs : last.reps).slice(0, sets);
+  const sug = suggestNext(spec, last, ctx);
+
+  if (sug.reason === "setup" || sug.reason === "soreness" || sug.reason === "review") {
+    const why = sug.reason === "setup" ? "Weeks 1 and 2: match last time and settle in." : sug.reason === "soreness" ? "Soreness is high: match last time, no more." : "You chose to hold: match last time.";
+    return { kind: "hold", kg: timed ? null : (last.kg ?? 0), targets: lastVals, unit, note: why };
+  }
+
+  if (sug.action === "up") {
+    if (timed) {
+      const secs = sug.secs ?? spec.repHi;
+      return { kind: "add-weight", kg: null, targets: Array.from({ length: sets }, () => secs), unit, note: `You held ${spec.repHi} s or more on both sets. Aim for ${secs} s.` };
+    }
+    const reps = repsAfterIncrease(spec);
+    const add = Math.round((sug.kg ?? 0) - (last.kg ?? 0));
+    return {
+      kind: "add-weight",
+      kg: sug.kg,
+      targets: Array.from({ length: sets }, () => reps),
+      unit,
+      note: `You hit ${spec.repHi} reps on both sets last time, so add ${add > 0 ? `${add} kg` : "weight"}: aim for ${reps} reps.`,
+    };
+  }
+
+  // Not at the top on both sets yet: same weight, one more on each set.
+  const bump = timed ? spec.increment : 1;
+  const targets = lastVals.map((v) => Math.min(spec.repHi, v + bump));
+  return {
+    kind: "add-rep",
+    kg: timed ? null : (last.kg ?? 0),
+    targets,
+    unit,
+    note: timed ? `Beat last time by ${bump} s on each set.` : "Same weight. Beat last time by 1 rep on each set.",
+  };
+}
+
+/** "32.5 kg × 10", "30 kg × 11, 10", "45 s", or "" when there is nothing to aim for yet. */
+export function goalText(kind: ExerciseKind, o: Overload): string {
+  if (o.kind === "first" || o.targets.length === 0) return "";
+  const same = o.targets.every((t) => t === o.targets[0]);
+  const list = same ? String(o.targets[0]) : o.targets.join(", ");
+  if (kind === "timed") return same ? `${o.targets[0]} s` : `${o.targets.join(", ")} s`;
+  const weight = o.kg && o.kg > 0 ? `${fmtKg(o.kg)} kg × ` : kind === "bodyweight" ? "Bodyweight × " : "";
+  return `${weight}${list}`;
+}
+
 /** Reps to pre-fill after a weight increase (the design uses 10 for 8-12). */
 export const repsAfterIncrease = (spec: Spec): number => Math.max(spec.repLo, Math.min(10, spec.repHi));
 
