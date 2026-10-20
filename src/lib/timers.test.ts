@@ -48,9 +48,9 @@ describe("rest timer (end timestamp)", () => {
     expect(restRemaining(end, sec(100))).toBe(0);
     expect(restRemaining(end, sec(500))).toBe(0);
   });
-  it("gives 90 s after the first set and 60 s after the second", () => {
+  it("gives 90 s after every set", () => {
     expect(restSecondsAfter(1)).toBe(90);
-    expect(restSecondsAfter(2)).toBe(60);
+    expect(restSecondsAfter(2)).toBe(90);
   });
   it("reports progress as a percentage", () => {
     expect(restPercent(45, 90)).toBe(50);

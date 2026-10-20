@@ -5,7 +5,7 @@
 export const AMBER_AT = 40 * 60; // seconds: "40 min in. Aim to wrap up by 50:00."
 export const RED_AT = 50 * 60; // seconds: "50 min. Time to wrap up."
 export const FIRST_REST_S = 90;
-export const SECOND_REST_S = 60;
+export const SECOND_REST_S = 90;
 
 /** Whole seconds since the session started. Never negative (clock skew). */
 export const elapsedSeconds = (startMs: number, nowMs: number): number => Math.max(0, Math.floor((nowMs - startMs) / 1000));
@@ -26,7 +26,7 @@ export const restRemaining = (endMs: number, nowMs: number): number => Math.max(
 
 export const restPercent = (remaining: number, total: number): number => (total <= 0 ? 0 : Math.round((remaining / total) * 100));
 
-/** Rest after the first set is 90 s; after the second (end of the exercise) it is 60 s. */
+/** Rest is 90 s after every set. The ±15 s buttons change only the rest that is running. */
 export const restSecondsAfter = (setsLogged: number): number => (setsLogged >= 2 ? SECOND_REST_S : FIRST_REST_S);
 
 const SAT_GUARD_START = 45 * 60;
