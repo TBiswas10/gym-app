@@ -58,7 +58,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
 
   return (
     <>
-      <div className="scroll">
+      <div className="scroll stagger">
         <div className="row between">
           <h1 className="t-title">Progress</h1>
           <Link className="btn btn-tertiary" href="/progress/history">History</Link>

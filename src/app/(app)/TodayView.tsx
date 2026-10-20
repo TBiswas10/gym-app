@@ -121,7 +121,7 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
 
   return (
     <>
-      <div className="scroll">
+      <div className="scroll stagger">
         <div className="row between start g3">
           <div className="col g1 grow">
             <span className="t-small c-2">{dateLine}</span>

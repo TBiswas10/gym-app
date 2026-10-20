@@ -35,7 +35,7 @@ export function LibraryView({ items, plan = {}, todayWeekday }: { items: LibItem
 
   return (
     <>
-      <div className="scroll">
+      <div className="scroll stagger">
         <div className="col g1">
           <h1 className="t-title">Library</h1>
           <p className="t-body c-2">{items.length} exercises. Tap one for a quick guide.</p>

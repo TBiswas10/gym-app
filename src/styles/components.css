@@ -26,16 +26,16 @@ button{cursor:pointer}
 .divider{border:0;border-top:1px solid var(--border);margin:0}
 
 /* ----- type ----- */
-.t-display{font:800 2.5rem/2.75rem var(--font-display);font-stretch:112%;letter-spacing:-0.01em;margin:0;text-wrap:balance}
-.t-title{font:800 1.75rem/2rem var(--font-display);font-stretch:112%;letter-spacing:-0.01em;margin:0;text-wrap:balance}
-.t-heading{font:700 1.25rem/1.625rem var(--font-display);font-stretch:108%;margin:0}
+.t-display{font:800 2.5rem/2.75rem var(--font-display);font-stretch:112%;letter-spacing:-0.02em;margin:0;text-wrap:balance}
+.t-title{font:800 1.75rem/2rem var(--font-display);font-stretch:112%;letter-spacing:-0.02em;margin:0;text-wrap:balance}
+.t-heading{font:700 1.25rem/1.625rem var(--font-display);font-stretch:108%;letter-spacing:-0.01em;margin:0}
 .t-body{font:500 1rem/1.5rem var(--font-body);margin:0}
 .t-small{font:500 .875rem/1.25rem var(--font-body);margin:0}
 .t-caption{font:700 .8125rem/1rem var(--font-body);margin:0}
-.t-eyebrow{font:700 .8125rem/1rem var(--font-body);letter-spacing:.08em;text-transform:uppercase;margin:0}
+.t-eyebrow{font:700 .8125rem/1rem var(--font-body);letter-spacing:.14em;text-transform:uppercase;margin:0}
 .num-xl{font:800 4rem/4rem var(--font-display);font-stretch:112%;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
 .num-l{font:800 3rem/3.25rem var(--font-display);font-stretch:112%;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
-.num-m{font:800 2rem/2.25rem var(--font-display);font-stretch:112%;font-variant-numeric:tabular-nums}
+.num-m{font:800 2rem/2.25rem var(--font-display);font-stretch:112%;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
 .tnum{font-variant-numeric:tabular-nums}
 .bold{font-weight:700}
 .c-text{color:var(--text)}.c-2{color:var(--text-2)}.c-accent{color:var(--accent)}.c-success{color:var(--success)}.c-warning{color:var(--warning)}.c-danger{color:var(--danger)}.c-info{color:var(--info)}
