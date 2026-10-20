@@ -46,8 +46,19 @@
   /* spring: stiffness 350, damping 28, mass 0.8 (settles in ~0.4 s, 0.8% overshoot) */
   --ease-spring: linear(0, 0.078, 0.235, 0.415, 0.576, 0.712, 0.814, 0.889, 0.939, 0.971, 0.991, 1.001, 1.006, 1.008, 1.007, 1.006, 1.005, 1.004, 1.002, 1.002, 1);
   --dur-spring: 400ms;
+  /* Owner-approved finish tokens (2026-10-20), derived from --text and --bg. Fallbacks below are the old solid values. */
+  --hairline: var(--border);
+  --highlight: transparent;
+  --glass: var(--bg);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.45);
   --safe-top: max(59px, env(safe-area-inset-top));
   --safe-bottom: max(34px, env(safe-area-inset-bottom));
+}
+@supports (color: color-mix(in srgb, red 50%, transparent)) {
+  :root{
+    --hairline: color-mix(in srgb, var(--text) 8%, transparent);
+    --highlight: color-mix(in srgb, var(--text) 6%, transparent);
+    --glass: color-mix(in srgb, var(--bg) 80%, transparent);
+  }
 }

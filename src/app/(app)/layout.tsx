@@ -19,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     /* no bar if it can't be read */
   }
   return (
-    <div className="screen fill">
+    <div className="screen fill has-tabs">
       <OnlineBanner />
       {testMode && (
         <Link className="test-bar" href="/plan" aria-label="Test mode is on. Open Plan to turn it off.">
