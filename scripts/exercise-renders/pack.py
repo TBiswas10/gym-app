@@ -6,7 +6,7 @@ import os
 import sys
 from PIL import Image
 
-OUT = 400
+OUT = 360
 frames_dir, slugs = sys.argv[1], sys.argv[2:]
 for slug in slugs:
     files = sorted(glob.glob(os.path.join(frames_dir, slug, "f*.png")))
@@ -14,8 +14,8 @@ for slug in slugs:
     ims = [Image.open(f).convert("RGBA").resize((OUT, OUT), Image.LANCZOS) for f in files]
     d = os.path.join("public", "exercises", slug)
     os.makedirs(d, exist_ok=True)
-    ims[0].save(os.path.join(d, "loop.webp"), save_all=True, append_images=ims[1:], duration=42, loop=0, quality=66, method=5, minimize_size=False)
-    ims[len(ims) // 2].save(os.path.join(d, "poster.webp"), quality=80, method=5)
+    ims[0].save(os.path.join(d, "loop.webp"), save_all=True, append_images=ims[1:], duration=50, loop=0, quality=58, alpha_quality=55, method=6)
+    ims[len(ims) // 2].save(os.path.join(d, "poster.webp"), quality=78, alpha_quality=80, method=6)
     print(slug, len(ims), "frames", os.path.getsize(os.path.join(d, "loop.webp")) // 1024, "KB")
 
 have = sorted(p.split(os.sep)[-2] for p in glob.glob(os.path.join("public", "exercises", "*", "loop.webp")))

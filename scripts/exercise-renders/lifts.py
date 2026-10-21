@@ -30,6 +30,9 @@ def box(name, size, loc, rot=(0, 0, 0), mat="frame"):
     o.rotation_euler = Euler([math.radians(a) for a in rot])
     o.data.materials.append(_mat(mat))
     bpy.ops.object.shade_smooth()
+    bv = o.modifiers.new("bevel", "BEVEL")
+    bv.width = 0.012
+    bv.segments = 3
     return o
 
 
@@ -53,6 +56,12 @@ def place_cyl(o, p0, p1, r):
     o.dimensions = (2 * r, 2 * r, d.length)
 
 
+def grip(fig, s):
+    """Where the hand actually holds: a little past the wrist along the forearm."""
+    w, e = fig.pos("wrist" + s), fig.pos("elbow" + s)
+    return w + (w - e).normalized() * 0.085
+
+
 def mid(a, b):
     return tuple((a[i] + b[i]) / 2 for i in range(3))
 
@@ -61,15 +70,14 @@ def mid(a, b):
 def chest_press_props():
     box("seat", (0.40, 0.40, 0.10), (0.02, 0, 0.40), mat="pad")
     box("back", (0.09, 0.40, 0.66), (-0.17, 0, 0.88), (0, -8, 0), mat="pad")
-    box("floor", (0.95, 0.5, 0.03), (0.05, 0, 0.015))
     box("post", (0.08, 0.14, 1.25), (-0.33, 0, 0.64))
     hs = {s: (cyl_between("grip" + s, (0, 0, 0), (0.1, 0, 0), 0.017), cyl_between("arm" + s, (0, 0, 0), (0.1, 0, 0), 0.013, "frame")) for s in "LR"}
 
-    def update(P):
+    def update(P, fig):
         for s in "LR":
-            h = Vector(P["hand" + s])
-            place_cyl(hs[s][0], h + Vector((-0.06, 0, 0)), h + Vector((0.07, 0, 0)), 0.017)
-            place_cyl(hs[s][1], h + Vector((-0.06, 0, 0)), h + Vector((-0.10, math.copysign(0.0, h.y), 0)), 0.013)
+            h = grip(fig, s)
+            place_cyl(hs[s][0], h + Vector((0, -0.06, 0)), h + Vector((0, 0.06, 0)), 0.017)
+            place_cyl(hs[s][1], h, h + Vector((-0.12, 0, 0)), 0.013)
     return update
 
 
@@ -89,14 +97,13 @@ CHEST_PRESS = dict(
 def lat_pulldown_props():
     box("seat", (0.40, 0.40, 0.10), (-0.03, 0, 0.45), mat="pad")
     box("thighpad", (0.22, 0.34, 0.07), (0.30, 0, 0.72), mat="pad")
-    box("floor", (0.95, 0.55, 0.03), (0.05, 0, 0.015))
     box("post", (0.08, 0.10, 2.25), (0.55, 0, 1.125))
     box("beam", (0.55, 0.10, 0.07), (0.3, 0, 2.2))
     bar = cyl_between("bar", (0, -0.5, 0), (0, 0.5, 0), 0.016)
     cable = cyl_between("cable", (0, 0, 0), (0, 0, 1), 0.006, "frame")
 
-    def update(P):
-        hl, hr = Vector(P["handL"]), Vector(P["handR"])
+    def update(P, fig):
+        hl, hr = grip(fig, "L"), grip(fig, "R")
         m = (hl + hr) / 2
         place_cyl(bar, (m.x, -0.52, m.z), (m.x, 0.52, m.z), 0.016)
         place_cyl(cable, (m.x, 0, m.z), (0.12, 0, 2.18), 0.006)
@@ -109,7 +116,7 @@ LAT_PULLDOWN = dict(
     props=lat_pulldown_props,
     A=dict(pelvis=(0, 0, 0.60), pelvis_pitch=0, lumbar=-2, chest=-2, neck=4, head=0,
            handL=(0.12, 0.40, 1.62), handR=(0.12, -0.40, 1.62), ankleL=(0.44, 0.14, 0.085), ankleR=(0.44, -0.14, 0.085), foot=0,
-           arm_pole=(-0.5, 0.2, -1.0), leg_pole=(1.0, 0.1, 0.3)),
+           arm_pole=(-0.15, 1.0, -0.7), leg_pole=(1.0, 0.1, 0.3)),
     B=dict(chest=-12, neck=8, handL=(0.17, 0.33, 1.02), handR=(0.17, -0.33, 1.02)),
     cam=dict(center=(0.1, 0, 0.98), scale=1.95, az=128, el=10),
 )
@@ -138,7 +145,7 @@ def leg_press_props():
             box("leg", (0.05, 0.05, p.z), (p.x, sy, p.z / 2))
     plate = box("plate", (0.05, 0.62, 0.5), (0, 0, 0), (0, -math.degrees(TH), 0), mat="frame")
 
-    def update(P):
+    def update(P, fig):
         a = (Vector(P["ankleL"]) + Vector(P["ankleR"])) / 2
         plate.location = a + D * 0.085
     return update

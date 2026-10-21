@@ -51,7 +51,7 @@ def setup_scene(size, cam):
     w.use_nodes = True
     bg = w.node_tree.nodes["Background"]
     bg.inputs[0].default_value = (0.62, 0.64, 0.68, 1)
-    bg.inputs[1].default_value = 0.55
+    bg.inputs[1].default_value = 0.4
     sc.world = w
     az, el = math.radians(cam["az"]), math.radians(cam["el"])
     c = Vector(cam["center"])
@@ -64,6 +64,30 @@ def setup_scene(size, cam):
     co.location = c + d * 8
     co.rotation_euler = (-d).to_track_quat("-Z", "Y").to_euler()
     sc.camera = co
+    # a soft contact shadow under the figure and machine: a black disc that fades to transparent (so it survives the alpha channel)
+    sh = cam.get("shadow", (0.12, 0.95, 0.6))
+    bpy.ops.mesh.primitive_plane_add(size=2, location=(sh[0], 0, 0.002))
+    gp = bpy.context.active_object
+    gp.scale = (sh[1], sh[2], 1)
+    gm = bpy.data.materials.new("shadow")
+    gm.use_nodes = True
+    nt = gm.node_tree
+    for n in list(nt.nodes):
+        nt.nodes.remove(n)
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    ln = nt.nodes.new("ShaderNodeVectorMath"); ln.operation = "LENGTH"
+    mr = nt.nodes.new("ShaderNodeMapRange"); mr.interpolation_type = "SMOOTHSTEP"; mr.clamp = True
+    mr.inputs["From Min"].default_value = 0.15; mr.inputs["From Max"].default_value = 1.0
+    mr.inputs["To Min"].default_value = 0.55; mr.inputs["To Max"].default_value = 0.0
+    tr = nt.nodes.new("ShaderNodeBsdfTransparent")
+    dk = nt.nodes.new("ShaderNodeBsdfDiffuse"); dk.inputs["Color"].default_value = (0.0, 0.0, 0.0, 1)
+    mx = nt.nodes.new("ShaderNodeMixShader")
+    out = nt.nodes.new("ShaderNodeOutputMaterial")
+    nt.links.new(tc.outputs["Object"], ln.inputs[0]); nt.links.new(ln.outputs["Value"], mr.inputs["Value"])
+    nt.links.new(mr.outputs["Result"], mx.inputs["Fac"]); nt.links.new(tr.outputs[0], mx.inputs[1]); nt.links.new(dk.outputs[0], mx.inputs[2])
+    nt.links.new(mx.outputs[0], out.inputs["Surface"])
+    gp.data.materials.append(gm)
+    gp.visible_shadow = False
 
     def light(name, kind, energy, loc, size_m, color=(1, 1, 1)):
         ld = bpy.data.lights.new(name, kind)
@@ -77,7 +101,7 @@ def setup_scene(size, cam):
         lo.rotation_euler = (c - Vector(loc)).to_track_quat("-Z", "Y").to_euler()
 
     right = Vector((-d.y, d.x, 0)).normalized()  # screen-right on the floor
-    light("key", "AREA", 330, c + d * 4 - right * 3 + Vector((0, 0, 3.5)), 3.0)
+    light("key", "AREA", 480, c + d * 4 - right * 3 + Vector((0, 0, 3.5)), 3.2)
     light("fill", "AREA", 90, c + d * 4 + right * 3.5 + Vector((0, 0, 1.2)), 4.0, (0.9, 0.95, 1.0))
     light("rim", "AREA", 220, c - d * 4 + right * 2.5 + Vector((0, 0, 2.5)), 2.0, (1.0, 0.97, 0.92))
     return sc
@@ -111,10 +135,11 @@ def main():
             seq = [("f%03d" % i, figure.lerp_pose(A, B, u)) for i, u in enumerate(us)]
         for name, pose in seq:
             fig.pose(pose)
-            update(pose)
+            update(pose, fig)
             sc.render.filepath = os.path.join(out, name + ".png")
             bpy.ops.render.render(write_still=True)
         print("DONE", slug, len(seq))
 
 
-main()
+if __name__ == "__main__":
+    main()

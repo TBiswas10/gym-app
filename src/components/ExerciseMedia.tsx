@@ -11,12 +11,12 @@ export function ExerciseMedia({ slug, name, thumb = false }: { slug: string; nam
       <span className={`media media-render ${thumb ? "media-thumb" : ""}`} role="img" aria-label={`${name}: the movement, with the working muscle highlighted`}>
         {thumb ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/exercises/${slug}/poster.webp`} width={400} height={400} alt="" loading="lazy" decoding="async" draggable={false} />
+          <img src={`/exercises/${slug}/poster.webp`} width={360} height={360} alt="" loading="lazy" decoding="async" draggable={false} />
         ) : (
           <picture>
             <source media="(prefers-reduced-motion: reduce)" srcSet={`/exercises/${slug}/poster.webp`} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/exercises/${slug}/loop.webp`} width={400} height={400} alt="" loading="lazy" decoding="async" draggable={false} />
+            <img src={`/exercises/${slug}/loop.webp`} width={360} height={360} alt="" loading="lazy" decoding="async" draggable={false} />
           </picture>
         )}
       </span>
