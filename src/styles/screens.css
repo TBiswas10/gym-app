@@ -308,3 +308,9 @@ a.verdict:active{transform:scale(.985);transition-duration:var(--dur-press)}
 .head .safety-pill[open]{align-self:stretch}
 .t-title{letter-spacing:-0.025em}
 .scroll.under-bar{padding-bottom:calc(var(--space-6) + env(safe-area-inset-bottom))}
+/* Our own 3D renders: square frames, shown whole (not cropped) on the raised plate. */
+.media-render{aspect-ratio:4/3}
+.media-render.media-thumb{aspect-ratio:1}
+.media-render picture{position:absolute;inset:0;display:block}
+.media-render img,.media-render picture img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.media-render img+img{animation:none}

@@ -16,9 +16,9 @@ describe("form help in the workout", () => {
     expect(out).toContain("Push until your arms are almost straight.");
   });
   it("collapsed form check: photos, three cues, two mistakes, and a way to the full guide", () => {
-    const out = renderToStaticMarkup(<FormCheck guide={guide} slug="chest" onFullGuide={() => {}} />);
+    const out = renderToStaticMarkup(<FormCheck guide={guide} slug="cablefly" onFullGuide={() => {}} />);
     expect(out).toContain("Form check");
-    expect(out).toContain("/exercises/chest/0.jpg");
+    expect(out).toContain("/exercises/cablefly/0.jpg");
     expect(out).toContain("Keep your shoulder blades back.");
     expect(out).toContain("Lower for 2 seconds.");
     expect(out).not.toContain("Breathe out as you press."); // only the top three
@@ -26,6 +26,12 @@ describe("form help in the workout", () => {
     expect(out).not.toContain("Letting the stack crash."); // only the top two
     expect(out).toContain("Full guide");
     expect(out).not.toMatch(/<details[^>]* open/);
+  });
+  it("shows our own 3D render (with a still for reduced motion) for lifts that have one", () => {
+    const out = renderToStaticMarkup(<FormCheck guide={guide} slug="chest" onFullGuide={() => {}} />);
+    expect(out).toContain("/exercises/chest/loop.webp");
+    expect(out).toContain("prefers-reduced-motion");
+    expect(out).not.toContain("/exercises/chest/0.jpg");
   });
   it("can leave the photos out (a swapped exercise with no photos of its own)", () => {
     expect(renderToStaticMarkup(<FormCheck guide={guide} slug="chest" showPhotos={false} onFullGuide={() => {}} />)).not.toContain("/exercises/");
