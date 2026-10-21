@@ -193,6 +193,11 @@ EX = [
      ["Lower the bar to your lower chest with your elbows close to your sides.", "Press straight up and squeeze your triceps.", "Keep your wrists straight."],
      ["Using a grip so narrow it strains your wrists.", "Flaring your elbows out.", "Bouncing the bar off your chest."],
      "Triceps pushdown", "Smith_Machine_Close-Grip_Bench_Press"),
+    ("chestrow", "Chest-supported row", "upper", "Back", "Dumbbells", "weight", ["Mid back", "Lats", "Biceps"], 8, 12, 2, 2,
+     ["Set an incline bench to about 30 degrees and lie chest-down on it.", "Let the dumbbells hang straight down with your arms long.", "Keep your head level with your spine and your feet planted."],
+     ["Pull your elbows back and up towards your hips.", "Squeeze your shoulder blades together at the top.", "Lower slowly until your arms are straight."],
+     ["Lifting your chest off the pad to swing the weight.", "Shrugging your shoulders up.", "Cutting the range short at the bottom."],
+     "Low seated row", "Dumbbell_Incline_Row"),
 ]
 
 
