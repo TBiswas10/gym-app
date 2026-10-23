@@ -30,26 +30,26 @@ NEXT = {"pelvis": "lumbar", "lumbar": "chest", "chest": "neck", "neck": "head", 
 # (bone, t along the bone, world offset in the rest pose, half-extents in the bone's axes). "Y" in the lateral offset = both sides, mirrored; "S" = outward on the limb's own side.
 REGIONS = {
     # (bone, t along the bone, rest-pose world offset, half-extents, tilt in degrees about the bone's X axis (mirrored on the right side))
-    "frontdelt": [("shoulder", 0.1, (0.055, 0.0, 0.0), (0.055, 0.06, 0.08), 0)],
-    "sidedelt": [("shoulder", 0.1, (0.0, "S0.07", 0.0), (0.055, 0.055, 0.08), 0)],
-    "reardelt": [("shoulder", 0.1, (-0.06, 0.0, 0.0), (0.055, 0.06, 0.08), 0)],
-    "biceps": [("shoulder", 0.55, (0.06, 0.0, 0.0), (0.05, 0.06, 0.1), 0)],
-    "triceps": [("shoulder", 0.55, (-0.06, 0.0, 0.0), (0.05, 0.06, 0.11), 0)],
-    "forearms": [("elbow", 0.4, (0.0, 0.0, 0.0), (0.065, 0.065, 0.15), 0)],
-    "quads": [("hip", 0.5, (0.085, 0.0, 0.0), (0.08, 0.1, 0.19), 0)],
-    "hamstrings": [("hip", 0.5, (-0.09, 0.0, 0.0), (0.075, 0.1, 0.19), 0)],
-    "calves": [("knee", 0.3, (-0.075, 0.0, 0.0), (0.065, 0.08, 0.13), 0)],
+    "frontdelt": [("shoulder", 0.1, (0.055, 0.0, 0.0), (0.066, 0.072, 0.092), 0)],
+    "sidedelt": [("shoulder", 0.1, (0.0, "S0.07", 0.0), (0.066, 0.066, 0.092), 0)],
+    "reardelt": [("shoulder", 0.1, (-0.06, 0.0, 0.0), (0.066, 0.072, 0.092), 0)],
+    "biceps": [("shoulder", 0.55, (0.06, 0.0, 0.0), (0.060, 0.072, 0.115), 0)],
+    "triceps": [("shoulder", 0.55, (-0.06, 0.0, 0.0), (0.060, 0.072, 0.127), 0)],
+    "forearms": [("elbow", 0.4, (0.0, 0.0, 0.0), (0.078, 0.078, 0.172), 0)],
+    "quads": [("hip", 0.5, (0.085, 0.0, 0.0), (0.096, 0.120, 0.218), 0)],
+    "hamstrings": [("hip", 0.5, (-0.09, 0.0, 0.0), (0.090, 0.120, 0.218), 0)],
+    "calves": [("knee", 0.3, (-0.075, 0.0, 0.0), (0.078, 0.096, 0.149), 0)],
 }
 # Torso muscles are anchored to the mesh surface: (bone, face, y, z, inset, half-extents (depth, lateral, vertical), tilt about the bone's X axis, mirrored left/right)
 # face "front" / "back" finds the skin at that (y, z); the glow ellipsoid is centred `inset` below the skin.
 TORSO = {
-    "chest": [("chest", "front", 0.1, 1.3, 0.03, (0.07, 0.115, 0.08), 22, True)],
-    "lats": [("chest", "back", 0.16, 1.2, 0.03, (0.07, 0.085, 0.17), -14, True)],
-    "midback": [("chest", "back", 0.0, 1.28, 0.03, (0.06, 0.12, 0.1), 0, False)],
-    "traps": [("chest", "back", 0.0, 1.42, 0.03, (0.06, 0.15, 0.07), 0, False), ("chest", "back", 0.0, 1.32, 0.03, (0.06, 0.07, 0.11), 0, False)],
-    "abs": [("lumbar", "front", 0.0, 1.12, 0.03, (0.05, 0.075, 0.15), 0, False)],
-    "obliques": [("lumbar", "side", 0.0, 1.07, 0.03, (0.07, 0.04, 0.11), 0, True)],
-    "glutes": [("pelvis", "back", 0.095, 0.93, 0.035, (0.07, 0.095, 0.1), 0, True)],
+    "chest": [("chest", "front", 0.1, 1.3, 0.03, (0.081, 0.138, 0.096), 22, True)],
+    "lats": [("chest", "back", 0.16, 1.2, 0.03, (0.081, 0.102, 0.204), -14, True)],
+    "midback": [("chest", "back", 0.0, 1.28, 0.03, (0.069, 0.144, 0.120), 0, False)],
+    "traps": [("chest", "back", 0.0, 1.42, 0.03, (0.069, 0.180, 0.084), 0, False), ("chest", "back", 0.0, 1.32, 0.03, (0.069, 0.084, 0.132), 0, False)],
+    "abs": [("lumbar", "front", 0.0, 1.12, 0.03, (0.057, 0.090, 0.180), 0, False)],
+    "obliques": [("lumbar", "side", 0.0, 1.07, 0.03, (0.081, 0.048, 0.132), 0, True)],
+    "glutes": [("pelvis", "back", 0.095, 0.93, 0.035, (0.081, 0.114, 0.120), 0, True)],
 }
 # Shorts: ellipsoids that cover the pelvis and the top of each thigh.
 SHORTS = [("pelvis", 0.0, (0.0, 0.0, -0.03), (0.21, 0.25, 0.12)), ("hip", 0.3, (0.0, 0.0, 0.0), (0.16, 0.16, 0.17))]
@@ -88,7 +88,7 @@ def _seg_dist(V, a, b):
 
 
 class Figure:
-    def __init__(self, highlight=(), secondary=(), skin=(0.6, 0.605, 0.62), hot=(0.95, 0.31, 0.04), shorts=(0.05, 0.053, 0.06)):
+    def __init__(self, highlight=(), secondary=(), skin=(0.54, 0.545, 0.56), hot=(0.95, 0.31, 0.04), shorts=(0.05, 0.053, 0.06)):
         self.ob, self.V0 = bodymod.load_mesh()
         LM = bodymod.landmarks(self.V0)
         LM["shoulderL"] = Vector((0.015, 0.192, 1.392))
@@ -289,38 +289,100 @@ class Figure:
                 cur = mx.outputs["Value"]
             return cur
 
-        sh_w = combine([region_w(e, 1.0, 0.92, 1.0) for e in self._shorts])
-        hot_w = combine([region_w(e, k, 0.84, 1.0) for e, k in self._regions])
+        sh_w = combine([region_w(e, 1.0, 0.92, 1.0) for e, k in [(e, 1) for e in self._shorts]])
+
+        def parts(e, k):
+            tc = N.new("ShaderNodeTexCoord")
+            tc.object = e
+            ln = N.new("ShaderNodeVectorMath")
+            ln.operation = "LENGTH"
+            L.new(tc.outputs["Object"], ln.inputs[0])
+
+            def ramp(lo, hi, top, bot, smooth=True):
+                rg = N.new("ShaderNodeMapRange")
+                rg.clamp = True
+                rg.interpolation_type = "SMOOTHSTEP" if smooth else "LINEAR"
+                rg.inputs["From Min"].default_value = lo
+                rg.inputs["From Max"].default_value = hi
+                rg.inputs["To Min"].default_value = top * k
+                rg.inputs["To Max"].default_value = bot
+                L.new(ln.outputs["Value"], rg.inputs["Value"])
+                return rg.outputs["Result"]
+            return ramp(0.8, 1.0, 1.0, 0.0), ramp(0.95, 1.5, 1.0, 0.0), ramp(0.0, 0.9, 1.0, 0.0, False)
+
+        def layers(regs):
+            if not regs:
+                return None
+            ps = [parts(e, k) for e, k in regs]
+            return combine([p[0] for p in ps]), combine([p[1] for p in ps]), combine([p[2] for p in ps])
+
+        def gradient(depth):
+            """Deep orange at the rim, bright orange-gold at the heart: the muscle looks lit from inside."""
+            sm = N.new("ShaderNodeMapRange")
+            sm.clamp = True
+            sm.interpolation_type = "SMOOTHSTEP"
+            sm.inputs["From Min"].default_value = 0.1
+            sm.inputs["From Max"].default_value = 0.65
+            L.new(depth, sm.inputs["Value"])
+            mx = N.new("ShaderNodeMix")
+            mx.data_type = "RGBA"
+            mx.inputs["A"].default_value = (0.78, 0.15, 0.02, 1)
+            mx.inputs["B"].default_value = (1.0, 0.52, 0.1, 1)
+            L.new(sm.outputs["Result"], mx.inputs["Factor"])
+            return mx.outputs["Result"]
+
+        def paint(cur, w, color):
+            mix = N.new("ShaderNodeMix")
+            mix.data_type = "RGBA"
+            if isinstance(color, tuple):
+                mix.inputs["B"].default_value = (*color, 1)
+            else:
+                L.new(color, mix.inputs["B"])
+            L.new(cur, mix.inputs["A"])
+            L.new(w, mix.inputs["Factor"])
+            return mix.outputs["Result"]
+
+        def glow(cur, lay):
+            core, halo, depth = lay
+            hm = N.new("ShaderNodeMath")
+            hm.operation = "MULTIPLY"
+            hm.inputs[1].default_value = 0.28
+            L.new(halo, hm.inputs[0])
+            cur = paint(cur, hm.outputs["Value"], (1.0, 0.42, 0.08))     # a soft warm halo just outside the edge
+            return paint(cur, core, gradient(depth))
+
+        under = [(e, k) for e, k in self._regions if not e.name.startswith("r_glutes")]
+        over = [(e, k) for e, k in self._regions if e.name.startswith("r_glutes")]
         col = N.new("ShaderNodeRGB")
         col.outputs[0].default_value = (*skin, 1)
         cur = col.outputs[0]
+        emis = []
+        lu, lo = layers(under), layers(over)
+        if lu:
+            cur = glow(cur, lu)
+            emis.append(lu[0])
         if sh_w is not None:
-            mix = N.new("ShaderNodeMix")
-            mix.data_type = "RGBA"
-            mix.inputs["B"].default_value = (*shorts, 1)
-            L.new(cur, mix.inputs["A"])
-            L.new(sh_w, mix.inputs["Factor"])
-            cur = mix.outputs["Result"]
+            cur = paint(cur, sh_w, shorts)
+        if lo:
+            cur = glow(cur, lo)
+            emis.append(lo[0])
+        hot_w = combine(emis)
         if hot_w is not None:
-            mix = N.new("ShaderNodeMix")
-            mix.data_type = "RGBA"
-            mix.inputs["B"].default_value = (*hot, 1)
-            L.new(cur, mix.inputs["A"])
-            L.new(hot_w, mix.inputs["Factor"])
-            cur = mix.outputs["Result"]
             mul = N.new("ShaderNodeMath")
             mul.operation = "MULTIPLY"
-            mul.inputs[1].default_value = 0.22
+            mul.inputs[1].default_value = 0.4
             L.new(hot_w, mul.inputs[0])
             for k in ("Emission Color", "Emission"):
                 if k in b.inputs:
-                    L.new(mix.outputs["Result"], b.inputs[k])
+                    hc = N.new("ShaderNodeRGB")
+                    hc.outputs[0].default_value = (1.0, 0.36, 0.05, 1)
+                    L.new(hc.outputs[0], b.inputs[k])
                     break
             if "Emission Strength" in b.inputs:
                 L.new(mul.outputs["Value"], b.inputs["Emission Strength"])
         ao = N.new("ShaderNodeAmbientOcclusion")
         ao.inputs["Distance"].default_value = 0.09
-        ao.samples = 8
+        ao.samples = 16
         ramp = N.new("ShaderNodeMapRange")
         ramp.clamp = True
         ramp.inputs["From Min"].default_value = 0.0
@@ -371,7 +433,11 @@ class Figure:
         self._upd()
         for s, sd in (("L", 1), ("R", -1)):
             S = self.pos("shoulder" + s)
-            T = Vector(P["hand" + s])
+            if "hand" + s in P:
+                T = Vector(P["hand" + s])
+            else:                                  # relative to the shoulder (world axes, y mirrored for the right arm)
+                r = P.get("rhand" + s, P.get("rhand"))
+                T = S + Vector((r[0], r[1] * sd, r[2]))
             pole = Vector(P.get("arm_pole", (-0.5, 0.3, -0.8)))
             pole = Vector((pole.x, pole.y * sd, pole.z))
             E, Tc = _two_bone(S, T, self.UARM, self.FARM, pole)
@@ -379,7 +445,11 @@ class Figure:
             self._world_dir("elbow" + s, Tc - E)
             self._world_dir("wrist" + s, Tc - E)
             H = self.pos("hip" + s)
-            A = Vector(P["ankle" + s])
+            if "ankle" + s in P:
+                A = Vector(P["ankle" + s])
+            else:                                  # relative to the hip
+                r = P.get("rank" + s, P.get("rank"))
+                A = H + Vector((r[0], r[1] * sd, r[2]))
             lp = Vector(P.get("leg_pole", (1.0, 0.15, 0.0)))
             lp = Vector((lp.x, lp.y * sd, lp.z))
             K_, Ac = _two_bone(H, A, self.THIGH, self.SHIN, lp)

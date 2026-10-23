@@ -1,6 +1,6 @@
 # 004 — Our own 3D exercise renders (replaces the free-exercise-db photos)
 
-Status: PLAN ONLY. Nothing built yet. Waiting for the owner's go on the pilot.
+Status: BUILT (2026-10-23). The mannequin turned out better from a sculpted CC0 base mesh than from primitives (see docs/ASSETS.md and CLAUDE.md). Pilot approved by iteration; all plan lifts plus the swap targets are being rendered.
 
 ## Goal
 Every one of the 54 library exercises gets a short looping animation of a smooth grey mannequin doing the lift, with the

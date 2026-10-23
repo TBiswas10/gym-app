@@ -6,11 +6,16 @@ import os
 import sys
 
 import bpy
+import numpy as np
 from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import figure  # noqa: E402
 import lifts  # noqa: E402
+import lifts2  # noqa: E402
+import lifts3  # noqa: E402
+
+ALL = {**lifts.LIFTS, **lifts2.LIFTS2, **lifts3.LIFTS3}
 
 
 def args():
@@ -35,7 +40,7 @@ def setup_scene(size, cam):
     sc = bpy.context.scene
     sc.render.engine = "BLENDER_EEVEE"
     try:
-        sc.eevee.taa_render_samples = 48
+        sc.eevee.taa_render_samples = 96
     except Exception:
         pass
     sc.render.film_transparent = True
@@ -111,16 +116,40 @@ def ease(u):
     return u * u * (3 - 2 * u)
 
 
+def fit_camera(sc, fig, poses, update, margin=1.22):
+    """Frame the figure (and the dumbbells and bars it holds) in every pose: centre it and set the ortho scale, so every lift fills the picture the same way."""
+    cam = sc.camera
+    cam_inv = cam.matrix_world.inverted()
+    pts = []
+    for P in poses:
+        fig.pose(P)
+        update(P, fig)
+        bpy.context.view_layer.update()
+        V = np.empty(len(fig.ob.data.vertices) * 3)
+        fig.ob.data.vertices.foreach_get("co", V)
+        V = V.reshape(-1, 3)[::60]
+        pts.extend(Vector(v) for v in V)
+        for ob in sc.objects:
+            if ob.type == "MESH" and ob is not fig.ob and ob.name.split(".")[0].startswith(("db", "bb", "grip", "bar", "vbar", "rope", "handle")):
+                pts.extend(ob.matrix_world @ Vector(c) for c in ob.bound_box)
+    cs = [cam_inv @ p for p in pts]
+    xs, ys = [c.x for c in cs], [c.y for c in cs]
+    cx, cy = (max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2
+    cam.location = cam.matrix_world.to_3x3() @ Vector((cx, cy, 0)) + cam.location
+    cam.data.ortho_scale = max(max(xs) - min(xs), max(ys) - min(ys)) * margin
+
+
 def main():
     o = args()
     for slug in o["slug"]:
-        L = lifts.LIFTS[slug]
+        L = ALL[slug]
         sc = setup_scene(o["size"], L["cam"])
         fig = figure.Figure(highlight=L["highlight"], secondary=L.get("secondary", ()))
         update = L["props"]()
         A = L["A"]
         B = dict(A)
         B.update(L["B"])
+        fit_camera(sc, fig, [A, B, figure.lerp_pose(A, B, 0.5)], update)
         out = os.path.join(o["out"], slug)
         os.makedirs(out, exist_ok=True)
         for f in os.listdir(out):

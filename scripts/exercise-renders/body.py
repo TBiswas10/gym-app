@@ -31,7 +31,17 @@ def load_mesh():
     ev = src_ob.evaluated_get(bpy.context.evaluated_depsgraph_get())
     me = bpy.data.meshes.new_from_object(ev)
     me.transform(Matrix.Scale(SCALE, 4) @ Matrix.Rotation(math.radians(90), 4, "Z"))
-    _faceless_head(me)
+    _swap_head(me)
+    n0 = len(me.vertices)
+    arr0 = np.empty(n0 * 3)
+    me.vertices.foreach_get("co", arr0)
+    if os.path.exists(CACHE) and np.load(CACHE).shape == (n0, 3):
+        V1 = np.load(CACHE)
+    else:
+        V1 = _shape(me, arr0.reshape(n0, 3).copy())
+        np.save(CACHE, V1)
+    me.vertices.foreach_set("co", V1.ravel())
+    me.update()
     for p in me.polygons:
         p.use_smooth = True
     ob = bpy.data.objects.new("BodyMesh", me)
@@ -46,43 +56,117 @@ def load_mesh():
     return ob, arr
 
 
-HEAD_CUT = 1.5   # below the chin: everything above is replaced by a smooth, faceless head
+CACHE = os.environ.get("HBM_CACHE", os.path.join(os.path.dirname(BLEND), "body_v7.npy"))
 
 
-def _faceless_head(me):
-    """Cut the sculpted face off at the jaw line and put a smooth egg-shaped mannequin head on the real neck."""
+HEAD_CUT = 1.5
+
+
+def _swap_head(me):
+    """Cut the sculpted face off at the jaw line and grow a smooth, faceless head out of the real neck: one seamless surface that starts
+    exactly as wide as the neck and flares out to an egg. (Built from rings, so there are no seams and no stray pieces.)"""
     import bmesh
     n = len(me.vertices)
     arr = np.empty(n * 3)
     me.vertices.foreach_get("co", arr)
     V = arr.reshape(n, 3)
-    top = V[:, 2].max()
-    hv = V[V[:, 2] > 1.6]
-    cy = float(hv[:, 1].mean())
+    top = float(V[:, 2].max())
     ring = V[(np.abs(V[:, 2] - HEAD_CUT) < 0.012) & (np.abs(V[:, 1]) < 0.075)]
     rcx, rcy = float(ring[:, 0].mean()), float(ring[:, 1].mean())
-    rrx, rry = float(np.percentile(np.abs(ring[:, 0] - rcx), 90)), float(np.percentile(np.abs(ring[:, 1] - rcy), 90))
-    print('NECKRING', len(ring), rcx, rcy, rrx, rry)
-    cx = rcx + 0.028
+    rrx = float(np.percentile(np.abs(ring[:, 0] - rcx), 92))
+    rry = float(np.percentile(np.abs(ring[:, 1] - rcy), 92))
     bm = bmesh.new()
     bm.from_mesh(me)
     drop = [f for f in bm.faces if f.calc_center_median().z > HEAD_CUT]
     bmesh.ops.delete(bm, geom=drop, context="FACES")
     for v in [v for v in bm.verts if not v.link_faces]:
         bm.verts.remove(v)
-    hz = 0.118
-    zc = top - hz
-    sph = bmesh.ops.create_uvsphere(bm, u_segments=64, v_segments=40, radius=1.0)
-    for v in sph["verts"]:
-        x, y, z = v.co
-        taper = 1.0 - 0.08 * max(0.0, -z)          # narrower toward the chin
-        v.co = (cx + x * 0.098 * taper, cy + y * 0.079 * taper, zc + z * hz)
-    # the neck carries on up into the head, the same size as the cut ring
-    cyl = bmesh.ops.create_cone(bm, cap_ends=True, segments=48, radius1=1.0, radius2=0.8, depth=0.1)
-    for v in cyl["verts"]:
-        v.co = (rcx + v.co.x * rrx * 0.97, rcy + v.co.y * rry * 0.97, HEAD_CUT + 0.02 + v.co.z)
+    # profile: (height, half-width front-back, half-width side-side, forward shift of the centre)
+    hx, hy = 0.1, 0.082
+    prof = [
+        (HEAD_CUT - 0.035, rrx * 0.9, rry * 0.9, 0.0),
+        (HEAD_CUT, rrx * 1.06, rry * 1.06, 0.0),
+        (HEAD_CUT + 0.03, 0.078, 0.07, 0.012),
+        (HEAD_CUT + 0.065, 0.094, 0.079, 0.022),
+        (HEAD_CUT + 0.11, hx, hy, 0.028),
+        (HEAD_CUT + 0.16, 0.098, 0.081, 0.028),
+        (HEAD_CUT + 0.2, 0.086, 0.072, 0.026),
+        (HEAD_CUT + 0.235, 0.06, 0.05, 0.022),
+        (top - 0.006, 0.026, 0.022, 0.02),
+        (top, 0.0, 0.0, 0.02),
+    ]
+    zs = np.array([p[0] for p in prof])
+    cols = np.array([[p[1], p[2], p[3]] for p in prof])
+    ring_n = 64
+    levels = np.linspace(zs[0], zs[-1], 56)
+    dense = np.stack([np.interp(levels, zs, cols[:, k]) for k in range(3)], axis=1)
+    for k in range(3):                                     # round off the corners of the piecewise-linear profile
+        for _ in range(3):
+            dense[1:-1, k] = (dense[:-2, k] + 2 * dense[1:-1, k] + dense[2:, k]) / 4
+    rows = []
+    for z, (rx, ry, sh) in zip(levels, dense):
+        if rx < 1e-4:
+            rows.append([bm.verts.new((rcx + sh, rcy, z))] * ring_n)
+            continue
+        rows.append([bm.verts.new((rcx + sh + rx * math.cos(2 * math.pi * j / ring_n), rcy + ry * math.sin(2 * math.pi * j / ring_n), z)) for j in range(ring_n)])
+    for r0, r1 in zip(rows, rows[1:]):
+        for j in range(ring_n):
+            j2 = (j + 1) % ring_n
+            vs = []
+            for v in (r0[j], r0[j2], r1[j2], r1[j]):
+                if not vs or vs[-1] is not v:
+                    vs.append(v)
+            if len(vs) > 1 and vs[0] is vs[-1]:
+                vs.pop()
+            if len(vs) >= 3:
+                try:
+                    bm.faces.new(vs)
+                except ValueError:
+                    pass
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     bm.to_mesh(me)
     bm.free()
+
+
+def _edges(me):
+    ne = len(me.edges)
+    ed = np.empty(ne * 2, dtype=np.int64)
+    me.edges.foreach_get("vertices", ed)
+    return ed.reshape(ne, 2)
+
+
+def _taubin(V, ed, w, iters=40, lam=0.5, mu=-0.53):
+    """Smooth the vertices weighted by w (0..1) without shrinking: the face features melt into one smooth surface, the neck and jaw stay."""
+    deg = np.maximum(np.bincount(ed.ravel(), minlength=len(V)).astype(np.float64), 1)[:, None]
+    for _ in range(iters):
+        for f in (lam, mu):
+            S = np.zeros_like(V)
+            np.add.at(S, ed[:, 0], V[ed[:, 1]])
+            np.add.at(S, ed[:, 1], V[ed[:, 0]])
+            V = V + f * w[:, None] * (S / deg - V)
+    return V
+
+
+def _shape(me, V):
+    """Curl the fingers into fists (they hold the handles)."""
+    L = landmarks(V)
+    for s, sgn in (("L", -1.0), ("R", 1.0)):
+        wr, el = np.array(L["wrist" + s]), np.array(L["elbow" + s])
+        u = (wr - el) / np.linalg.norm(wr - el)
+        rel = V - wr
+        along = rel @ u
+        perp = np.linalg.norm(rel - np.outer(along, u), axis=1)
+        hand = (along > -0.01) & (perp < 0.075) & (np.abs(V[:, 1]) > 0.3)
+        pivot = wr + u * 0.03
+        t = np.clip((along - 0.03) / 0.06, 0.0, 1.0)
+        phi = sgn * 1.75 * t
+        idx = np.where(hand & (t > 0))[0]
+        r = V[idx] - pivot
+        c, sn = np.cos(phi[idx]), np.sin(phi[idx])
+        y2 = r[:, 1] * c - r[:, 2] * sn
+        z2 = r[:, 1] * sn + r[:, 2] * c
+        V[idx] = pivot + np.stack([r[:, 0], y2, z2], axis=1)
+    return V
 
 
 def _centroid(V, zc, xlo, xhi, half=0.012, side=1):

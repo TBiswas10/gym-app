@@ -6,64 +6,7 @@ import math
 import bpy
 from mathutils import Euler, Matrix, Vector
 
-from figure import make_mat
-
-_mats = {}
-
-
-def _mat(kind):
-    if kind not in _mats:
-        _mats[kind] = {
-            "frame": make_mat("frame", (0.085, 0.09, 0.1), rough=0.55, metallic=0.2),
-            "pad": make_mat("pad", (0.045, 0.047, 0.052), rough=0.8),
-            "chrome": make_mat("chrome", (0.5, 0.52, 0.55), rough=0.28, metallic=0.9),
-        }[kind]
-    return _mats[kind]
-
-
-def box(name, size, loc, rot=(0, 0, 0), mat="frame"):
-    bpy.ops.mesh.primitive_cube_add(size=1)
-    o = bpy.context.active_object
-    o.name = name
-    o.dimensions = size
-    o.location = loc
-    o.rotation_euler = Euler([math.radians(a) for a in rot])
-    o.data.materials.append(_mat(mat))
-    bpy.ops.object.shade_smooth()
-    bv = o.modifiers.new("bevel", "BEVEL")
-    bv.width = 0.012
-    bv.segments = 3
-    return o
-
-
-def cyl_between(name, p0, p1, r, mat="chrome"):
-    bpy.ops.mesh.primitive_cylinder_add(radius=r, depth=1, vertices=24)
-    o = bpy.context.active_object
-    o.name = name
-    o.data.materials.append(_mat(mat))
-    bpy.ops.object.shade_smooth()
-    place_cyl(o, p0, p1, r)
-    return o
-
-
-def place_cyl(o, p0, p1, r):
-    p0, p1 = Vector(p0), Vector(p1)
-    d = p1 - p0
-    o.location = (p0 + p1) / 2
-    o.rotation_mode = "QUATERNION"
-    o.rotation_quaternion = d.to_track_quat("Z", "Y")
-    o.scale = (r / 1.0 * 1.0, r / 1.0 * 1.0, d.length)
-    o.dimensions = (2 * r, 2 * r, d.length)
-
-
-def grip(fig, s):
-    """Where the hand actually holds: a little past the wrist along the forearm."""
-    w, e = fig.pos("wrist" + s), fig.pos("elbow" + s)
-    return w + (w - e).normalized() * 0.085
-
-
-def mid(a, b):
-    return tuple((a[i] + b[i]) / 2 for i in range(3))
+from props import box, box_dir, tube, cyl_between, place_cyl, grip, mid, Dumbbell, _mat
 
 
 # ======================================================================= chest press (seated machine)
@@ -169,4 +112,42 @@ LEG_PRESS = dict(
     cam=dict(center=(0.3, 0, 0.62), scale=2.1, az=84, el=6),
 )
 
-LIFTS = {l["slug"]: l for l in (CHEST_PRESS, LAT_PULLDOWN, LEG_PRESS)}
+
+# ======================================================================= incline dumbbell curl (seated on an incline bench)
+def incline_bench(alpha=60.0):
+    a = math.radians(alpha)
+    P = Vector((-0.06, 0, 0.46))
+    d = Vector((-math.cos(a), 0, math.sin(a)))
+    n = Vector((math.sin(a), 0, math.cos(a)))
+    box("seatpad", (0.36, 0.30, 0.08), (0.10, 0, 0.42), mat="pad")
+    box_dir("backpad", (0.74, 0.30, 0.08), tuple(P + d * 0.38 - n * 0.04), tuple(d), mat="pad")
+    box("front_foot", (0.07, 0.52, 0.05), (0.30, 0, 0.025))
+    box("rear_foot", (0.07, 0.52, 0.05), (-0.52, 0, 0.025))
+    tube("rail", (0.30, 0, 0.05), (-0.52, 0, 0.05), 0.022)
+    tube("post_front", (0.26, 0, 0.05), (0.16, 0, 0.38), 0.024)
+    tube("post_mid", (-0.12, 0, 0.05), (-0.04, 0, 0.38), 0.024)
+    tube("strut", (-0.52, 0, 0.05), tuple(P + d * 0.5 - n * 0.09), 0.024)
+
+
+def dbcurl_props():
+    incline_bench(60.0)
+    dbs = {s: Dumbbell("db" + s) for s in "LR"}
+
+    def update(P, fig):
+        for s in "LR":
+            dbs[s].place(grip(fig, s))
+    return update
+
+
+DB_CURL = dict(
+    slug="dbcurl",
+    highlight=("biceps",), secondary=("forearms", "frontdelt"),
+    props=dbcurl_props,
+    A=dict(pelvis=(-0.03, 0, 0.585), pelvis_pitch=-30, lumbar=0, chest=0, neck=24, head=0,
+           handL=(-0.30, 0.27, 0.45), handR=(-0.30, -0.27, 0.45), ankleL=(0.30, 0.17, 0.085), ankleR=(0.30, -0.17, 0.085), foot=0,
+           arm_pole=(-0.4, 0.3, -1.0), leg_pole=(1.0, 0.1, 0.3)),
+    B=dict(handL=(-0.08, 0.25, 1.1), handR=(-0.08, -0.25, 1.1)),
+    cam=dict(center=(0.0, 0, 0.72), scale=1.95, az=52, el=12, shadow=(-0.05, 1.0, 0.65)),
+)
+
+LIFTS = {l["slug"]: l for l in (CHEST_PRESS, LAT_PULLDOWN, LEG_PRESS, DB_CURL)}
