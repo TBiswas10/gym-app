@@ -20,17 +20,19 @@ export interface LibItem {
 }
 
 const GROUPS = ["All", "My plan", "Chest", "Back", "Shoulders", "Arms", "Legs", "Core"];
+const KITS = ["Any equipment", "Machine", "Cable", "Dumbbells", "Smith machine", "Bodyweight", "Bench"];
 const TABS = ["Setup", "How to do it", "Mistakes"];
 
 export function LibraryView({ items, plan = {}, todayWeekday }: { items: LibItem[]; plan?: Record<string, number[]>; todayWeekday?: number }) {
   const router = useRouter();
   const [filter, setFilter] = useState("All");
+  const [kit, setKit] = useState("Any equipment");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<LibItem | null>(null);
   const [tab, setTab] = useState(0);
   const inPlan = (slug: string) => (plan[slug]?.length ?? 0) > 0;
   const planCount = items.filter((e) => inPlan(e.slug)).length;
-  const rows = items.filter((e) => (filter === "All" || (filter === "My plan" ? inPlan(e.slug) : e.group === filter)) && matchesQuery(e, query));
+  const rows = items.filter((e) => (filter === "All" || (filter === "My plan" ? inPlan(e.slug) : e.group === filter)) && (kit === "Any equipment" || e.kit === kit) && matchesQuery(e, query));
   const list = open ? [open.setup, open.cues, open.mistakes][tab] : [];
 
   return (
@@ -65,6 +67,11 @@ export function LibraryView({ items, plan = {}, todayWeekday }: { items: LibItem
             <button key={g} type="button" className="chip" role="tab" aria-selected={filter === g} onClick={() => setFilter(g)}>{g === "My plan" ? `My plan (${planCount})` : g}</button>
           ))}
         </div>
+        <div className="chip-row" role="tablist" aria-label="Filter by equipment">
+          {KITS.map((k) => (
+            <button key={k} type="button" className="chip" role="tab" aria-selected={kit === k} onClick={() => setKit(k)}>{k}</button>
+          ))}
+        </div>
         <div className="col g2 lib-grid">
           {rows.map((e) => (
             <button
@@ -95,8 +102,8 @@ export function LibraryView({ items, plan = {}, todayWeekday }: { items: LibItem
         {rows.length === 0 && (
           <div className="empty">
             <p className="t-body">{query ? `No exercises match “${query.trim()}”.` : "Nothing here yet."}</p>
-            {(query || filter !== "All") && (
-              <button type="button" className="btn btn-secondary" onClick={() => { setQuery(""); setFilter("All"); }}>Clear search and filter</button>
+            {(query || filter !== "All" || kit !== "Any equipment") && (
+              <button type="button" className="btn btn-secondary" onClick={() => { setQuery(""); setFilter("All"); setKit("Any equipment"); }}>Clear search and filter</button>
             )}
           </div>
         )}

@@ -6,7 +6,7 @@ import math
 import bpy
 from mathutils import Euler, Matrix, Vector
 
-from props import box, box_dir, tube, cyl_between, place_cyl, grip, mid, Dumbbell, _mat
+from props import box, box_dir, tube, cyl_between, place_cyl, grip, mid, line, Dumbbell, _mat
 
 
 # ======================================================================= chest press (seated machine)
@@ -14,13 +14,13 @@ def chest_press_props():
     box("seat", (0.40, 0.40, 0.10), (0.02, 0, 0.40), mat="pad")
     box("back", (0.09, 0.40, 0.66), (-0.17, 0, 0.88), (0, -8, 0), mat="pad")
     box("post", (0.08, 0.14, 1.25), (-0.33, 0, 0.64))
-    hs = {s: (cyl_between("grip" + s, (0, 0, 0), (0.1, 0, 0), 0.017), cyl_between("arm" + s, (0, 0, 0), (0.1, 0, 0), 0.013, "frame")) for s in "LR"}
+    hs = {s: (cyl_between("grip" + s, (0, 0, 0), (0.1, 0, 0), 0.017), cyl_between("arm" + s, (0, 0, 0), (0.1, 0, 0), 0.016, "frame")) for s in "LR"}
 
     def update(P, fig):
         for s in "LR":
             h = grip(fig, s)
             place_cyl(hs[s][0], h + Vector((0, -0.06, 0)), h + Vector((0, 0.06, 0)), 0.017)
-            place_cyl(hs[s][1], h, h + Vector((-0.12, 0, 0)), 0.013)
+            place_cyl(hs[s][1], h, Vector((-0.33, math.copysign(0.34, h.y), h.z + 0.02)), 0.016)
     return update
 
 
@@ -43,7 +43,7 @@ def lat_pulldown_props():
     box("post", (0.08, 0.10, 2.25), (0.55, 0, 1.125))
     box("beam", (0.55, 0.10, 0.07), (0.3, 0, 2.2))
     bar = cyl_between("bar", (0, -0.5, 0), (0, 0.5, 0), 0.016)
-    cable = cyl_between("cable", (0, 0, 0), (0, 0, 1), 0.006, "frame")
+    cable = line("cable")
 
     def update(P, fig):
         hl, hr = grip(fig, "L"), grip(fig, "R")

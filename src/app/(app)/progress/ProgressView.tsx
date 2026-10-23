@@ -29,7 +29,10 @@ export function ProgressView({ data }: { data: ProgressData }) {
   const [tab, setTab] = useState<"strength" | "week" | "plan">("strength");
   const [sel, setSel] = useState(best ? best.i : 0);
   const [all, setAll] = useState(false);
-  const chip = data.chips[sel];
+  const [metric, setMetric] = useState<"top" | "e1rm">("top");
+  const base = data.chips[sel];
+  const chip = base && metric === "e1rm" && base.e1rm && base.e1rm.length > 0 ? { ...base, values: base.e1rm } : base;
+  const showE1rm = metric === "e1rm" && chip !== base;
   const unit = chip?.unit ?? "kg";
   const fmt = (v: number) => `${fmtNum(v)} ${unit}`;
   const delta = chip && chip.values.length > 1 ? chip.values[chip.values.length - 1] - chip.values[0] : 0;
@@ -116,6 +119,12 @@ export function ProgressView({ data }: { data: ProgressData }) {
               </div>
 
               <div className="col g2">
+                {base?.e1rm && base.e1rm.length > 0 && (
+                  <div className="chip-row-tight" role="tablist" aria-label="What the chart shows">
+                    <button type="button" className="chip" role="tab" aria-selected={!showE1rm} onClick={() => setMetric("top")}>Top set</button>
+                    <button type="button" className="chip" role="tab" aria-selected={showE1rm} onClick={() => setMetric("e1rm")}>Estimated 1RM</button>
+                  </div>
+                )}
                 <div className="row between" style={{ alignItems: "flex-end" }}>
                   <span className="col" style={{ minWidth: 0 }}>
                     <span className="t-caption c-2">{chip.name.toUpperCase()}</span>
@@ -124,12 +133,12 @@ export function ProgressView({ data }: { data: ProgressData }) {
                   {chip.values.length > 1 && <span className="tag tag-accent">{delta >= 0 ? "+" : "−"}{fmtNum(Math.abs(delta))} {unit} over {chip.values.length} sessions</span>}
                 </div>
                 <LineChart
-                  key={chip.slug}
+                  key={`${chip.slug}-${showE1rm}`}
                   values={chip.values}
                   format={fmt}
-                  ariaLabel={`${chip.name} ${chip.kind === "timed" ? "longest hold" : chip.kind === "bodyweight" ? "best set" : "top set"} by session: ${chip.values.map(fmtNum).join(", ")} ${unit}`}
+                  ariaLabel={`${chip.name} ${showE1rm ? "estimated one-rep max" : chip.kind === "timed" ? "longest hold" : chip.kind === "bodyweight" ? "best set" : "top set"} by session: ${chip.values.map(fmtNum).join(", ")} ${unit}`}
                 />
-                <p className="t-small c-2">{chip.kind === "timed" ? "Longest hold" : chip.kind === "bodyweight" ? "Best set" : "Top set"}, last {chip.values.length} sessions. Tap a point.</p>
+                <p className="t-small c-2">{showE1rm ? "Estimated 1RM (the most you could lift once, worked out from your best set)" : chip.kind === "timed" ? "Longest hold" : chip.kind === "bodyweight" ? "Best set" : "Top set"}, last {chip.values.length} sessions. Tap a point.</p>
               </div>
             </>
           ) : (

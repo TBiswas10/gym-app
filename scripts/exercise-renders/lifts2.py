@@ -48,7 +48,7 @@ def shoulder_props():
 
 
 SHOULDER = dict(
-    slug="shoulder", highlight=("frontdelt", "sidedelt"), secondary=("triceps",), props=shoulder_props,
+    slug="shoulder", arc=dict(rhandL=(0.05, -0.04, 0.0), rhandR=(0.05, -0.04, 0.0)), highlight=("frontdelt", "sidedelt"), secondary=("triceps",), props=shoulder_props,
     A=seated(0.45, 0.0, -2, 8, rhandL=(0.10, 0.30, 0.10), rhandR=(0.10, 0.30, 0.10), arm_pole=(-0.5, 0.9, -0.6)),
     B=dict(rhandL=(0.02, 0.18, 0.64), rhandR=(0.02, 0.18, 0.64)),
     cam=dict(center=(0.1, 0, 0.9), scale=1.9, az=45, el=10),
@@ -80,7 +80,7 @@ def legext_props():
     box("post", (0.10, 0.2, 1.0), (-0.38, 0, 0.5))
     box("base", (1.0, 0.5, 0.05), (0.1, 0, 0.025))
     pad = cyl_between("shinpad", (0, -0.2, 0), (0, 0.2, 0), 0.045, "pad")
-    arm = line("lever", 0.02)
+    arm = cyl_between("lever", (0, 0, 0), (0, 0, 1), 0.02, "frame")
     g = {s: cyl_between("grip" + s, (0, 0, 0), (0, 0, 0.1), 0.017) for s in "LR"}
 
     def update(P, fig):
@@ -111,7 +111,7 @@ def calf_props():
 
 
 CALF = dict(
-    slug="calf", highlight=("calves",), secondary=(), props=calf_props,
+    slug="calf", tempo=(0.9, 0.7, 1.8, 0.3), highlight=("calves",), secondary=(), props=calf_props,
     A=seated(0.45, -0.08, -4, 8, ankleL=(0.36, 0.11, 0.115), ankleR=(0.36, -0.11, 0.115), foot=-8, handL=(0.15, 0.17, 0.64), handR=(0.15, -0.17, 0.64), leg_pole=(1.0, 0.0, 0.6)),
     B=dict(ankleL=(0.36, 0.11, 0.19), ankleR=(0.36, -0.11, 0.19), foot=38),
     cam=dict(center=(0.22, 0, 0.5), scale=1.7, az=105, el=8),
@@ -135,7 +135,7 @@ def row_props():
 
 
 ROW = dict(
-    slug="row", highlight=("midback", "lats"), secondary=("biceps", "reardelt"), props=row_props,
+    slug="row", arc=dict(rhand=(0.0, 0.0, 0.04)), highlight=("midback", "lats"), secondary=("biceps", "reardelt"), props=row_props,
     A=dict(pelvis=(-0.15, 0, 0.575), pelvis_pitch=0, lumbar=0, chest=22, neck=-8, head=0, rank=(0.78, 0.04, -0.14), foot=-10,
            rhand=(0.58, 0.09, -0.34), arm_pole=(-0.1, 0.3, -1.0), leg_pole=(0.4, 0.0, 1.0)),
     B=dict(chest=-6, neck=4, rhand=(0.12, 0.13, -0.42)),
@@ -150,7 +150,7 @@ def legcurl_props():
         box("leg", (0.07, 0.07, 0.4), (x, 0.1, 0.22))
         box("leg2", (0.07, 0.07, 0.4), (x, -0.1, 0.22))
     roller = cyl_between("roller", (0, -0.2, 0), (0, 0.2, 0), 0.045, "pad")
-    arm = line("lever", 0.02)
+    arm = cyl_between("lever", (0, 0, 0), (0, 0, 1), 0.02, "frame")
     g = {s: cyl_between("grip" + s, (0, 0, 0), (0, 0, 0.1), 0.017) for s in "LR"}
 
     def update(P, fig):
@@ -201,7 +201,7 @@ def incline_press_props():
 
 
 INCLINE = dict(
-    slug="incline", highlight=("chest",), secondary=("frontdelt", "triceps"), props=incline_press_props,
+    slug="incline", arc=dict(rhand=(0.04, 0.03, 0.0)), highlight=("chest",), secondary=("frontdelt", "triceps"), props=incline_press_props,
     A=dict(pelvis=(-0.03, 0, 0.585), pelvis_pitch=-45, lumbar=0, chest=0, neck=30, head=0, ankleL=(0.30, 0.17, 0.085), ankleR=(0.30, -0.17, 0.085), foot=0,
            rhand=(0.12, 0.31, 0.10), arm_pole=(-0.3, 0.9, -0.9), leg_pole=(1.0, 0.1, 0.3)),
     B=dict(rhand=(0.46, 0.17, 0.44)),
@@ -219,7 +219,7 @@ def lateral_props():
 
 
 LATERAL = dict(
-    slug="lateral", highlight=("sidedelt",), secondary=("traps",), props=lateral_props,
+    slug="lateral", arc=dict(rhand=(0.0, 0.08, -0.17)), highlight=("sidedelt",), secondary=("traps",), props=lateral_props,
     A=pose(STAND, rhand=(0.03, 0.15, -0.62), arm_pole=(-0.5, 0.4, -0.4)),
     B=dict(rhand=(0.06, 0.62, 0.04), arm_pole=(-0.6, 0.0, -0.4)),
     cam=dict(center=(0.0, 0, 0.9), scale=2.15, az=30, el=6, shadow=(0.0, 0.7, 0.5)),
@@ -227,7 +227,7 @@ LATERAL = dict(
 
 # ------------------------------------------------------------------ hammer curl
 HAMMER = dict(
-    slug="hammer", highlight=("biceps",), secondary=("forearms",), props=lateral_props,
+    slug="hammer", arc=dict(rhand=(0.19, 0.0, -0.10)), highlight=("biceps",), secondary=("forearms",), props=lateral_props,
     A=pose(STAND, rhand=(0.0, 0.14, -0.64), arm_pole=(-0.6, 0.2, -0.3)),
     B=dict(rhand=(0.20, 0.13, -0.06)),
     cam=dict(center=(0.0, 0, 0.9), scale=2.15, az=40, el=6, shadow=(0.0, 0.7, 0.5)),
@@ -248,7 +248,7 @@ def cablecurl_props():
 
 
 CABLECURL = dict(
-    slug="cablecurl", highlight=("biceps",), secondary=("forearms",), props=cablecurl_props,
+    slug="cablecurl", arc=dict(rhand=(0.19, 0.0, -0.10)), highlight=("biceps",), secondary=("forearms",), props=cablecurl_props,
     A=pose(STAND, rhand=(0.04, 0.17, -0.63), arm_pole=(-0.6, 0.3, -0.3)),
     B=dict(rhand=(0.22, 0.14, -0.04)),
     cam=dict(center=(0.35, 0, 0.9), scale=2.4, az=50, el=6),
@@ -269,7 +269,7 @@ def pushdown_props():
 
 
 PUSHDOWN = dict(
-    slug="triceps", highlight=("triceps",), secondary=("forearms",), props=pushdown_props,
+    slug="triceps", arc=dict(rhand=(0.07, 0.0, 0.05)), highlight=("triceps",), secondary=("forearms",), props=pushdown_props,
     A=pose(STAND, chest=8, rhand=(0.26, 0.11, -0.16), arm_pole=(-1.0, 0.1, -0.4)),
     B=dict(rhand=(0.10, 0.12, -0.62)),
     cam=dict(center=(0.3, 0, 0.95), scale=2.4, az=55, el=6),
@@ -293,7 +293,7 @@ def chestrow_props():
 
 
 CHESTROW = dict(
-    slug="chestrow", highlight=("midback", "lats"), secondary=("reardelt", "biceps"), props=chestrow_props,
+    slug="chestrow", arc=dict(rhand=(0.0, 0.03, 0.04)), highlight=("midback", "lats"), secondary=("reardelt", "biceps"), props=chestrow_props,
     A=dict(pelvis=(-0.02, 0, 0.82), pelvis_pitch=45, lumbar=0, chest=0, neck=-45, head=0, rank=(-0.30, 0.05, -0.72), foot=0,
            rhand=(0.0, 0.22, -0.64), arm_pole=(-0.4, 0.6, -0.4), leg_pole=(1.0, 0.0, 0.2)),
     B=dict(rhand=(-0.22, 0.30, -0.22)),
@@ -308,7 +308,7 @@ def plank_props():
 
 
 PLANK = dict(
-    slug="plank", highlight=("obliques", "frontdelt"), secondary=("abs",), props=plank_props,
+    slug="plank", tempo=(2.0, 1.2, 2.0, 0.5), highlight=("obliques", "frontdelt"), secondary=("abs",), props=plank_props,
     A=dict(pelvis=(-0.18, 0, 0.30), pelvis_pitch=80, lumbar=0, chest=0, neck=-60, head=0,
            handL=(0.56, 0.17, 0.065), handR=(0.56, -0.17, 0.065), rank=(-0.78, 0.04, -0.17), foot=62, arm_pole=(-0.8, 0.2, -0.6), leg_pole=(0.0, 0.0, 1.0)),
     B=dict(pelvis=(-0.18, 0, 0.315)),

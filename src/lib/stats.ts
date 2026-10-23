@@ -41,6 +41,28 @@ export function topSeries(workouts: HistWorkout[], sets: HistSet[], slug: string
   return points.slice(-limit);
 }
 
+/** Estimated one-rep max (Epley): the weight you could lift once, worked out from a set. One rep is the weight itself; sets past 12 reps are too far from a max to say. */
+export function est1rm(kg: number, reps: number): number | null {
+  if (!(kg > 0) || !(reps >= 1) || reps > 12) return null;
+  return Math.round(kg * (reps === 1 ? 1 : 1 + reps / 30) * 10) / 10;
+}
+
+/** Best estimated 1RM per session, oldest first, last `limit` sessions (weighted lifts only; sessions with no usable set are skipped). */
+export function e1rmSeries(workouts: HistWorkout[], sets: HistSet[], slug: string, limit = 8): SeriesPoint[] {
+  const ordered = [...workouts].sort((a, b) => (a.planned_date < b.planned_date ? -1 : a.planned_date > b.planned_date ? 1 : 0));
+  const points: SeriesPoint[] = [];
+  for (const w of ordered) {
+    let best: number | null = null;
+    for (const s of sets) {
+      if (s.workout_id !== w.id || s.exercise_slug !== slug || s.variant) continue;
+      const e = est1rm(s.weight_kg ?? 0, s.reps ?? 0);
+      if (e !== null && (best === null || e > best)) best = e;
+    }
+    if (best !== null) points.push({ date: w.planned_date, value: best });
+  }
+  return points.slice(-limit);
+}
+
 /** Exercises with data, most-logged first. */
 export function exercisesWithData(sets: HistSet[]): string[] {
   const count = new Map<string, Set<string>>();

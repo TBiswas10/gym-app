@@ -27,10 +27,10 @@ describe("form help in the workout", () => {
     expect(out).toContain("Full guide");
     expect(out).not.toMatch(/<details[^>]* open/);
   });
-  it("shows our own 3D render (with a still for reduced motion) for lifts that have one", () => {
+  it("shows our own 3D render clip (tap to enlarge) for lifts that have one", () => {
     const out = renderToStaticMarkup(<FormCheck guide={guide} slug="chest" onFullGuide={() => {}} />);
-    expect(out).toContain("/exercises/chest/loop.webp");
-    expect(out).toContain("prefers-reduced-motion");
+    expect(out).toContain("/exercises/chest/loop.mp4");
+    expect(out).toContain("/exercises/chest/poster.webp");
     expect(out).not.toContain("/exercises/chest/0.jpg");
   });
   it("can leave the photos out (a swapped exercise with no photos of its own)", () => {

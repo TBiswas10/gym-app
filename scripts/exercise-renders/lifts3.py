@@ -25,7 +25,7 @@ def assisted_props():
     box("base", (1.0, 1.0, 0.05), (0.0, 0, 0.025))
     pad = box("kneepad", (0.34, 0.30, 0.07), (0.0, 0, 0.5), mat="pad")
     g = {s: cyl_between("grip" + s, (0, 0, 0), (0.1, 0, 0), 0.017) for s in "LR"}
-    arms = {s: line("arm" + s, 0.018) for s in "LR"}
+    arms = {s: cyl_between("arm" + s, (0, 0, 0), (0, 0, 1), 0.018, "frame") for s in "LR"}
 
     def update(P, fig):
         pz = (fig.pos("hipL").z + fig.pos("hipR").z) / 2
@@ -60,7 +60,7 @@ def cablelateral_props():
 
 
 CABLELATERAL = dict(
-    slug="cablelateral", highlight=("sidedelt",), secondary=("traps",), props=cablelateral_props,
+    slug="cablelateral", arc=dict(rhandL=(0.0, 0.08, -0.17)), highlight=("sidedelt",), secondary=("traps",), props=cablelateral_props,
     A=pose(STAND, rhandL=(0.02, -0.12, -0.60), rhandR=(0.0, 0.14, -0.62), arm_pole=(-0.5, 0.3, -0.4)),
     B=dict(rhandL=(0.05, 0.62, 0.05)),
     cam=dict(center=(0.0, 0, 0.9), scale=2.4, az=25, el=6, shadow=(0.0, 0.9, 0.6)),
@@ -74,7 +74,7 @@ def deadbug_props():
 
 
 DEADBUG = dict(
-    slug="deadbug", highlight=("abs",), secondary=("obliques",), props=deadbug_props,
+    slug="deadbug", tempo=(1.3, 0.35, 1.5, 0.2), highlight=("abs",), secondary=("obliques",), props=deadbug_props,
     A=dict(pelvis=(0.0, 0, 0.17), pelvis_pitch=-90, lumbar=0, chest=0, neck=14, head=0,
            rhandL=(0.0, 0.12, 0.62), rhandR=(-0.60, 0.1, 0.0),
            rankL=(0.80, 0.03, 0.14), rankR=(0.42, 0.03, 0.40), foot=-20, arm_pole=(0, 0.3, -0.4), leg_pole=(-0.5, 0.0, 1.0)),
@@ -100,7 +100,7 @@ def dbpress_props():
 
 
 DBPRESS = dict(
-    slug="dbpress", highlight=("chest",), secondary=("frontdelt", "triceps"), props=dbpress_props,
+    slug="dbpress", arc=dict(rhand=(0.0, 0.04, 0.0)), highlight=("chest",), secondary=("frontdelt", "triceps"), props=dbpress_props,
     A=dict(pelvis=(0.0, 0, 0.575), pelvis_pitch=-90, lumbar=0, chest=0, neck=14, head=0, rank=(0.40, 0.10, -0.49), foot=0,
            rhand=(0.0, 0.31, 0.08), arm_pole=(-0.2, 0.9, -0.8), leg_pole=(1.0, 0.1, 0.4)),
     B=dict(rhand=(0.0, 0.17, 0.64)),
@@ -121,7 +121,7 @@ def dbshoulder_props():
 
 
 DBSHOULDER = dict(
-    slug="dbshoulder", highlight=("frontdelt", "sidedelt"), secondary=("triceps",), props=dbshoulder_props,
+    slug="dbshoulder", arc=dict(rhand=(0.04, -0.03, 0.0)), highlight=("frontdelt", "sidedelt"), secondary=("triceps",), props=dbshoulder_props,
     A=seated(0.45, 0.0, -4, 8, rhand=(0.10, 0.30, 0.08), arm_pole=(-0.5, 0.9, -0.6)),
     B=dict(rhand=(0.0, 0.19, 0.63)),
     cam=dict(center=(0.05, 0, 0.95), scale=2.1, az=45, el=10),
@@ -138,7 +138,7 @@ def dbrow_props():
 
 
 DBROW = dict(
-    slug="dbrow", highlight=("lats", "midback"), secondary=("reardelt", "biceps"), props=dbrow_props,
+    slug="dbrow", arc=dict(rhandR=(0.0, 0.0, 0.05)), highlight=("lats", "midback"), secondary=("reardelt", "biceps"), props=dbrow_props,
     A=dict(pelvis=(-0.12, 0, 0.86), pelvis_pitch=62, lumbar=0, chest=0, neck=-52, head=0,
            rhandR=(0.02, -0.16, -0.64), handL=(0.42, 0.14, 0.50), rank=(-0.30, 0.05, -0.72), foot=0, arm_pole=(-0.6, 0.3, -0.2), leg_pole=(1.0, 0.0, 0.3)),
     B=dict(rhandR=(-0.18, -0.24, -0.22)),
@@ -160,7 +160,7 @@ def overheadtri_props():
 
 
 OVERHEADTRI = dict(
-    slug="overheadtri", highlight=("triceps",), secondary=("forearms",), props=overheadtri_props,
+    slug="overheadtri", arc=dict(rhand=(-0.05, 0.0, 0.08)), highlight=("triceps",), secondary=("forearms",), props=overheadtri_props,
     A=pose(STAND, chest=-4, rhand=(-0.08, 0.09, 0.22), arm_pole=(-0.2, 0.3, 1.0)),
     B=dict(rhand=(0.28, 0.08, 0.55)),
     cam=dict(center=(-0.15, 0, 1.0), scale=2.4, az=50, el=8),
@@ -178,7 +178,7 @@ def preacher_props():
 
 
 PREACHER = dict(
-    slug="preacher", highlight=("biceps",), secondary=("forearms",), props=preacher_props,
+    slug="preacher", arc=dict(rhand=(0.06, 0.0, 0.05)), highlight=("biceps",), secondary=("forearms",), props=preacher_props,
     A=seated(0.45, -0.05, 8, 0, ank=(0.32, 0.17, 0.085), rhand=(0.40, 0.11, -0.40), arm_pole=(-0.2, 0.2, -1.0)),
     B=dict(rhand=(0.20, 0.12, 0.05)),
     cam=dict(center=(0.15, 0, 0.85), scale=1.9, az=50, el=10),
@@ -199,7 +199,7 @@ def facepull_props():
 
 
 FACEPULL = dict(
-    slug="facepull", highlight=("reardelt",), secondary=("traps", "midback"), props=facepull_props,
+    slug="facepull", arc=dict(rhand=(0.0, 0.06, 0.04)), highlight=("reardelt",), secondary=("traps", "midback"), props=facepull_props,
     A=pose(STAND, chest=-3, rhand=(0.62, 0.05, 0.02), arm_pole=(0.0, 0.5, -1.0)),
     B=dict(rhand=(0.08, 0.30, 0.10), arm_pole=(-0.2, 1.0, 0.1)),
     cam=dict(center=(0.35, 0, 1.0), scale=2.4, az=125, el=8),
@@ -338,7 +338,7 @@ def standcalf_props():
 
 
 STANDCALF = dict(
-    slug="standcalf", highlight=("calves",), secondary=(), props=standcalf_props,
+    slug="standcalf", tempo=(0.9, 0.7, 1.8, 0.3), highlight=("calves",), secondary=(), props=standcalf_props,
     A=pose(STAND, pelvis=(0, 0, 1.025), rank=(-0.05, 0.1, -0.808), foot=-6, rhand=(0.02, 0.28, 0.16), arm_pole=(-0.4, 0.6, 0.2)),
     B=dict(pelvis=(0, 0, 1.115), foot=40),
     cam=dict(center=(-0.05, 0, 0.8), scale=2.3, az=120, el=8),
@@ -352,7 +352,7 @@ def pushup_props():
 
 
 PUSHUP = dict(
-    slug="pushup", highlight=("chest",), secondary=("triceps", "frontdelt"), props=pushup_props,
+    slug="pushup", tempo=(1.1, 0.35, 1.8, 0.3), highlight=("chest",), secondary=("triceps", "frontdelt"), props=pushup_props,
     A=dict(pelvis=(-0.38, 0, 0.52), pelvis_pitch=78, lumbar=0, chest=0, neck=-58, head=0, handL=(0.10, 0.24, 0.045), handR=(0.10, -0.24, 0.045),
            rank=(-0.70, 0.04, -0.40), foot=62, arm_pole=(-0.5, 0.9, 0.0), leg_pole=(0.0, 0.0, 1.0)),
     B=dict(pelvis=(-0.38, 0, 0.27), pelvis_pitch=83, neck=-62),
@@ -375,7 +375,7 @@ def pecdeck_props():
 
 
 PECDECK = dict(
-    slug="pecdeck", highlight=("chest",), secondary=("frontdelt",), props=pecdeck_props,
+    slug="pecdeck", arc=dict(rhand=(0.05, 0.08, 0.0)), highlight=("chest",), secondary=("frontdelt",), props=pecdeck_props,
     A=seated(0.45, -0.05, -4, 8, rhand=(0.20, 0.55, 0.0), arm_pole=(-0.2, 0.2, -0.8)),
     B=dict(rhand=(0.56, 0.07, 0.0)),
     cam=dict(center=(0.1, 0, 0.92), scale=1.9, az=48, el=10),

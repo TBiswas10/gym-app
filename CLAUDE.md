@@ -1,166 +1,28 @@
 # Workout Tracker
 
-Single-user iPhone PWA (installed from Safari to the Home Screen). Built from the design handoff in `design/` and the exported tokens.
+Single-user iPhone PWA (Home Screen from Safari), also usable on a laptop. Next.js 16 (App Router, TS), React 19, Tailwind v3 + CSS tokens, Supabase (Auth, Postgres, RLS), Vercel. Production: https://gym-app-one-xi.vercel.app (project `gym-app`, team tirtha-biswas-projects, Supabase ref `yvamsbkfjpgwssporklz`). Repo TBiswas10/gym-app is PUBLIC.
 
-## Stack
-- Next.js 16 (App Router, TypeScript), React 19. `src/proxy.ts` replaces middleware (Next 16).
-- Tailwind CSS **v3** (the exported `tailwind.config.js` is v3 format) + `src/styles/tokens.css` + `src/styles/components.css`.
-- Supabase (Auth + Postgres + RLS) via `@supabase/ssr`. Hosting: Vercel.
-- Fonts (Archivo, Figtree) are self-hosted in `src/app/fonts`. No third-party scripts, fonts, analytics or tracking.
+Full feature and architecture notes live in `docs/FEATURES.md` (read it when touching a feature; it is long on purpose). Update the matching bullet there when behaviour changes, and keep THIS file short.
 
-## Plan facts (do not change)
-Mon Push, Tue Pull, Wed Legs + Core, Thu Upper (light), Sat Lower + Core + Cardio, Fri and Sun rest.
-All exercises are 2 sets. Cardio comes at the END of the session, after the lifts (owner decision 2026-10-15; it was first as the warm-up before). Sessions capped at 45-50 min. Two plans: 5-day split and 3-day full body.
-12-week programme: weeks 1-2 find your weight, weeks 3-12 build. Check-ins at weeks 4, 8, 12.
+## Commands
+- Check everything: `bash scripts/check.sh` (types, lint, tests). Build: `npm run build`. Single test: `npx vitest run path`.
+- Ship: use the `ship-gym-app` skill (checks, commit, push, `vercel deploy --prod --yes`, verify `/api/version` equals HEAD).
+- Database changes: `supabase-change` skill. Exercise animations: `render-exercise` skill (Blender 5.2 headless, `scripts/exercise-renders`).
 
-## Design token rule
-Styling comes ONLY from `tailwind.config.js`, `src/styles/tokens.css` and the classes in `src/styles/components.css`.
-No new colours, sizes, radii or fonts. Use `var(--token)` in any inline style. One-off literals that the design
-screens themselves use go in one marked file and are listed for review. Never invent hex values.
-`src/lib/tokens.ts` reads token values from the Tailwind config for non-CSS uses (icons, manifest).
+## Plan facts (never change)
+Mon Push, Tue Pull, Wed Legs + Core, Thu Upper (light), Sat Lower + Core + Cardio, Fri and Sun rest. All exercises 2 sets. Cardio at the END. Sessions 45-50 min. 12 weeks: 1-2 find your weight, 3-12 build; check-ins 4, 8, 12.
 
-## Security rules
-- RLS on every table; only the signed-in user can read or write their rows.
-- Secrets only in server-side env vars. `NEXT_PUBLIC_*` is only the Supabase URL and anon key (safe by design with RLS).
-- Never use or expose a service-role key. Never commit `.env*` (except `.env.example`).
-- Friendly error messages in the design's tone; never show raw error text.
-- Privacy: store only login email and workout data.
+## Rules that are easy to break
+- Styling ONLY from tokens (`tailwind.config.js`, `src/styles/tokens.css`, `components.css`; one-offs in `screens.css`). No new colours, sizes, radii, fonts, hex values.
+- RLS on every table; no service-role key anywhere; `NEXT_PUBLIC_*` only the Supabase URL and anon key; never commit `.env*`. Store only login email and workout data.
+- Friendly error messages, never raw error text. Times stored UTC, shown Australia/Sydney ("today" = Sydney date). Weights in kg.
+- Progression: weight goes up only when the top of the rep range is hit on BOTH sets; +2.5 kg upper, +5 kg legs, rounded to real steps.
+- Schema only via versioned migrations applied with the Supabase MCP. Regenerate `database.types.ts` after each.
+- Ask before adding a dependency or making a large decision. Commit after each working step.
+- ESLint is not used (typescript-eslint does not support TS 7); lint is oxlint. Python/Blender output (`_renders/`, `__pycache__`) is never committed; the CC0 base body mesh is never in the repo.
 
-## Data rules
-- Timestamps stored in UTC, displayed in Australia/Sydney. "Today" = the Sydney local date.
-- Weights stored in kg. Pounds only converted after the user confirms.
-- Schema changes only through versioned SQL migrations in `supabase/migrations` (never edit the DB by hand).
-
-## Progression rules
-Suggest a higher weight only when the top of the rep range is hit on BOTH sets, otherwise hold.
-+2.5 kg upper body, +5 kg legs, rounded to real steps (dumbbells 2 kg, 1 kg for lateral raise/hammer curl,
-machine stacks 2.5 or 5 kg); increments editable per exercise. Soreness 4-5 for 3 sessions in a row: suggest hold/light.
-Deload suggestion around week 7 (half the sets). Check-in "Add a set" was dropped: all exercises stay at 2 sets.
-
-## Database (supabase/migrations + supabase/seed.sql)
-- Global, read-only: `exercises` (55, with form guides and progression steps). Templates: `program_templates`,
-  `template_days`, `template_exercises` hold built-ins (`user_id is null`) and the user's own editable copy
-  (made by `start_program()` / `clone_template()`).
-- User-owned (RLS `user_id = auth.uid()`): `program_state` (+ view `program_state_view` with derived `current_week`),
-  `user_exercise_settings`, `schedule_overrides` (skipped/moved/light days), `workouts`, `sets`, `cardio_entries`,
-  `checkins` (soreness/energy/bodyweight), `reviews` (weeks 4/8/12: build | hold | deload).
-- Child rows reference `(workout_id, user_id)`, so a row can never point at someone else's workout.
-- `sets.set_number` is 1 or 2 (plan fact). Client-generated UUIDs make offline retries idempotent.
-- `delete_my_account()` (SECURITY DEFINER, own account only) cascades all data. No service-role key anywhere.
-- Current week is derived from `start_date` and the Sydney date, never stored, so it cannot drift.
-- Migrations are applied through the Supabase MCP (`apply_migration`); the file name must use the version the DB records
-  (see `list_migrations`) so the repo and DB history match. Seed data is applied with `execute_sql`.
-- Later migrations: `push_subscriptions` (step 8), MCP rate limit + request log (step 7b).
-
-## App structure and rules from step 3
-- Routes: `(app)/` has the tab bar (Today `/`, `/progress`, `/library`, `/plan`); `/install` and `/notifications` are onboarding;
-  `/workout` is the session screen (there is no separate find-weight step any more: weights are found inside the workout). First sign-in with no `program_state` goes
-  `/` -> `/install` -> `/notifications` -> `completeOnboarding()` (starts the 5-day plan from today, Sydney date).
-- Schedule model (`src/lib/schedule.ts`): a session is identified by its ORIGIN date; a move puts it on another slot date
-  in the same week; workouts are recorded against the origin date. `schedule_overrides` holds skipped / moved / light.
-- Pure, tested logic lives in `src/lib` (`dates`, `plan`, `schedule`); screens only render it. `npm test` runs vitest
-  (also server-renders TodayView with fixtures for the design's states).
-- `src/lib/database.types.ts` is generated from the live schema (regenerate after each migration).
-- One-off design styles that are not in components.css live ONLY in `src/styles/screens.css` (review list for the token rule).
-- Server actions are the only write path for Today (RLS applies); optimistic UI via `useOptimistic`.
-
-## Workout architecture (steps 4-6)
-- `workout-state.ts` is the whole state of a session and every change to it (pure). `diffOps(a, b)` turns a change into
-  server operations (`ops.ts`); undo is `diffOps(b, a)`. Operations are idempotent and validated by `ops-validate.ts`
-  (the server also relies on RLS and DB constraints). `sync-queue.ts` + `useSync` keep a queue on the phone, so sets
-  survive losing signal and are sent in order when the network returns.
-- Timers (`timers.ts`): the session stores its start timestamp (workouts.started_at), rest stores its end time; both are
-  recalculated from the clock every tick and on visibilitychange. Amber at 40:00, red at 50:00, Saturday-style cardio guard at 45:00.
-- Progression (`progression.ts`): up only when the top of the range is hit on BOTH sets; weeks 1-2 and high soreness hold.
-- Quick log (`parser.ts`): pure; always returns an entry to CONFIRM or a problem with fixes; pounds are offered, never auto-converted.
-- `/workout` starts or resumes the single in-progress session (partial unique index). Start links use prefetch={false}.
-
-## MCP server (step 7b, see docs/MCP.md)
-- `/mcp` (stateless streamable HTTP, `@modelcontextprotocol/sdk`, zod). Auth = Supabase OAuth 2.1 access tokens (must carry
-  `client_id`); `/.well-known/oauth-protected-resource` points clients at Supabase Auth; `/oauth/consent` is the approval page.
-- The server acts AS the user (token-based client, RLS applies). No service-role key anywhere.
-- Migration `mcp_hardening` (partly relaxed later by `mcp_more_power`): connector tokens cannot delete, change plan/settings/reviews or call account/plan functions
-  (RESTRICTIVE policies on `auth.jwt() ->> 'client_id'`); `mcp_requests` = log + rate-limit counts.
-- 15 tools now (added get_plan, list_exercises, get_schedule, get_settings, start_workout, finish_workout, edit_logged_sets). Then (owner said "Unlock those powers", migration `mcp_more_power`): delete_logged_sets / delete_workout / delete_cardio_entry (confirm flags), edit_plan_day, schedule_day, update_settings, set_exercise_settings = 22 tools. Connectors can now delete logged data and edit plan/settings/schedule; they still cannot touch the account, restart the programme, switch plan type or change start_date (trigger `program_state_connector_guard`).
-- Root `src/app/loading.tsx` is the dark launch shell (same tile as the launch image) so the HTML flushes immediately on open.
-- Read tools never write. Write tools (`log_sets`, `log_cardio`, `log_checkin`) are narrow, validated, replace-not-delete.
-
-## Push, offline and errors (step 8)
-- `public/sw.js`: offline fallback (`/offline`, never caches data pages), caches static files, shows push notifications.
-  Registered in production only. `push_subscriptions` + `rest_timers` tables (RLS, closed to connector tokens).
-- Rest alert flow: phone POSTs `/api/push/rest` {seconds,title,body} -> row in `rest_timers` -> `after()` waits, claims the row
-  (pending -> sent) and sends with `web-push`; skip/undo POSTs `/api/push/cancel`. VAPID keys: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`,
-  `VAPID_PRIVATE_KEY` (server only), `VAPID_SUBJECT` (the app URL, not an email).
-- Push works only from the installed Home Screen app (iOS 16.4+) after a tap; denied/unsupported fall back to the on-screen timer.
-- Friendly `error.tsx`, `global-error.tsx`, `not-found.tsx`, `(app)/loading.tsx`, offline banner; security headers in `next.config.ts`.
-
-## Motion and feel (Apple-style polish, tokens only)
-- Feedback on press (`:active`), never on release: buttons, tabs, sets all scale/tint instantly. `touch-action: manipulation` removes the tap delay.
-- Sheets leave the way they arrived (`anim-out`, then unmount); scrim fades. Reduced motion swaps slides for short fades.
-- Tabs never wait: all four are prefetched (`prefetch` + `router.prefetch`), `staleTimes.dynamic = 30s` keeps visited ones, no skeleton (`loading.tsx` removed), tap lights the tab on pointer-down. Every write action calls `revalidatePath("/", "layout")` so cached tabs never show old data.
-- `SwipeTabs` (layout): swipe left/right between tabs (follows the finger, rubber-bands at the ends), pull down at the top to refresh. Logic in `src/lib/tabs.ts` (tested). Ignores fields and sideways-scrolling rows (`data-no-swipe` opts out).
-- Keyboard: `KeyboardFit` (root layout) shrinks `.screen.fill` to the visible area (`--app-h`) while the keyboard is open and swaps the home-indicator padding for `--space-3`, so bottom bars and fields stay clear. Audit (ios-design craft checks): contrast of text/text-2/accent passes 4.5:1; text-3 (3.9:1) is used only on disabled controls; icon-only buttons have labels; focus rings present.
-- `.screen.fill` is `position:fixed` on all four edges. iOS status bar style is `black` (solid strip): with `black-translucent` this iPhone gave the app a window 47pt (status bar height) shorter than the screen and left a dead gap under the tab bar (measured on a real device). The status bar style is read only when the app is added to the Home Screen, so changing it means re-adding the app. `--safe-top` = inset + space-6 (app.css). Tab swipes page like an iOS app: finger-follow, velocity-based throw-off, next tab slides in from the opposite side (`SwipeTabs`); `EdgeBack` gives the left-edge back swipe on Library guides and Reviews.
-- Keyboard: `KeyboardFit` (root layout) shrinks the screen to the visible area (`--app-h`) while the keyboard is open and swaps the home-indicator padding for `--space-3`.
-- Workout extras: rest ring with ±15 s (`extendRest`), haptics via a hidden `switch` checkbox (`haptics.ts`, Safari 17.4+, silent no-op elsewhere), Wake Lock keeps the screen on, stall banner (`stallCheck`: same weight 3 sessions, never both sets at top; advice only, rule unchanged). Progress has a Consistency card (`consistency()`). Library/guides show two swapping exercise photos (`ExerciseMedia`, files in `public/exercises`). Push failures now return the real code from `/api/push/test` and log `push-failed`.
-- Set entry: tap the number to type it (`NumField`, number pad), chips "Same as last time" and "+increment" (`restoreLast`, `addKg`, `setValue`); the quick-log "same as last" chip was removed on request; in-app banners (set logged / swapped / new best) sit at the TOP, clear of the Log button. Today shrinks the setup note to one line after the first view (`wt.setupSeen`). Progress has Records (`records()`); finish screen shows one warm line (`encouragement()`). Hosting region is `icn1` (next to the Supabase DB in Seoul) via `vercel.json`; launch screens are STATIC files `public/splash/<w>x<h>.png` (generated once from the old dynamic route; iOS shows white without a matching one, and caches them when the app is added to the Home Screen).
-- Pull to refresh (SwipeTabs): a circle drops in as you pull at the top of a tab, turns lime and taps (haptic) at the threshold (`PULL_THRESHOLD` = 90 px), spins while `router.refresh()` runs in a transition, then the page eases back. Verified on a real iPhone: MCP connector works, push alerts work, number pad / swipes / keyboard lift work.
-- Session order is lifts -> cardio (to finish) -> optional cool-down (`buildState`; `wrapUp` at 50:00 skips the lifts still to do and lands on cardio, which can be shortened or skipped). Estimate = lifts + cardio (`estimateMinutes`). The workout X opens a sheet: Resume / End workout and check in / Leave for now. There is no separate find-weight step: Start goes straight to `/workout`; setup weeks only hold weights and the sets count (the `/find-weight` route still exists but is not linked).
-- Test mode (Plan > Test mode, `program_state.test_mode`, `workouts.is_test`, migration `test_mode`): Today shows a card to start ANY template day (`/workout?test=<weekday>`) and preview week 4/8/12 check-ins; test sessions are flagged and `setTestMode(false)` deletes them (checkins first, since their workout_id is set null on delete).
-- Finish: `/complete` opens as ONE huge tick (`.done-tick`, "Workout complete", stats, PBs, warm line) with Continue to the check-in; Today shows a "Workout complete" tick on done days. A skipped day (schedule override) can still be started ("Do it now") and shows a tick once done (`buildStrip` ignores the skip when the origin is completed); in a workout, finishing a skipped lift turns it into a tick (`logSet`). Lifts can be reordered from the checklist (`moveExercise`, "Change order").
-- UI pass (rings + hero numbers): Today has weekly Activity-style rings (`Rings`, `ringFraction`: sessions / sets / cardio minutes in accent / info / success) and a Resume bar while a session is open (`ResumeBar`). Workout: hero numbers (`.num-hero`) you can scrub by dragging up/down (`NumField` + `scrubSteps`, haptic tick per step), bigger rest ring that pulses in the last 5 s, a "New best" card with before -> after on a PB, horizontal swipe on the card to move between lifts. Tab bar has one sliding indicator (`.tab-ind`). First launch shows a 4-card gesture tour (`GestureTour`, `wt.tourSeen`). Not built: sound, drag-sheet physics, shared-element transitions.
-- Round of requested changes: the quick-log box (ChatBar) and its confirm card are REMOVED from the workout screen (the pure `parser.ts` stays; MCP uses it). The account-deletion UI and `deleteAccount` action are removed (the DB function stays, still refused for connectors). Library now has 55 exercises (Chest-supported row added 2026-10-21, slug `chestrow`, dumbbell incline row photos) (37 added by `scripts/more-exercises.py` -> `supabase/seed-more-exercises.sql`, photos in `public/exercises`); "Seated row" is named "Low seated row"; the leg curl is the LYING leg curl (slug `legcurl`, renamed from "Seated leg curl"; there is no seated machine) and stays in the plans; the Dumbbell Romanian deadlift is a library extra. Checklist: "Reorder lifts" = drag by the grip handle. In-app banners and the new-best card dismiss by swiping up (`useSwipeUp`). Progress's first card has an exercise picker sheet instead of a long chip row.
-- Animation audit applied (docs/animation-audit.md, plans/): tab indicator and bars animate transforms (not left/width); `--ease-out` is now cubic-bezier(0.23, 1, 0.32, 1) (owner approved); plan accordion eases open (`.collapse`); Today's day card eases in on day change; banners/new-best enter with `@starting-style` transitions.
-- Launch splash (`SplashScreen`, root layout): dark screen + lime tile + name + tagline, held 0.9 s then fades 0.3 s, once per launch (`sessionStorage wt.splashSeen`), never blocks taps; continues the iOS launch image so opening reads as one picture.
-- Library search (`library-search.ts`, `.search`): every typed word must start a word in the name, group, kit or muscles; "db", "bb", "rdl" shorthands; combines with the group chips; has a clear button and a no-match state.
-- Change log (migration `change_log`, `src/lib/server/change-log.ts`): every Claude edit/delete and in-app plan/settings edit is recorded with its "before" and can be undone (`undo_change` tool or Plan > Change log). Deletes, `edit_plan_day` and `swap_plan_exercise` take `dry_run` and need `confirm`. `log_sets` takes `swapped_to` (a session swap; sets keep their swap when corrected). The workout info button shows the swapped-in exercise (`backupGuides`). Your own Swap-button substitute is `user_exercise_settings.backup_name` (migration `exercise_backup_override`, set with `set_exercise_settings` `backup`; falls back to the built-in `exercises.backup_name`). 38 MCP tools (weekly coach: `save_weekly_review`, `get_weekly_reviews`, prompt `weekly_review`; goals: `get_goals`, `set_goal`, `remove_goal`; `edit_checkin`, `get_week_summary`, `get_records`, `get_bodyweight`, `edit_logged_cardio`, `edit_plan_cardio` (migration `mcp_cardio_plan_edit`: connectors may update only the cardio columns of template_days, guard trigger); `get_cardio`: entries with machine numbers, per-machine summary, minutes per week; history and today now show cardio numbers).
-- Only `--dur-*` / `--ease-*` tokens; no new colours (so no translucent bars). No animation library added.
-- Own 3D exercise renders (plan: `plans/004-exercise-3d-renders.md`): `scripts/exercise-renders/` renders every library lift as a looping animation in headless Blender 5.2. The body is the sculpted male base mesh from Blender Studio's Human Base Meshes bundle (CC0, v1.4.1, NOT in the repo: set `HBM_BLEND` to its .blend; processed vertices are cached next to it in `body_v7.npy`), skinned by us (`figure.py`: joint empties + linear blend skinning in numpy, weights from distance to bone segments, smoothed; two-bone IK for arms and legs). `body.py` loads it into our world, cuts the face off and grows a smooth faceless head from the neck, and curls the fingers. The working muscle glows orange (`REGIONS` / `TORSO` in figure.py: ellipsoids tied to bones, painted by the shader with a gradient and halo; primary full, secondary half; glutes show over the shorts). `props.py` (dumbbell, barbell, benches, cable towers), `lifts.py` / `lifts2.py` / `lifts3.py` (each lift = start pose, finish pose, props, camera; hands are given relative to the shoulder `rhand`, feet relative to the hip `rank`), `render.py` (soft studio light, contact shadow, auto-framing of every pose), `pack.py` (360 px animated WebP, ~90-135 KB, plus a poster; writes `src/lib/rendered-exercises.ts`). `ExerciseMedia` shows the loop (poster for reduced motion and Library thumbs) for slugs in `RENDERED`, else the old photo pair. Run: `blender -b -P scripts/exercise-renders/render.py -- --out _renders --slug chest --frames 24 --size 640` then `python scripts/exercise-renders/pack.py _renders chest` (`make_all.sh` does a list, `stills.sh` makes start/finish images, `grid.py` a contact sheet). `_renders/` is gitignored.
-- Laptop layout (screens.css, `@media (min-width:900px)`): the phone layout is untouched; on a wide screen a left sidebar replaces the tab bar (`.has-tabs > .tabbar` becomes a column with the app name, current tab highlighted), every screen's content sits in a centred 880 px column (`--desk-pad` on `.head`, `.scroll`, `.bottom-bar`; the rest pill, sheets and toasts follow), the Library list is two columns (`.lib-grid`), and mouse devices get hover states and pointer cursors. Checked on Today, Progress, Library and Plan with static copies of the screens at 1440 px; the workout screen and sub-pages only get the centred column. Swipe gestures are touch-only, so they never fire with a mouse.
-- Rest is 90 s after every set (`timers.ts`); +/-15 s changes only the running rest. The rest timer is a floating glass pill (`.rest-pill`, inside the footer just above the Log button: ring + next lift + Skip, tap for +/-15, sound, alert). The Swap button opens a drawer (`alternatives.ts`: library lifts ranked by same main muscle / same group / shared muscle, with equipment tags, no invented percentages; `swapTo` sets the chosen name as the session's variant; form help follows it via `page.alternatives`). Pain reminder is a centred pill in the header.
-- Themes (Plan > Appearance, `themes.ts`, `ThemePicker`): lime (default, `:root`) plus teal / amber / amethyst / stealth as `[data-theme]` blocks at the end of tokens.css (owner-supplied hex, the ONLY place besides the lime defaults; Amethyst `--accent-pressed` is #9A72F7, lighter than supplied, to keep 4.5:1 with its button text). Choice in `localStorage wt.theme`, applied before first paint by `EARLY_THEME_SCRIPT` in the root layout; `themes.test.tsx` checks contrast per theme. Workout overhaul: glass clock timer, glass-pill segments (current one glows), a one-line 'Pain? Stop.' pill (`.safety-pill`), cue + goal + last time in one `.briefing` card, Form check / How to do your sets as borderless `.tip-pill`s, raised glass active set tile with queued tiles receding, `.btn-log` (lit top edge, scale(.985) press). Not built from the big luxury brief: floating rest pill, anatomical heatmap, swap drawer with equivalency %, wheel scrubbers, RPE slider.
-- Muscle balance (Progress > This week, `balance.ts`): push vs pull, front vs back chain and upper vs lower, counted in sets over the last 4 weeks by each exercise's PRIMARY muscle (`exercises.muscles[0]`); needs 8 sets before it says anything and only flags a split beyond 60/40 (legs below 30%). Rest countdown sounds (`audio-cues.ts`, opt-in per phone in `localStorage wt.sound`, speaker button in the rest block): Web Audio ticks at 3, 2, 1 and a two-note chime at 0, no audio files; unlocked by the tap that logs a set or switches sounds on; a phone on silent can mute Web Audio (vibration still works).
-- Real-phone fixes (screenshot, 2026-10-20): the Training volume card labels weeks by day number only (full dates were colliding) and compares this week SO FAR with the SAME POINT of last week (`volumeSamePoint`), never with a finished week. Coloured card/banner edges use derived tokens (`--accent-edge`, `--warning-edge`, `--danger-edge`, `--success-edge`, `--info-edge`), so there are no colour literals outside tokens.css. Fire-and-forget promises end in `.catch(() => undefined)`. Known, deliberate exceptions to "animate transform/opacity only": the plan accordion (`.collapse`, grid-template-rows) and the tour dots (width).
-- Finish pass (owner request, 2026-10-20): `--ease-spring` is a real spring (stiffness 350, damping 28, mass 0.8) written as CSS `linear()` with `--dur-spring` 400 ms, so no animation library. Every pressable compresses fast on press (`--dur-press`) and springs back on release; large rows/cards press to 0.985. The four tab screens use `.stagger` (first five blocks rise 40 ms apart). Display type tracks -0.02em, eyebrows .14em, captions .12em. Then approved (2026-10-20): three finish tokens derived from existing ones (no new hex) in tokens.css: `--hairline` (text 8%), `--highlight` (text 6%, 1px inset top on cards and sheets), `--glass` (bg 80% + blur, the tab bar only). The tab layout is `.has-tabs`: the tab bar floats over the content (TabBar writes its real height to `--tabbar-h`; `.scroll` pads by it; the Start bar sits above it). Fallbacks are the old solid values where color-mix is missing.
-- Personal form cue per lift (`user_exercise_settings.form_note`, migration `form_note_and_client_errors`): shown as "My cue" above the main cue in the workout, edited from the Form check or the guide page ("My form cue"), and settable by Claude (`set_exercise_settings` `form_note`). Error reporting: `ErrorReporter` + the error screens POST to `/api/log-error` (`error-report.ts` trims and drops network noise; 8 per launch, 40 per hour) into `client_errors`; Claude reads them with `get_app_errors` (38 tools). Tooling: `npm run lint` is oxlint (`.oxlintrc.json`; ESLint is NOT used because typescript-eslint does not support TypeScript 7), and `.github/workflows/ci.yml` runs types, lint, tests and the build on every push and pull request with placeholder env.
-- Progressive overload (double progression, `overloadTarget` in `progression.ts`; it never changes the weight rule, it names the goal): top of the range on BOTH sets last time -> add weight and aim for ~10 reps; otherwise same weight and one more rep (or 5 s) on each set, never past the top; weeks 1-2, high soreness or a chosen hold -> match last time. Shown as "Goal today" under the exercise name and "Aim ..." in each unlogged set tile (workout), "Goal ..." on Today's lift rows, "beat last time, aim for ..." in the briefing, and `goal_today` / `goal_why` in the MCP `get_today_workout` and `suggest_next_weights`. Progress > This week has a Training volume card (`weeklyVolume`: kg x reps per week, last 8 weeks).
-- Form help in the workout: the key cue is always under the exercise name (`KeyCue`), and a collapsed "Form check" (`FormCheck`: the two photos cross-fading in a loop, the top 3 cues, the top 2 mistakes, link to the full guide) sits above the sets tip; both follow a swap (`backupGuides`). Photos are the public-domain free-exercise-db images in `public/exercises`.
-- Library marks the exercises in your current plan (`plan` slug -> weekdays, loaded in `library/page.tsx`): accent edge, small day pills (the pill for today reads "Today"), and a "My plan (n)" filter chip.
-- Reliability (why the app could glitch, and what stops it): (1) the workout state saved on the phone (`wt.ws.<id>`) is only used if `restoreState` says it still fits the server's session (same lifts, valid step index, well-formed steps; sets the server has that the phone lacks win), otherwise it is dropped; `workout/error.tsx` also clears it and reloads. (2) `KeyboardFit` only treats the keyboard as open while a field is focused and re-checks on focus, visibility, pageshow, rotation and a 800 ms guard, so the bottom bar can never stay shrunk or panned off-screen. (3) `UpdateWatcher` + `/api/version` (build id in `NEXT_PUBLIC_BUILD_ID`) reloads an app that has been open across a deploy (a button during a workout), and `useSync` asks for a check when an upload fails while online. (4) The service worker looks for a new version each time the app comes to the foreground. (5) Plan > Your data > "Fix a glitch" clears local screen state and caches (keeps `wt.queue.v1`).
-- Offline saving: the queue (`sync-queue.ts`, ops) now has a `checkin` op, so finishing a session with no signal works end to end: WorkoutView's finish opens an offline sheet (soreness, energy, notes) and queues `finish` + `checkin`; the check-in screen saves to the queue instead of submitting when `navigator.onLine` is false. `SyncKeeper` (in the tab layout) keeps uploading on every tab screen and shows a "N saved on this phone" pill; `useSync` has ONE module-level flush lock so two screens can never send the same batch and then both trim the queue. Not offline: Today/Plan edits (they need the network and say so), and starting a workout.
-- Swipe fixes: only the four tab screens swipe sideways between tabs (`isTabRoot`; sub-pages use the left-edge back swipe); the week-strip press-and-hold cancels when the finger moves more than 8 px; Today's extra queries start before Today's own data (`startV2Today`) so the next tab arrives sooner. Start button shows "~40 min".
-- UI round 4: Today's big header says what today is ("Upper (light) today", "Done for today", "Rest day. Next up: Push"), lift rows show "Last time 30 kg" (`V2Today.lasts`), the day-card eyebrow is accent only on today, and the half-empty "Sessions done" card is folded into the week card. Workout set tiles show last session's number faintly (`ghostText`, "Last 30 kg × 12"). Progress has three tabs (Strength: lifts, goals, records, review | This week | 12 weeks); all panels are rendered and inactive ones are `hidden`. Plan folds export and backup under "Your data".
-- Density pass (measured by rendering the screens in 375/390/412 px frames: no horizontal overflow, no tap target under 44 px, no text under 12 px): on a training day the session card used to sit below a suggestion, a review pointer and a big missed-workout card. Now suggestions and the missed day are one-line rows (`.attn-row`) that open in place, the day card is slimmer, Progress shows 3 lifts first and folds "Sets per muscle group", Records and "How the 12 weeks work" (`details`), and Plan opens as a closed list.
-- UI round 3: the Today briefing lives INSIDE the day card (`BriefingInline`: what to try + notes), suggestions show one at a time (`NudgeStack`, "1 of 2"), and the old deload card is replaced by the deload nudge. Press and hold a day in the week strip for quick actions (start early, light, skip via `skipDay`, bring back). Workout: the rest block says what comes next, the Log button repeats the numbers ("Log set 2 · 30 kg × 12"), a just-logged set pops, and after the last set the app moves to the next lift 3 s after rest ends ("Stay here" cancels). Progress opens with one sentence, Records rows open that lift's chart, and `/progress/history` lists finished sessions; a session page shows sets, cardio and check-in with "Edit check-in" (`/complete?w=<id>&edit=1`). Plan editor: per exercise "Swap button offers" (`saveBackup`) and an editable cardio row (`savePlanCardio`: machine + minutes), both in the change log.
-- v2 (owner approved, migration `v2_nudges_coach_goals_share`): Today shows a briefing (`briefing.ts`, built in `server/v2-data.ts`: session, time, lifts that go up, care notes), plan nudges (`nudges.ts`: tired -> light next session, deload week, stalled lift -> smaller weight jump; they only propose, accepting makes one logged change, answers are stored per week in `nudge_responses`) and a pointer to the latest weekly review. Progress has Goals (`goals` table, `goals.ts`; one target per exercise, start = best at the time) and the weekly review written by Claude (`coach_reviews`, MCP `save_weekly_review` and the `weekly_review` prompt). Rest days show a 10 minute stretch routine (`stretch.ts`). Sharing: Plan > Share your week makes a 7-day token link (`share_links`); `/share/<token>` is public and reads only `share_summary(token)` totals (no weights, notes, soreness, bodyweight). Connectors cannot read share links or write nudge answers. Check-in uses five-button scales (`ScalePick`, `checkin-scale.ts`), no pre-selected values; Progress shows a strength list and two 1-5 trend lines.
-- Design pass 2 (owner approved): bottom sheets use `--ease-drawer` (cubic-bezier(0.32, 0.72, 0, 1)) and slide the full height (`sheet-up` 280 ms / `sheet-down` 220 ms); the splash holds 0.45 s and is skipped when the app opens straight into `/workout` (rest alert); the done tick draws its check (`draw-check`); the unused `glow` animation was removed.
-
-## Build order (stop after each step for testing)
-1. Setup, PWA manifest + icons, Supabase login, tokens in Tailwind  (done, tested)
-2. Database tables + RLS + seed  (applied to the gym-app Supabase project 2026-10-09, verified)
-3. Install guide, notifications screen, Today screen  (done, tested)
-4. Active workout (sets, last-time, rest + session timers, suggestions, undo, edit/delete)  (done, tested on a phone)
-5. Cardio cards  (built)
-6. Chat quick-log (pure rule-based parser + confirmation card)  (built, then REMOVED from the workout screen by the owner; the parser stays for MCP)
-7. Progress charts, week 4/8/12 reviews, Plan editor, Library + form guides, CSV export, (account-deletion UI removed by the owner)  (done, tested on a phone)
-7b. Remote MCP server in this app (streamable HTTP, official SDK, authenticated, rate limited, logged)  (done, working with Claude; 38 tools, change log + undo)
-8. Web push for rest-timer end, safe areas, offline + error states  (done, tested on a phone)
-9. Optional: server-side LLM call for messy chat input
-
-## Working rules
-- Ask before making large decisions or adding dependencies. Keep dependencies minimal; explain any new one first.
-- Commit after each working step. Run tests (and typecheck/build) before each commit.
-- Unit tests for progression, parser, timer calculation and date logic (vitest, added at step 3).
-- Each step ends with: matches the design using only tokens, tests pass, no console errors, RLS on new tables,
-  and a short summary + manual test checklist for the user.
-- Keep this file updated as we go.
-
-## Notes
-- Deployed to Vercel (project `gym-app`, team tirtha-biswas-projects) by CLI: `vercel deploy --prod`. Production URL
-  https://gym-app-one-xi.vercel.app . Env vars (the two NEXT_PUBLIC_SUPABASE_* values) are set in Vercel for Production.
-  The GitHub repo (TBiswas10/gym-app) is PUBLIC and was pushed on 2026-10-10 on the owner's instruction; secrets are never committed (.env* ignored).
-- `design/Workout Tracker.html` (11 MB bundled design export) is gitignored; `design/tokens.json` is committed.
-- Design deviation: `.screen` is fixed 390x844 in the design; the app uses `.screen.fill` (100% x 100dvh).
-
-## Backups
-`/api/backup` (Plan > Download full backup) returns everything of yours as JSON (not notification subscriptions or request logs). `/api/export` is the CSV of workouts.
+## Quality bar (what "not slop" means here)
+- Verify before claiming done: run the checks and LOOK at the result (screenshot or rendered frame). Report what was NOT verified (usually the phone). Never say "looks good" about an image you have not opened.
+- Match the surrounding code: its comment density, naming, idiom. No speculative abstractions, no unrequested features, no dead code, no comments that restate the code.
+- Copy is plain and honest: no invented numbers or percentages, no hype. Fix root causes, never suppress errors.
+- After two failed corrections on the same problem, stop and rethink from scratch instead of patching again.

@@ -1,7 +1,7 @@
 import type { ServerClient } from "../supabase/server";
 import { addDays, programmeWeek, sydneyDate, weekDates } from "../dates";
 import type { ExerciseKind } from "../plan";
-import { checkInDue, consistency, records, exercisesWithData, nextCheckIn, topSeries, weekCells, volumeSamePoint, weeklyVolume, weekStats, type VolumeWeek, type WeekCell } from "../stats";
+import { checkInDue, consistency, e1rmSeries, records, exercisesWithData, nextCheckIn, topSeries, weekCells, volumeSamePoint, weeklyVolume, weekStats, type VolumeWeek, type WeekCell } from "../stats";
 import { fmtNum } from "../format";
 import { balance, type Balance } from "../balance";
 import { loadGoals, loadReviews, type GoalView, type ReviewView } from "./v2-data";
@@ -9,7 +9,7 @@ import { loadGoals, loadReviews, type GoalView, type ReviewView } from "./v2-dat
 export interface ProgressData {
   week: number;
   empty: boolean;
-  chips: { slug: string; name: string; kind: ExerciseKind; values: number[]; unit: "kg" | "s" | "reps" }[];
+  chips: { slug: string; name: string; kind: ExerciseKind; values: number[]; unit: "kg" | "s" | "reps"; e1rm?: number[] }[];
   thisWeek: { sessions: number; planned: number; sets: number; groups: [string, number][]; pbs: { name: string; text: string }[] };
   trend: { soreness: number; energy: number }[];
   cells: { week: number; cell: WeekCell }[];
@@ -58,6 +58,7 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
     return {
       slug, name: e.name, kind,
       values: topSeries(workouts, sets, slug, kind, 8).map((p) => p.value),
+      e1rm: kind === "weight" ? e1rmSeries(workouts, sets, slug, 8).map((p) => p.value) : undefined,
       unit: (kind === "timed" ? "s" : kind === "bodyweight" ? "reps" : "kg") as "kg" | "s" | "reps",
     };
   });

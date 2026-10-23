@@ -12,7 +12,14 @@ next-env.d.ts
 
 # local tooling
 .vercel/
-.claude/
+.claude/*
+!.claude/settings.json
+!.claude/agents/
+!.claude/skills/
+.claude/skills/find-skills/
+.claude/skills/web-design-guidelines/
+.claude/skills/playwright-best-practices/
+.claude/skills/blender-motion-state-inspection/
 supabase/.temp/
 .DS_Store
 

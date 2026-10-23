@@ -9,15 +9,98 @@ from figure import make_mat
 _mats = {}
 
 
+def _pbr(name, base, metallic, rough, bump=None, aniso=0.0, strength=0.15):
+    """A physically based material, with a procedural bump so surfaces are not perfectly smooth:
+    pad = vinyl grain, chrome = knurling along the bar, frame = brushed streaks."""
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    b = nt.nodes["Principled BSDF"]
+    b.inputs["Base Color"].default_value = (*base, 1)
+    b.inputs["Metallic"].default_value = metallic
+    b.inputs["Roughness"].default_value = rough
+    if aniso and "Anisotropic" in b.inputs:
+        b.inputs["Anisotropic"].default_value = aniso
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    bp = nt.nodes.new("ShaderNodeBump")
+    bp.inputs["Strength"].default_value = strength
+    bp.inputs["Distance"].default_value = 0.003
+    if bump == "grain":
+        t = nt.nodes.new("ShaderNodeTexNoise")
+        t.inputs["Scale"].default_value = 160.0
+        t.inputs["Detail"].default_value = 6.0
+        nt.links.new(tc.outputs["Object"], t.inputs["Vector"])
+        nt.links.new(t.outputs["Fac"], bp.inputs["Height"])
+    elif bump == "knurl":
+        t = nt.nodes.new("ShaderNodeTexWave")
+        t.wave_type = "BANDS"
+        t.bands_direction = "Z"
+        t.inputs["Scale"].default_value = 220.0
+        t.inputs["Distortion"].default_value = 0.0
+        nt.links.new(tc.outputs["Object"], t.inputs["Vector"])
+        nt.links.new(t.outputs["Fac"], bp.inputs["Height"])
+    elif bump == "brushed":
+        mp = nt.nodes.new("ShaderNodeMapping")
+        mp.inputs["Scale"].default_value = (1.0, 1.0, 90.0)
+        nt.links.new(tc.outputs["Object"], mp.inputs["Vector"])
+        t = nt.nodes.new("ShaderNodeTexNoise")
+        t.inputs["Scale"].default_value = 40.0
+        t.inputs["Detail"].default_value = 4.0
+        nt.links.new(mp.outputs["Vector"], t.inputs["Vector"])
+        nt.links.new(t.outputs["Fac"], bp.inputs["Height"])
+    if bump:
+        nt.links.new(bp.outputs["Normal"], b.inputs["Normal"])
+    return m
+
+
 def _mat(kind):
     if kind not in _mats:
         _mats[kind] = {
-            "frame": make_mat("frame", (0.085, 0.09, 0.1), rough=0.55, metallic=0.2),
-            "pad": make_mat("pad", (0.045, 0.047, 0.052), rough=0.8),
-            "chrome": make_mat("chrome", (0.5, 0.52, 0.55), rough=0.28, metallic=0.9),
-            "plate": make_mat("plate", (0.035, 0.037, 0.042), rough=0.45, metallic=0.5),
+            "frame": _pbr("frame", (0.16, 0.168, 0.185), 0.92, 0.36, "brushed", 0.5, 0.25),          # anodised aluminium
+            "pad": _pbr("pad", (0.042, 0.044, 0.05), 0.0, 0.58, "grain", 0.0, 0.2),                    # vinyl pads
+            "chrome": _pbr("chrome", (0.86, 0.88, 0.9), 1.0, 0.14, "knurl", 0.0, 0.35),               # polished steel, knurled
+            "plate": _pbr("plate", (0.03, 0.032, 0.037), 0.6, 0.4, "grain", 0.0, 0.08),               # cast iron plates
         }[kind]
     return _mats[kind]
+
+
+class Cable:
+    """A cable that hangs between two points with a little slack, as a chain of thin cylinders re-placed every frame.
+    If the far end is a weight-stack pulley, the plates above the pin rise as the cable is pulled out."""
+
+    def __init__(self, name="cable", r=0.0055, n=18, mat="chrome"):
+        self.r = r
+        self.segs = [cyl_between(f"{name}{i}", (0, 0, 0), (0, 0, 1), r, mat) for i in range(n)]
+        self.sag = 0.025
+        self.base = None
+
+    def set(self, p0, p1, sag=None):
+        p0, p1 = Vector(p0), Vector(p1)
+        sag = self.sag if sag is None else sag
+        n = len(self.segs)
+        pts = [p0 + (p1 - p0) * (i / n) - Vector((0, 0, 4 * sag * (i / n) * (1 - i / n))) for i in range(n + 1)]
+        for i, s in enumerate(self.segs):
+            place_cyl(s, pts[i], pts[i + 1], self.r)
+        L = (p1 - p0).length
+        if self.base is None:
+            self.base = L
+        stack_rise(p1, max(0.0, (L - self.base) * 0.5))
+
+
+_STACKS = []
+
+
+def stack_rise(near, r):
+    """Lift the plates above the selector pin by r, if a weight stack's pulley is near this point."""
+    for st in _STACKS:
+        if (st["pulley"] - near).length < 0.25:
+            r = min(r, 0.5)
+            for i, pl in enumerate(st["plates"]):
+                if i >= st["pin"]:
+                    pl.location.z = st["z"][i] + r
+            if st["vcable"] is not None:
+                st["vcable"].set(st["pulley"], Vector((st["pulley"].x, st["pulley"].y, st["plates"][-1].location.z + 0.03)), 0.0)
+            return
 
 
 def box(name, size, loc, rot=(0, 0, 0), mat="frame"):
@@ -46,6 +129,8 @@ def cyl_between(name, p0, p1, r, mat="chrome"):
 
 
 def place_cyl(o, p0, p1, r):
+    if isinstance(o, Cable):
+        return o.set(p0, p1)
     p0, p1 = Vector(p0), Vector(p1)
     d = p1 - p0
     o.location = (p0 + p1) / 2
@@ -134,15 +219,31 @@ class Barbell:
 
 
 def cable_tower(x, y=0.0, height=2.15, pulley_z=None):
-    """A cable station standing at x: two uprights, a weight stack and a pulley at pulley_z (the cable runs from there). Returns the pulley point."""
-    box("tower_post", (0.12, 0.30, height), (x, y, height / 2), mat="frame")
-    box("tower_stack", (0.10, 0.24, height * 0.62), (x - 0.02, y, height * 0.34), mat="plate")
-    box("tower_foot", (0.45, 0.4, 0.05), (x - 0.12, y, 0.025), mat="frame")
+    """A cable station: uprights, a weight stack of plates on two guide rods with a selector pin, and a pulley at pulley_z. Returns the pulley point."""
+    box("tower_post", (0.12, 0.34, height), (x, y, height / 2), mat="frame")
+    box("tower_foot", (0.45, 0.46, 0.05), (x - 0.12, y, 0.025), mat="frame")
+    plates, zs = [], []
+    n_pl, z0, h = 14, 0.12, 0.074
+    for i in range(n_pl):
+        z = z0 + i * h
+        plates.append(box("stack_plate", (0.1, 0.2, 0.062), (x - 0.05, y, z), mat="plate"))
+        zs.append(z)
+    for sy in (-0.085, 0.085):
+        tube("stack_rod", (x - 0.05, y + sy, 0.08), (x - 0.05, y + sy, z0 + n_pl * h), 0.011, "chrome")
+    pin = 5
+    tube("stack_pin", (x - 0.12, y, zs[pin]), (x + 0.02, y, zs[pin]), 0.012, "chrome")
     pz = pulley_z if pulley_z is not None else height - 0.08
-    wheel = _disc("pulley", (x - 0.1, y, pz), 0.05, 0.03, "chrome")
-    return Vector((x - 0.1, y, pz))
+    _disc("pulley", (x - 0.1, y, pz), 0.05, 0.03, "chrome")
+    pul = Vector((x - 0.1, y, pz))
+    vc = None
+    if pz > 1.0:
+        vc = Cable("stackcable", 0.004, 6)
+        vc.set(pul, Vector((pul.x, pul.y, zs[-1] + 0.03)), 0.0)
+        vc.base = 1e9                        # the stack cable does not drive the stack
+    _STACKS.append({"pulley": pul, "plates": plates, "z": zs, "pin": pin, "vcable": vc})
+    return pul
 
 
-def line(name, r=0.005, mat="frame"):
-    """A thin cylinder you re-aim each frame with place_cyl(obj, p0, p1, r)."""
-    return cyl_between(name, (0, 0, 0), (0, 0, 1), r, mat)
+def line(name, r=0.005, mat="chrome"):
+    """A cable you re-aim each frame with place_cyl(obj, p0, p1, r): it hangs with a little slack, and drives a weight stack's plates if it ends at one."""
+    return Cable(name, r + 0.0005)

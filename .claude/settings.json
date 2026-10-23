@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "bash scripts/hooks/pre-edit.sh" }] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "bash scripts/hooks/post-edit.sh", "timeout": 60 }] }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "bash scripts/hooks/stop-check.sh", "timeout": 300 }] }
+    ]
+  },
+  "permissions": {
+    "allow": ["Bash(npx tsc *)", "Bash(npm run lint)", "Bash(npx vitest *)", "Bash(npm run build)", "Bash(bash scripts/check.sh)", "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)"],
+    "deny": ["Read(./.env)", "Read(./.env.local)", "Bash(git push --force*)"]
+  }
+}

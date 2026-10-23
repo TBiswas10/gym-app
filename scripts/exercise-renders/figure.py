@@ -8,6 +8,7 @@ blended from the joint empties' matrices (linear blend skinning in numpy). Weigh
 segments, smoothed over the mesh. The material paints the shorts and the working muscle with ellipsoid "region" empties.
 """
 import math
+import os
 
 import bpy
 import numpy as np
@@ -15,14 +16,14 @@ from mathutils import Euler, Matrix, Vector
 
 import body as bodymod
 
-BONES = ["pelvis", "lumbar", "chest", "neck", "head",
+BONES = ["pelvis", "lumbar", "chest", "neck", "head", "clavL", "clavR",
          "shoulderL", "shoulderR", "elbowL", "elbowR", "wristL", "wristR",
          "hipL", "hipR", "kneeL", "kneeR", "ankleL", "ankleR"]
 PARENT = {"lumbar": "pelvis", "chest": "lumbar", "neck": "chest", "head": "neck",
-          "shoulderL": "chest", "shoulderR": "chest", "elbowL": "shoulderL", "elbowR": "shoulderR",
+          "clavL": "chest", "clavR": "chest", "shoulderL": "clavL", "shoulderR": "clavR", "elbowL": "shoulderL", "elbowR": "shoulderR",
           "wristL": "elbowL", "wristR": "elbowR", "hipL": "pelvis", "hipR": "pelvis",
           "kneeL": "hipL", "kneeR": "hipR", "ankleL": "kneeL", "ankleR": "kneeR"}
-NEXT = {"pelvis": "lumbar", "lumbar": "chest", "chest": "neck", "neck": "head", "head": "head",
+NEXT = {"clavL": "shoulderL", "clavR": "shoulderR", "pelvis": "lumbar", "lumbar": "chest", "chest": "neck", "neck": "head", "head": "head",
         "shoulderL": "elbowL", "shoulderR": "elbowR", "elbowL": "wristL", "elbowR": "wristR", "wristL": "wristL", "wristR": "wristR",
         "hipL": "kneeL", "hipR": "kneeR", "kneeL": "ankleL", "kneeR": "ankleR", "ankleL": "ankleL", "ankleR": "ankleR"}
 
@@ -81,6 +82,11 @@ def _two_bone(S, T, a, b, pole):
     return E, S + u * dist
 
 
+def _qmul(p, q):
+    pw, pv, qw, qv = p[0], p[1:], q[0], q[1:]
+    return np.concatenate(([pw * qw - pv @ qv], pw * qv + qw * pv + np.cross(pv, qv)))
+
+
 def _seg_dist(V, a, b):
     ab = b - a
     t = np.clip(((V - a) @ ab) / max(float(ab @ ab), 1e-9), 0.0, 1.0)
@@ -94,6 +100,8 @@ class Figure:
         LM["shoulderL"] = Vector((0.015, 0.192, 1.392))
         LM["shoulderR"] = Vector((0.015, -0.192, 1.392))
         LM["head"] = Vector((LM["head"].x - 0.01, 0.0, 1.515))
+        for s_, sd_ in (('L', 1), ('R', -1)):
+            LM['clav' + s_] = Vector((LM['neck'].x - 0.005, 0.05 * sd_, LM['shoulder' + s_].z + 0.012))
         pos = {b: Vector(LM[b]) for b in BONES}
         top = Vector((LM["head"].x + 0.01, 0, LM["z0"] + LM["H"]))
         self.rest_pos = pos
@@ -130,7 +138,8 @@ class Figure:
         for b in ("lumbar", "chest", "neck", "head"):
             j[b].location = pos[b] - pos[PARENT[b]]
         for s in "LR":
-            j["shoulder" + s].location = pos["shoulder" + s] - pos["chest"]
+            j["clav" + s].location = pos["clav" + s] - pos["chest"]
+            j["shoulder" + s].location = pos["shoulder" + s] - pos["clav" + s]
             j["hip" + s].location = pos["hip" + s] - pos["pelvis"]
         up()
         for s in "LR":
@@ -157,12 +166,14 @@ class Figure:
         segs = {
             "pelvis": [(P["pelvis"], P["lumbar"]), (P["pelvis"], P["hipL"]), (P["pelvis"], P["hipR"])],
             "lumbar": [(P["lumbar"], P["chest"])],
-            "chest": [(P["chest"], P["neck"]), (P["chest"], P["shoulderL"]), (P["chest"], P["shoulderR"])],
+            "chest": [(P["chest"], P["neck"]), (P["chest"], P["shoulderL"] + np.array([0, 0, -0.1])), (P["chest"], P["shoulderR"] + np.array([0, 0, -0.1])), (P["chest"], P["shoulderL"] + np.array([0, -0.03, -0.02])), (P["chest"], P["shoulderR"] + np.array([0, 0.03, -0.02]))],
             "neck": [(P["neck"], P["head"])],
             "head": [(P["head"], T)],
         }
         for s in "LR":
-            segs["shoulder" + s] = [(P["shoulder" + s], P["elbow" + s])]
+            segs["clav" + s] = [(P["clav" + s], P["shoulder" + s])]
+            u_ = P["elbow" + s] - P["shoulder" + s]
+            segs["shoulder" + s] = [(P["shoulder" + s] + u_ * 0.12, P["elbow" + s])]
             segs["elbow" + s] = [(P["elbow" + s], P["wrist" + s])]
             segs["wrist" + s] = [(P["wrist" + s], P["wrist" + s] + (P["wrist" + s] - P["elbow" + s]) * 0.8)]
             segs["hip" + s] = [(P["hip" + s], P["knee" + s])]
@@ -191,12 +202,56 @@ class Figure:
         self.active = [i for i in range(len(BONES)) if W[:, i].max() > 0]
 
     def _skin(self):
+        if os.environ.get("FIG_SKIN", "lbs") == "lbs":
+            return self._skin_lbs()
+        return self._skin_dqs()
+
+    def _skin_lbs(self):
         V = self.V0
         out = np.zeros_like(V)
         for i in self.active:
             b = BONES[i]
             A = np.array(self.j[b].matrix_world) @ self.Rinv[b]
             out += self.W[:, i:i + 1] * (V @ A[:3, :3].T + A[:3, 3])
+        self.ob.data.vertices.foreach_set("co", out.ravel())
+        self.ob.data.update()
+
+    def _skin_dqs(self):
+        """Dual quaternion skinning: bends and twists without pinching or collapsing like a plain blend of matrices."""
+        V = self.V0
+        N = len(V)
+        qr_all, qd_all = {}, {}
+        for i in self.active:
+            b = BONES[i]
+            A = Matrix(np.array(self.j[b].matrix_world) @ self.Rinv[b])
+            q = A.to_quaternion()
+            t = A.to_translation()
+            r = np.array([q.w, q.x, q.y, q.z])
+            # dual part = 0.5 * (0, t) * q
+            tw = np.array([0.0, t.x, t.y, t.z])
+            qd = 0.5 * _qmul(tw, r)
+            qr_all[i], qd_all[i] = r, qd
+        ref = np.zeros((N, 4))
+        top = np.zeros(N)
+        for i in self.active:
+            m = self.W[:, i] > top
+            ref[m] = qr_all[i]
+            top[m] = self.W[m, i]
+        Qr = np.zeros((N, 4))
+        Qd = np.zeros((N, 4))
+        for i in self.active:
+            w = self.W[:, i:i + 1]
+            s = np.where((ref @ qr_all[i]) < 0, -1.0, 1.0)[:, None]
+            Qr += w * s * qr_all[i]
+            Qd += w * s * qd_all[i]
+        n = np.linalg.norm(Qr, axis=1, keepdims=True)
+        Qr /= n
+        Qd /= n
+        rw, rv = Qr[:, :1], Qr[:, 1:]
+        dw, dv = Qd[:, :1], Qd[:, 1:]
+        c1 = np.cross(rv, V)
+        out = V + 2 * (rw * c1 + np.cross(rv, c1))
+        out += 2 * (-dw * rv + rw * dv + np.cross(rv, dv))
         self.ob.data.vertices.foreach_set("co", out.ravel())
         self.ob.data.update()
 
@@ -289,97 +344,126 @@ class Figure:
                 cur = mx.outputs["Value"]
             return cur
 
-        sh_w = combine([region_w(e, 1.0, 0.92, 1.0) for e, k in [(e, 1) for e in self._shorts]])
+        sh_w = combine([region_w(e, 1.0, 0.92, 1.0) for e in self._shorts])
 
-        def parts(e, k):
+        def lin(hexs):
+            h = hexs.lstrip("#")
+            c = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+            return tuple((x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4) for x in c) + (1.0,)
+
+        pulse = N.new("ShaderNodeValue")
+        pulse.label = "pulse"
+        pulse.outputs[0].default_value = 0.0
+        self.pulse_node = pulse
+        pulse_out = pulse.outputs[0]
+
+        def math(op, a_, b_=None, clamp=False):
+            n = N.new("ShaderNodeMath")
+            n.operation = op
+            n.use_clamp = clamp
+            for i, v in enumerate((a_, b_)):
+                if v is None:
+                    continue
+                if isinstance(v, (int, float)):
+                    n.inputs[i].default_value = v
+                else:
+                    L.new(v, n.inputs[i])
+            return n.outputs["Value"]
+
+        def parts(e):
+            """One glow region: core (crisp edge, wobbled by noise so it is organic, not an oval), halo, depth and fibre streaks along the muscle."""
             tc = N.new("ShaderNodeTexCoord")
             tc.object = e
             ln = N.new("ShaderNodeVectorMath")
             ln.operation = "LENGTH"
             L.new(tc.outputs["Object"], ln.inputs[0])
+            nz = N.new("ShaderNodeTexNoise")
+            nz.inputs["Scale"].default_value = 6.0
+            nz.inputs["Detail"].default_value = 2.0
+            L.new(tc.outputs["Object"], nz.inputs["Vector"])
+            wob = math("MULTIPLY", math("SUBTRACT", nz.outputs["Fac"], 0.5), 0.2)
+            dist = math("ADD", ln.outputs["Value"], wob)
 
-            def ramp(lo, hi, top, bot, smooth=True):
+            def ramp(lo, hi, smooth=True):
                 rg = N.new("ShaderNodeMapRange")
                 rg.clamp = True
                 rg.interpolation_type = "SMOOTHSTEP" if smooth else "LINEAR"
                 rg.inputs["From Min"].default_value = lo
                 rg.inputs["From Max"].default_value = hi
-                rg.inputs["To Min"].default_value = top * k
-                rg.inputs["To Max"].default_value = bot
-                L.new(ln.outputs["Value"], rg.inputs["Value"])
+                rg.inputs["To Min"].default_value = 1.0
+                rg.inputs["To Max"].default_value = 0.0
+                L.new(dist, rg.inputs["Value"])
                 return rg.outputs["Result"]
-            return ramp(0.8, 1.0, 1.0, 0.0), ramp(0.95, 1.5, 1.0, 0.0), ramp(0.0, 0.9, 1.0, 0.0, False)
+            sep = N.new("ShaderNodeSeparateXYZ")
+            L.new(tc.outputs["Object"], sep.inputs[0])
+            phase = math("ADD", math("MULTIPLY", sep.outputs["X"], 42.0), math("MULTIPLY", nz.outputs["Fac"], 5.0))
+            streak = math("ADD", math("MULTIPLY", math("SINE", phase), 0.5), 0.5)
+            return ramp(0.8, 1.0), ramp(0.95, 1.5), ramp(0.0, 0.9, False), streak
 
         def layers(regs):
             if not regs:
                 return None
-            ps = [parts(e, k) for e, k in regs]
-            return combine([p[0] for p in ps]), combine([p[1] for p in ps]), combine([p[2] for p in ps])
+            ps = [parts(e) for e in regs]
+            return tuple(combine([p[i] for p in ps]) for i in range(4))
 
-        def gradient(depth):
-            """Deep orange at the rim, bright orange-gold at the heart: the muscle looks lit from inside."""
-            sm = N.new("ShaderNodeMapRange")
-            sm.clamp = True
-            sm.interpolation_type = "SMOOTHSTEP"
-            sm.inputs["From Min"].default_value = 0.1
-            sm.inputs["From Max"].default_value = 0.65
-            L.new(depth, sm.inputs["Value"])
+        def mixc(a_, b_, fac):
             mx = N.new("ShaderNodeMix")
             mx.data_type = "RGBA"
-            mx.inputs["A"].default_value = (0.78, 0.15, 0.02, 1)
-            mx.inputs["B"].default_value = (1.0, 0.52, 0.1, 1)
-            L.new(sm.outputs["Result"], mx.inputs["Factor"])
+            for key, v in (("A", a_), ("B", b_)):
+                if isinstance(v, tuple):
+                    mx.inputs[key].default_value = v
+                else:
+                    L.new(v, mx.inputs[key])
+            if isinstance(fac, (int, float)):
+                mx.inputs["Factor"].default_value = fac
+            else:
+                L.new(fac, mx.inputs["Factor"])
             return mx.outputs["Result"]
 
-        def paint(cur, w, color):
-            mix = N.new("ShaderNodeMix")
-            mix.data_type = "RGBA"
-            if isinstance(color, tuple):
-                mix.inputs["B"].default_value = (*color, 1)
+        def glow(cur, lay, primary):
+            core, halo, depth, streak = lay
+            fibre = math("ADD", math("MULTIPLY", streak, 0.24), 0.76)             # 0.76 .. 1.0: darker streaks between the fibres
+            if primary:
+                # fire orange at the rim, heating toward hot red-pink in the middle as the muscle works
+                col = mixc(lin("#FF4500"), lin("#FF0055"), math("MULTIPLY", math("MULTIPLY", depth, pulse_out), 0.85))
             else:
-                L.new(color, mix.inputs["B"])
-            L.new(cur, mix.inputs["A"])
-            L.new(w, mix.inputs["Factor"])
-            return mix.outputs["Result"]
+                col = mixc(lin("#FFB700"), lin("#FF8C00"), math("MULTIPLY", math("MULTIPLY", depth, pulse_out), 0.5))
+            col = mixc(col, lin("#000000"), math("SUBTRACT", 1.0, fibre))
+            cur = mixc(cur, lin("#FF5A00" if primary else "#FFB700"), math("MULTIPLY", halo, 0.3 if primary else 0.2))      # a soft halo just outside the edge
+            cur = mixc(cur, col, core)
+            # emission follows the work: dim at rest, bright at the peak of the rep
+            amp = (0.28, 0.9) if primary else (0.16, 0.38)
+            emit = math("MULTIPLY", core, math("ADD", amp[0], math("MULTIPLY", pulse_out, amp[1])))
+            return cur, emit
 
-        def glow(cur, lay):
-            core, halo, depth = lay
-            hm = N.new("ShaderNodeMath")
-            hm.operation = "MULTIPLY"
-            hm.inputs[1].default_value = 0.28
-            L.new(halo, hm.inputs[0])
-            cur = paint(cur, hm.outputs["Value"], (1.0, 0.42, 0.08))     # a soft warm halo just outside the edge
-            return paint(cur, core, gradient(depth))
-
-        under = [(e, k) for e, k in self._regions if not e.name.startswith("r_glutes")]
-        over = [(e, k) for e, k in self._regions if e.name.startswith("r_glutes")]
-        col = N.new("ShaderNodeRGB")
-        col.outputs[0].default_value = (*skin, 1)
-        cur = col.outputs[0]
-        emis = []
-        lu, lo = layers(under), layers(over)
-        if lu:
-            cur = glow(cur, lu)
-            emis.append(lu[0])
+        prim_u = [e for e, k in self._regions if k >= 1.0 and not e.name.startswith("r_glutes")]
+        sec_u = [e for e, k in self._regions if k < 1.0 and not e.name.startswith("r_glutes")]
+        prim_o = [e for e, k in self._regions if k >= 1.0 and e.name.startswith("r_glutes")]
+        sec_o = [e for e, k in self._regions if k < 1.0 and e.name.startswith("r_glutes")]
+        col0 = N.new("ShaderNodeRGB")
+        col0.outputs[0].default_value = (*skin, 1)
+        cur = col0.outputs[0]
+        emits = []
+        for regs, primary in ((sec_u, False), (prim_u, True)):
+            lay = layers(regs)
+            if lay:
+                cur, em = glow(cur, lay, primary)
+                emits.append(em)
         if sh_w is not None:
-            cur = paint(cur, sh_w, shorts)
-        if lo:
-            cur = glow(cur, lo)
-            emis.append(lo[0])
-        hot_w = combine(emis)
-        if hot_w is not None:
-            mul = N.new("ShaderNodeMath")
-            mul.operation = "MULTIPLY"
-            mul.inputs[1].default_value = 0.4
-            L.new(hot_w, mul.inputs[0])
+            cur = mixc(cur, (*shorts, 1), sh_w)
+        for regs, primary in ((sec_o, False), (prim_o, True)):
+            lay = layers(regs)
+            if lay:
+                cur, em = glow(cur, lay, primary)
+                emits.append(em)
+        total = combine(emits)
+        if total is not None:
             for k in ("Emission Color", "Emission"):
                 if k in b.inputs:
-                    hc = N.new("ShaderNodeRGB")
-                    hc.outputs[0].default_value = (1.0, 0.36, 0.05, 1)
-                    L.new(hc.outputs[0], b.inputs[k])
+                    L.new(cur, b.inputs[k])
                     break
             if "Emission Strength" in b.inputs:
-                L.new(mul.outputs["Value"], b.inputs["Emission Strength"])
+                L.new(total, b.inputs["Emission Strength"])
         ao = N.new("ShaderNodeAmbientOcclusion")
         ao.inputs["Distance"].default_value = 0.09
         ao.samples = 16
@@ -432,6 +516,22 @@ class Figure:
             j[n].rotation_quaternion = Euler((0, math.radians(P.get(n, 0)), 0)).to_quaternion()
         self._upd()
         for s, sd in (("L", 1), ("R", -1)):
+            j["clav" + s].rotation_quaternion = (1, 0, 0, 0)
+            self._upd()
+            S0 = self.pos("shoulder" + s)
+            if "hand" + s in P:
+                T0 = Vector(P["hand" + s])
+            else:
+                r0 = P.get("rhand" + s, P.get("rhand"))
+                T0 = S0 + Vector((r0[0], r0[1] * sd, r0[2]))
+            Rc = j["chest"].matrix_world.to_3x3().normalized()
+            dloc = Rc.inverted() @ (T0 - S0)
+            dloc = dloc.normalized() if dloc.length > 1e-6 else Vector((0, 0, -1))
+            elev = math.degrees(math.acos(max(-1.0, min(1.0, -dloc.z))))      # 0 = arm hanging, 90 = out level, 180 = straight up
+            lift = min(22.0, max(0.0, (elev - 20.0) * 0.26))
+            reach = max(0.0, dloc.x) * 7.0
+            j["clav" + s].rotation_quaternion = Euler((math.radians(lift * sd), 0, math.radians(-reach * sd))).to_quaternion()
+            self._upd()
             S = self.pos("shoulder" + s)
             if "hand" + s in P:
                 T = Vector(P["hand" + s])

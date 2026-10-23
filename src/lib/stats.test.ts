@@ -199,3 +199,19 @@ describe("volumeSamePoint: compare a part-week with the same part of last week",
     expect(volumeSamePoint(workouts, [S("c", "plank", 1, null, null, 40), S("c", "back", 1, null, 12)], "2026-10-20").now).toBe(0);
   });
 });
+
+describe("estimated one-rep max", () => {
+  it("uses Epley, and says nothing past 12 reps", async () => {
+    const { est1rm } = await import("./stats");
+    expect(est1rm(100, 1)).toBe(100);
+    expect(est1rm(60, 10)).toBe(80);
+    expect(est1rm(40, 15)).toBeNull();
+    expect(est1rm(0, 8)).toBeNull();
+  });
+  it("takes the best set of each session", async () => {
+    const { e1rmSeries } = await import("./stats");
+    const w = [{ id: "a", planned_date: "2026-10-01" }, { id: "b", planned_date: "2026-10-08" }] as never;
+    const s = (workout_id: string, kg: number, reps: number) => ({ workout_id, exercise_slug: "chest", set_number: 1, weight_kg: kg, reps, seconds: null, variant: null }) as never;
+    expect(e1rmSeries(w, [s("a", 50, 10), s("a", 50, 8), s("b", 55, 10)], "chest").map((p) => p.value)).toEqual([66.7, 73.3]);
+  });
+});
