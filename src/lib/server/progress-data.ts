@@ -1,7 +1,7 @@
 import type { ServerClient } from "../supabase/server";
 import { addDays, programmeWeek, sydneyDate, weekDates } from "../dates";
 import type { ExerciseKind } from "../plan";
-import { checkInDue, consistency, e1rmSeries, records, exercisesWithData, nextCheckIn, topSeries, weekCells, volumeSamePoint, weeklyVolume, weekStats, type VolumeWeek, type WeekCell } from "../stats";
+import { activityGrid, checkInDue, consistency, e1rmSeries, records, exercisesWithData, nextCheckIn, topSeries, weekCells, volumeSamePoint, weeklyVolume, weekStats, type VolumeWeek, type WeekCell } from "../stats";
 import { fmtNum } from "../format";
 import { balance, type Balance } from "../balance";
 import { loadGoals, loadReviews, type GoalView, type ReviewView } from "./v2-data";
@@ -9,6 +9,8 @@ import { loadGoals, loadReviews, type GoalView, type ReviewView } from "./v2-dat
 export interface ProgressData {
   week: number;
   empty: boolean;
+  /** finished sessions as a calendar: 16 weeks, Monday to Sunday */
+  activity?: import("../stats").ActivityCell[][];
   chips: { slug: string; name: string; kind: ExerciseKind; values: number[]; unit: "kg" | "s" | "reps"; e1rm?: number[] }[];
   thisWeek: { sessions: number; planned: number; sets: number; groups: [string, number][]; pbs: { name: string; text: string }[] };
   trend: { soreness: number; energy: number }[];
@@ -71,6 +73,7 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
   const done = (reviewRes.data ?? []).map((r) => r.week);
   const [goals, reviews] = await Promise.all([loadGoals(supabase).catch(() => [] as GoalView[]), loadReviews(supabase).catch(() => [] as ReviewView[])]);
   return {
+    activity: activityGrid(workouts, today),
     goals,
     reviews,
     volume: weeklyVolume(workouts, sets, today),

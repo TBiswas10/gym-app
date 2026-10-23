@@ -223,6 +223,29 @@ export function ProgressView({ data }: { data: ProgressData }) {
         </div>
 
         <div hidden={tab !== "plan"} className="col g4" role="tabpanel">
+        {data.activity && (
+          <section className="card" aria-label="Activity calendar">
+            <div className="row between baseline">
+              <h2 className="t-heading">Activity</h2>
+              <span className="t-small c-2">last 16 weeks</span>
+            </div>
+            <div className="cal" role="group" aria-label="Days you trained, oldest week on the left">
+              {data.activity.map((wk, i) => (
+                <span key={i} className="cal-col">
+                  {wk.map((c) =>
+                    c.id ? (
+                      <Link key={c.date} className="cal-cell is-done" href={`/progress/history/${c.id}`} aria-label={`Session on ${c.date}`} />
+                    ) : (
+                      <i key={c.date} className={`cal-cell${c.future ? " is-future" : ""}`} aria-hidden="true" />
+                    ),
+                  )}
+                </span>
+              ))}
+            </div>
+            <p className="t-small c-2">Each square is a day. Tap a lit one to open that session.</p>
+          </section>
+        )}
+
         <section className="card" aria-label="Consistency">
           <div className="row between baseline">
             <h2 className="t-heading">Consistency</h2>

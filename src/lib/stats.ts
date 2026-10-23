@@ -1,6 +1,6 @@
 // Progress numbers. Pure functions over rows already loaded from the database.
 
-import { addDays, programmeWeek, weekDates } from "./dates";
+import { addDays, programmeWeek, startOfWeek, weekDates } from "./dates";
 import { bestSet, isPB, type LastTime } from "./progression";
 import type { ExerciseKind } from "./plan";
 
@@ -39,6 +39,20 @@ export function topSeries(workouts: HistWorkout[], sets: HistSet[], slug: string
     if (mine.length) points.push({ date: w.planned_date, value: topValue(kind, mine) });
   }
   return points.slice(-limit);
+}
+
+export interface ActivityCell { date: string; id: string | null; future: boolean }
+
+/** A calendar of finished sessions: `weeks` columns (oldest first, each Monday to Sunday) ending with the week that contains `today`. */
+export function activityGrid(sessions: { id: string; planned_date: string }[], today: string, weeks = 16): ActivityCell[][] {
+  const byDate = new Map(sessions.map((s) => [s.planned_date, s.id]));
+  const first = addDays(startOfWeek(today), -7 * (weeks - 1));
+  return Array.from({ length: weeks }, (_, w) =>
+    Array.from({ length: 7 }, (_, d) => {
+      const date = addDays(first, w * 7 + d);
+      return { date, id: byDate.get(date) ?? null, future: date > today };
+    }),
+  );
 }
 
 /** Estimated one-rep max (Epley): the weight you could lift once, worked out from a set. One rep is the weight itself; sets past 12 reps are too far from a max to say. */

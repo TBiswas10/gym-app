@@ -215,3 +215,16 @@ describe("estimated one-rep max", () => {
     expect(e1rmSeries(w, [s("a", 50, 10), s("a", 50, 8), s("b", 55, 10)], "chest").map((p) => p.value)).toEqual([66.7, 73.3]);
   });
 });
+
+describe("activity calendar", () => {
+  it("lays out Monday to Sunday columns ending with this week, and marks session days", async () => {
+    const { activityGrid } = await import("./stats");
+    const g = activityGrid([{ id: "w1", planned_date: "2026-10-21" }], "2026-10-22", 3);
+    expect(g).toHaveLength(3);
+    expect(g[2][0].date).toBe("2026-10-19");
+    expect(g[2][6].date).toBe("2026-10-25");
+    expect(g[2][2]).toMatchObject({ date: "2026-10-21", id: "w1", future: false });
+    expect(g[2][4].future).toBe(true);
+    expect(g[0][0].date).toBe("2026-10-05");
+  });
+});
