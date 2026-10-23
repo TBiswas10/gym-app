@@ -65,7 +65,7 @@ export function LibraryView({ items, plan = {}, todayWeekday }: { items: LibItem
             <button key={g} type="button" className="chip" role="tab" aria-selected={filter === g} onClick={() => setFilter(g)}>{g === "My plan" ? `My plan (${planCount})` : g}</button>
           ))}
         </div>
-        <div className="col g2">
+        <div className="col g2 lib-grid">
           {rows.map((e) => (
             <button
               key={e.slug}
