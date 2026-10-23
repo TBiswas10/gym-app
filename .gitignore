@@ -25,3 +25,5 @@ design/Workout Tracker.html
 
 .vercel
 _renders/
+__pycache__/
+*.pyc
