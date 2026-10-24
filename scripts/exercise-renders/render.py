@@ -152,7 +152,7 @@ def fit_camera(sc, fig, lift, update, margin=1.2):
         V = V.reshape(-1, 3)[::60]
         pts.extend(Vector(v) for v in V)
         for ob in sc.objects:
-            if ob.type == "MESH" and ob is not fig.ob and ob.name.split(".")[0].startswith(("db", "bb", "grip", "bar", "vbar", "rope", "handle")):
+            if ob.type == "MESH" and ob is not fig.ob and ob.name.split(".")[0].startswith(("db", "bb", "grip", "bar", "vbar", "rope", "handle", "rail", "plate", "backpad", "seatpad")):
                 pts.extend(ob.matrix_world @ Vector(c) for c in ob.bound_box)
     cs = [cam_inv @ p for p in pts]
     xs, ys = [c.x for c in cs], [c.y for c in cs]

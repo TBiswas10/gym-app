@@ -37,7 +37,7 @@ describe("tool list", () => {
     const c = await connect();
     const { tools } = await c.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
-    expect(tools).toHaveLength(38);
+    expect(tools).toHaveLength(39);
   });
   it("marks read tools read-only and write tools as non-destructive", async () => {
     const { tools } = await (await connect()).listTools();
@@ -112,6 +112,15 @@ describe("destructive tools refuse without an explicit confirmation", () => {
     const text = JSON.stringify(got.messages);
     expect(text).toContain("save_weekly_review");
     expect(text).toContain("get_week_summary");
+  });
+  it("offers the personal trainer prompts, which start from the trainer brief and never change the plan unasked", async () => {
+    const c = await connect();
+    const { prompts } = await c.listPrompts();
+    for (const n of ["personal_trainer", "plan_tomorrow", "post_workout_debrief", "plateau_detective"]) expect(prompts.map((p) => p.name)).toContain(n);
+    const text = JSON.stringify((await c.getPrompt({ name: "plateau_detective" })).messages);
+    expect(text).toContain("get_trainer_brief");
+    expect(text).toContain("Ask before changing");
+    expect(text).toContain("fixed");
   });
   it("log_sets takes swapped_to", async () => {
     const { tools } = await (await connect()).listTools();
