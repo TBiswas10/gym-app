@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { RENDER_META } from "@/lib/rendered-exercises";
 import { muscleLabel, tempoHint } from "@/lib/render-text";
 
@@ -72,7 +73,10 @@ function Viewer({ slug, name, onClose }: { slug: string; name: string; onClose: 
     else v.pause();
     setPlaying(!v.paused);
   };
-  return (
+  // Shown on the screen itself, not inside the guide sheet that may be holding the clip.
+  const host = typeof document === "undefined" ? null : document.querySelector<HTMLElement>(".screen");
+  if (!host) return null;
+  return createPortal(
     <>
       <div className="scrim" onClick={onClose} />
       <div className="sheet-wrap">
@@ -92,6 +96,7 @@ function Viewer({ slug, name, onClose }: { slug: string; name: string; onClose: 
           <button type="button" className="btn btn-tertiary btn-block" onClick={onClose}>Close</button>
         </div>
       </div>
-    </>
+    </>,
+    host,
   );
 }
