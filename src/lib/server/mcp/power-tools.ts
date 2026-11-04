@@ -215,6 +215,55 @@ export function registerPowerTools(server: McpServer, { supabase, uid }: Ctx): v
     },
   );
 
+  // ---------------------------------------------------------------- add_to_plan_day
+  server.registerTool(
+    "add_to_plan_day",
+    {
+      title: "Add exercises to a day (e.g. an ab circuit)",
+      description:
+        "Add exercises to the END of one training day without touching the rest (1 = Monday ... 7 = Sunday). Use it for a custom ab circuit or any extra block: list the exercises in the order to do them, each with 1 or 2 sets and a rep range (timed holds: seconds as the range). Exercises already on the day are skipped; a day holds at most 10. Needs confirm: true, or dry_run: true to preview. Undo with undo_change.",
+      inputSchema: {
+        weekday: z.number().int().min(1).max(7),
+        exercises: z.array(z.object({ exercise: z.string().min(2).max(60), sets: z.number().int().min(1).max(2).default(2), rep_lo: z.number().int().min(1).max(100), rep_hi: z.number().int().min(1).max(100) })).min(1).max(8),
+        ...PREVIEW,
+      },
+      annotations: CHANGE,
+    },
+    async ({ weekday, exercises, dry_run, confirm }) => {
+      if (!dry_run && confirm !== true) return errorResult(NEEDS_CONFIRM);
+      const cx = await loadCx(supabase);
+      if (!cx) return errorResult(NO_PROGRAM);
+      const { data: tpl } = await supabase.from("program_templates").select("id").eq("user_id", uid).eq("plan_type", cx.state.planType).maybeSingle();
+      if (!tpl) return errorResult(NO_PROGRAM);
+      const { data: day } = await supabase.from("template_days").select("full_name").eq("template_id", tpl.id).eq("weekday", weekday).maybeSingle();
+      if (!day) return errorResult(`${longDay(weekday)} isn’t a training day in your plan.`);
+      const { data: before } = await supabase.from("template_exercises").select("exercise_slug, sets, rep_lo, rep_hi").eq("template_id", tpl.id).eq("weekday", weekday).order("position");
+      const rows = (before ?? []).map((b) => ({ slug: b.exercise_slug, sets: b.sets, rep_lo: b.rep_lo, rep_hi: b.rep_hi }));
+      const added: string[] = [];
+      for (const e of exercises) {
+        if (e.rep_hi < e.rep_lo) return errorResult(`“${e.exercise}”: rep_hi must be at least rep_lo.`);
+        const m = findExercises(e.exercise, cx.catalog);
+        if (m.length !== 1) return errorResult(m.length === 0 ? `I don’t know an exercise called “${e.exercise}”.` : `“${e.exercise}” could be ${m.map((x) => x.name).join(" or ")}. Which one?`);
+        if (rows.some((r) => r.slug === m[0].slug)) continue;
+        rows.push({ slug: m[0].slug, sets: e.sets, rep_lo: e.rep_lo, rep_hi: e.rep_hi });
+        added.push(`${m[0].name}: ${e.sets} × ${e.rep_lo}-${e.rep_hi}`);
+      }
+      if (!added.length) return errorResult("All of those are already on that day.");
+      if (rows.length > 10) return errorResult(`That would make ${rows.length} exercises; a day holds at most 10.`);
+      const report = [`${longDay(weekday)} (${day.full_name}) gets, after the ${before?.length ?? 0} it has:`, ...added.map((a) => `- ${a}`)];
+      if (dry_run) return textResult(["Preview:", ...report, "Nothing was changed."].join("\n"));
+      const { error } = await supabase.rpc("replace_day_exercises", { p_template: tpl.id, p_weekday: weekday, p_rows: rows });
+      if (error) return errorResult(FRIENDLY);
+      await recordChange(supabase, {
+        source: "claude", action: "edit_plan_day", undoable: true,
+        summary: `Added to ${longDay(weekday)} (${day.full_name}): ${added.map((a) => a.split(":")[0]).join(", ")}`,
+        before: { kind: "edit_plan_day", template_id: tpl.id, weekday, rows: (before ?? []).map((b) => ({ slug: b.exercise_slug, sets: b.sets, rep_lo: b.rep_lo, rep_hi: b.rep_hi })) },
+        after: { rows },
+      });
+      return textResult(["Added.", ...report, UNDO_NOTE].join("\n"));
+    },
+  );
+
   // ---------------------------------------------------------------- edit_checkin
   server.registerTool(
     "edit_checkin",

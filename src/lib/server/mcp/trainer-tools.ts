@@ -37,6 +37,11 @@ export function registerTrainerTools(server: McpServer, { supabase, uid }: Ctx):
     "Call get_trainer_brief and open with one sentence on where I am in the programme and one thing that is going well.",
     "Then ask what I want help with today (a question, a tough session, a stall, how I feel). Answer it using my numbers.",
   ]);
+  prompt("ab_circuit", "Custom ab circuit", "Design an ab circuit and add it to a training day.", [
+    "Ask which day and how long (about 5 to 8 minutes), and whether I have joint or back problems. Use list_exercises for the Core ab options (including bodyweight and machine ones) and get_plan to see what that day already has.",
+    "Pick 3 to 5 different ab exercises that hit abs, obliques and lower abs without repeating, 2 sets each (timed holds: seconds as the rep range). Order them from hardest to easiest.",
+    "Show the circuit with a one-line reason for each, call add_to_plan_day with dry_run true, and only add it for real (confirm true) after I say yes.",
+  ]);
   prompt("plan_tomorrow", "Plan tomorrow", "A preview of tomorrow's session with what to aim for and what to watch.", [
     "Call get_trainer_brief and get_schedule. Describe tomorrow's session: the lifts, the goal for each (from goal_today), the expected time and cardio.",
     "Flag anything to adjust (high soreness, a stalled lift, a deload week) and propose one change at most. Ask before applying it.",

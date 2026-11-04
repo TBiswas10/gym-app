@@ -27,7 +27,7 @@ export function GuideSheet({ guide, slug, onClose: done, bare = false }: { guide
               <Icon name="x" />
             </button>
           </div>
-          {!bare && <ExerciseMedia slug={slug} name={guide.name} />}
+          {!bare && <ExerciseMedia slug={slug} name={guide.name} still />}
           <div className="row g2 wrap">
             {guide.muscles.map((m, i) => (
               <span key={m} className={`tag ${i === 0 ? "tag-accent" : ""}`}>{m}</span>

@@ -18,7 +18,7 @@ export function FormCheck({ guide, slug, showPhotos = true, onFullGuide, note = 
     <details className="tip tip-pill">
       <summary><Icon name="book" size={20} />Form check</summary>
       <div className="tip-body">
-        {showPhotos && <ExerciseMedia slug={slug} name={guide.name} />}
+        {showPhotos && <ExerciseMedia slug={slug} name={guide.name} still />}
         {cues.length > 0 && (
           <div className="col g1">
             <span className="t-caption c-2">DO THIS</span>

@@ -9,7 +9,7 @@ import { muscleLabel, tempoHint } from "@/lib/render-text";
 // (public/exercises/<slug>/loop.mp4 + poster.webp, made by scripts/exercise-renders). Tap the clip for the big viewer.
 // Small Library thumbnails and people who prefer reduced motion get the still poster.
 // Lifts without a render fall back to two photos (start and finish) that swap: free-exercise-db (public domain), /public/exercises/<slug>/0.jpg and 1.jpg.
-export function ExerciseMedia({ slug, name, thumb = false }: { slug: string; name: string; thumb?: boolean }) {
+export function ExerciseMedia({ slug, name, thumb = false, still = false }: { slug: string; name: string; thumb?: boolean; still?: boolean }) {
   const meta = RENDER_META[slug];
   const [reduce, setReduce] = useState(false);
   const [open, setOpen] = useState(false);
@@ -22,7 +22,7 @@ export function ExerciseMedia({ slug, name, thumb = false }: { slug: string; nam
   }, []);
   if (meta) {
     const poster = `/exercises/${slug}/poster.webp`;
-    if (thumb || reduce) {
+    if (thumb || reduce || still) {
       return (
         <span className={`media media-render ${thumb ? "media-thumb" : ""}`} role="img" aria-label={`${name}: the working muscle highlighted`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}

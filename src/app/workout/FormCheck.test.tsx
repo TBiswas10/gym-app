@@ -29,7 +29,8 @@ describe("form help in the workout", () => {
   });
   it("shows our own 3D render clip (tap to enlarge) for lifts that have one", () => {
     const out = renderToStaticMarkup(<FormCheck guide={guide} slug="chest" onFullGuide={() => {}} />);
-    expect(out).toContain("/exercises/chest/loop.mp4");
+    expect(out).toContain("/exercises/chest/poster.webp");
+    expect(out).not.toContain("loop.mp4");
     expect(out).toContain("/exercises/chest/poster.webp");
     expect(out).not.toContain("/exercises/chest/0.jpg");
   });

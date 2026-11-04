@@ -14,7 +14,10 @@ export function TabBar() {
   useEffect(() => setTapped(null), [path]);
   // Fetch every tab ahead of time so switching never waits.
   useEffect(() => {
-    for (const t of TABS) router.prefetch(t.href);
+    // After the screen has settled: loading the heavy tabs (Progress reads every set) at launch made opening feel stuck.
+    const go = () => TABS.forEach((t) => router.prefetch(t.href));
+    const id = window.setTimeout(go, 4000);
+    return () => window.clearTimeout(id);
   }, [router]);
   const active = tapped ?? TABS[Math.max(tabIndex(path), 0)].href;
   // The bar floats over the screen (glass); the screen pads its content by the bar's real height so nothing hides under it.
@@ -33,7 +36,7 @@ export function TabBar() {
     <nav ref={navRef} className="tabbar" aria-label="Main" style={{ "--i": Math.max(0, TABS.findIndex((t) => t.href === active)) } as React.CSSProperties}>
       <span className="tab-ind" aria-hidden="true" />
       {TABS.map((t) => (
-        <Link key={t.href} className="tab" href={t.href} prefetch aria-current={t.href === active ? "page" : undefined} onPointerDown={() => setTapped(t.href)}>
+        <Link key={t.href} className="tab" href={t.href} prefetch={false} aria-current={t.href === active ? "page" : undefined} onPointerDown={() => setTapped(t.href)}>
           <Icon name={t.icon} />
           {t.label}
         </Link>
