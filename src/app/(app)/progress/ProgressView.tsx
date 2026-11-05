@@ -223,6 +223,31 @@ export function ProgressView({ data }: { data: ProgressData }) {
         </div>
 
         <div hidden={tab !== "plan"} className="col g4" role="tabpanel">
+        {data.bodyweight && (
+          <section className="card" aria-label="Bodyweight">
+            <div className="row between baseline">
+              <h2 className="t-heading">Bodyweight</h2>
+              <span className="t-small c-2">7-day average</span>
+            </div>
+            <div className="row between" style={{ alignItems: "flex-end" }}>
+              <span className="num-m">{fmtNum(data.bodyweight.summary.now)} kg</span>
+              <span className="tag tag-accent">
+                {data.bodyweight.summary.change === 0 ? "No change" : `${data.bodyweight.summary.change > 0 ? "+" : "−"}${fmtNum(Math.abs(data.bodyweight.summary.change))} kg since you started`}
+              </span>
+            </div>
+            {data.bodyweight.avg.length > 1 && (
+              <LineChart values={data.bodyweight.avg} format={(v) => `${fmtNum(v)} kg`} ariaLabel={`Bodyweight 7-day average: ${data.bodyweight.avg.map(fmtNum).join(", ")} kg`} />
+            )}
+            <p className="t-small c-2">
+              {data.bodyweight.goal === null
+                ? "Set a goal weight in Plan to see how far to go."
+                : data.bodyweight.summary.reached
+                  ? `You’re at your goal of ${fmtNum(data.bodyweight.goal)} kg.`
+                  : `${fmtNum(data.bodyweight.summary.toGo ?? 0)} kg to go to ${fmtNum(data.bodyweight.goal)} kg.`}
+            </p>
+          </section>
+        )}
+
         {data.activity && (
           <section className="card" aria-label="Activity calendar">
             <div className="row between baseline">

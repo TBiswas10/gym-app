@@ -25,6 +25,7 @@ export interface PlanData {
   library: { slug: string; name: string; group: string; kind: ExerciseKind; repLo: number; repHi: number }[];
   restAlerts: boolean;
   trackBodyweight: boolean;
+  goalWeightKg: number | null;
   testMode?: boolean;
   email: string;
   /** Per exercise: your own Swap-button substitute (null = use the built-in one) and the built-in one. */
@@ -34,7 +35,7 @@ export interface PlanData {
 const kindOf = (k: string): ExerciseKind => (k === "timed" || k === "bodyweight" ? k : "weight");
 
 export async function loadPlan(supabase: ServerClient, uid: string, email: string): Promise<PlanData | null> {
-  const { data: state } = await supabase.from("program_state").select("plan_type, rest_alerts, track_bodyweight, test_mode").maybeSingle();
+  const { data: state } = await supabase.from("program_state").select("plan_type, rest_alerts, track_bodyweight, test_mode, goal_weight_kg").maybeSingle();
   if (!state) return null;
   const planType = state.plan_type as "5day" | "3day";
 
@@ -71,6 +72,6 @@ export async function loadPlan(supabase: ServerClient, uid: string, email: strin
     backups,
     planType, templateId: tpl.id, days,
     library: (libRes.data ?? []).map((e) => ({ slug: e.slug, name: e.name, group: e.muscle_group, kind: kindOf(e.kind), repLo: e.rep_lo, repHi: e.rep_hi })),
-    restAlerts: state.rest_alerts, trackBodyweight: state.track_bodyweight, testMode: !!state.test_mode, email,
+    restAlerts: state.rest_alerts, trackBodyweight: state.track_bodyweight, goalWeightKg: state.goal_weight_kg != null ? Number(state.goal_weight_kg) : null, testMode: !!state.test_mode, email,
   };
 }

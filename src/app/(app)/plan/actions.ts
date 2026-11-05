@@ -57,6 +57,16 @@ export async function switchPlan(planType: string): Promise<Result> {
   return { ok: true };
 }
 
+/** Goal bodyweight in kg (30 to 300), or null to clear it. */
+export async function saveGoalWeight(kg: number | null): Promise<Result> {
+  if (kg !== null && !(Number.isFinite(kg) && kg >= 30 && kg <= 300)) return { ok: false, error: "Enter a weight between 30 and 300 kg." };
+  const supabase = await createClient();
+  const { error } = await supabase.from("program_state").update({ goal_weight_kg: kg === null ? null : Math.round(kg * 10) / 10 }).not("user_id", "is", null);
+  if (error) return { ok: false, error: FRIENDLY };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 export async function saveSettings(patch: { restAlerts?: boolean; trackBodyweight?: boolean }): Promise<Result> {
   const update: { rest_alerts?: boolean; track_bodyweight?: boolean } = {};
   if (typeof patch.restAlerts === "boolean") update.rest_alerts = patch.restAlerts;

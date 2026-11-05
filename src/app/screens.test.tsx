@@ -72,6 +72,17 @@ describe("Progress: muscle balance", () => {
   });
 });
 
+describe("Progress: bodyweight", () => {
+  it("shows the 7-day average, the change and how far to the goal", () => {
+    const out = renderToStaticMarkup(<ProgressView data={progress({ bodyweight: { avg: [82, 81, 80], goal: 76, summary: { now: 80, start: 82, change: -2, toGo: 4, direction: "down", reached: false } } })} />);
+    for (const t of ["Bodyweight", "7-day average", "80 kg", "since you started", "4 kg to go to 76 kg"]) expect(out).toContain(t);
+  });
+  it("asks for a goal when there is none, and is hidden when tracking is off", () => {
+    expect(renderToStaticMarkup(<ProgressView data={progress({ bodyweight: { avg: [80], goal: null, summary: { now: 80, start: 80, change: 0, toGo: null, direction: null, reached: false } } })} />)).toContain("Set a goal weight in Plan");
+    expect(renderToStaticMarkup(<ProgressView data={progress()} />)).not.toContain("aria-label=\"Bodyweight\"");
+  });
+});
+
 describe("Library", () => {
   const items = [
     { slug: "chest", name: "Chest press", group: "Chest", kit: "Machine", muscles: ["Chest"], setup: ["Adjust the seat."], cues: ["Push."], mistakes: ["Locking."] },
@@ -120,7 +131,7 @@ describe("Form guide", () => {
 
 describe("Plan", () => {
   const data: PlanData = {
-    planType: "5day", templateId: "11111111-1111-4111-8111-111111111111", email: "me@example.com", restAlerts: true, trackBodyweight: false,
+    planType: "5day", templateId: "11111111-1111-4111-8111-111111111111", email: "me@example.com", restAlerts: true, trackBodyweight: false, goalWeightKg: null,
     library: [{ slug: "chest", name: "Chest press", group: "Chest", kind: "weight", repLo: 8, repHi: 12 }, { slug: "lat", name: "Lat pulldown", group: "Back", kind: "weight", repLo: 8, repHi: 12 }],
     days: [
       { weekday: 1, shortName: "Push", fullName: "Push", cardioName: "Bike or cross-trainer", cardioLabel: "10 min", cardioMinutes: 10, exercises: [{ slug: "chest", name: "Chest press", kind: "weight", sets: 2, repLo: 8, repHi: 12 }] },

@@ -4,11 +4,14 @@ import type { ExerciseKind } from "../plan";
 import { activityGrid, checkInDue, consistency, e1rmSeries, records, exercisesWithData, nextCheckIn, topSeries, weekCells, volumeSamePoint, weeklyVolume, weekStats, type VolumeWeek, type WeekCell } from "../stats";
 import { fmtNum } from "../format";
 import { balance, type Balance } from "../balance";
+import { rollingAverage, summarise, type WeightSummary } from "../bodyweight";
 import { loadGoals, loadReviews, type GoalView, type ReviewView } from "./v2-data";
 
 export interface ProgressData {
   week: number;
   empty: boolean;
+  /** weigh-ins (7-day average), the goal and the summary; only when bodyweight tracking is on */
+  bodyweight?: { avg: number[]; goal: number | null; summary: WeightSummary };
   /** finished sessions as a calendar: 16 weeks, Monday to Sunday */
   activity?: import("../stats").ActivityCell[][];
   chips: { slug: string; name: string; kind: ExerciseKind; values: number[]; unit: "kg" | "s" | "reps"; e1rm?: number[] }[];
@@ -35,12 +38,14 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
   const { data: state } = await supabase.from("program_state_view").select("start_date, current_week").maybeSingle();
   const week = state?.start_date ? programmeWeek(state.start_date, today) : 1;
 
-  const [workoutsRes, exRes, checkRes, reviewRes, tplRes] = await Promise.all([
+  const [workoutsRes, exRes, checkRes, reviewRes, tplRes, bwRes, psRes] = await Promise.all([
     supabase.from("workouts").select("id, planned_date").eq("status", "completed").order("planned_date"),
     supabase.from("exercises").select("slug, name, kind, muscle_group, muscles"),
     supabase.from("checkins").select("soreness, energy").not("soreness", "is", null).not("energy", "is", null).order("created_at", { ascending: false }).limit(8),
     supabase.from("reviews").select("week").not("applied_at", "is", null),
     supabase.from("program_templates").select("template_days(weekday)").not("user_id", "is", null).limit(2),
+    supabase.from("checkins").select("checked_on, bodyweight_kg").not("bodyweight_kg", "is", null).order("checked_on").limit(400),
+    supabase.from("program_state").select("track_bodyweight, goal_weight_kg").maybeSingle(),
   ]);
   for (const r of [workoutsRes, exRes, checkRes, reviewRes, tplRes]) if (r.error) throw r.error;
 
@@ -72,7 +77,11 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
 
   const done = (reviewRes.data ?? []).map((r) => r.week);
   const [goals, reviews] = await Promise.all([loadGoals(supabase).catch(() => [] as GoalView[]), loadReviews(supabase).catch(() => [] as ReviewView[])]);
+  const weigh = (bwRes.data ?? []).map((r) => ({ date: r.checked_on as string, kg: Number(r.bodyweight_kg) }));
+  const goalKg = psRes.data?.goal_weight_kg != null ? Number(psRes.data.goal_weight_kg) : null;
+  const bwSummary = psRes.data?.track_bodyweight ? summarise(weigh, goalKg) : null;
   return {
+    bodyweight: bwSummary ? { avg: rollingAverage(weigh).slice(-30), goal: goalKg, summary: bwSummary } : undefined,
     activity: activityGrid(workouts, today),
     goals,
     reviews,

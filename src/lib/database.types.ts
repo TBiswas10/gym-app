@@ -78,9 +78,9 @@ export type Database = {
         Relationships: [];
       };
       program_state: {
-        Row: { created_at: string; deload_weeks: number[]; plan_type: string; rest_alerts: boolean; start_date: string; test_mode: boolean; track_bodyweight: boolean; updated_at: string; user_id: string };
-        Insert: { created_at?: string; deload_weeks?: number[]; plan_type: string; rest_alerts?: boolean; start_date: string; test_mode?: boolean; track_bodyweight?: boolean; updated_at?: string; user_id?: string };
-        Update: { created_at?: string; deload_weeks?: number[]; plan_type?: string; rest_alerts?: boolean; start_date?: string; test_mode?: boolean; track_bodyweight?: boolean; updated_at?: string; user_id?: string };
+        Row: { created_at: string; deload_weeks: number[]; goal_weight_kg: number | null; plan_type: string; rest_alerts: boolean; start_date: string; test_mode: boolean; track_bodyweight: boolean; updated_at: string; user_id: string };
+        Insert: { created_at?: string; deload_weeks?: number[]; goal_weight_kg?: number | null; plan_type: string; rest_alerts?: boolean; start_date: string; test_mode?: boolean; track_bodyweight?: boolean; updated_at?: string; user_id?: string };
+        Update: { created_at?: string; deload_weeks?: number[]; goal_weight_kg?: number | null; plan_type?: string; rest_alerts?: boolean; start_date?: string; test_mode?: boolean; track_bodyweight?: boolean; updated_at?: string; user_id?: string };
         Relationships: [];
       };
       program_templates: {

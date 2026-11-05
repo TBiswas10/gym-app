@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
+import { RestoreBackup } from "@/components/RestoreBackup";
 import { ThemePicker } from "@/components/ThemePicker";
 import { logOut } from "@/lib/auth-actions";
 import { shortDay } from "@/lib/dates";
@@ -11,7 +12,7 @@ import { estimateMinutes } from "@/lib/plan";
 import { add, estimateNote, move, rangeLabel, rangesFor, removeAt, setRange, setSets, type Row } from "@/lib/plan-edit";
 import type { PlanData } from "@/lib/server/plan-data";
 import { disableRestAlerts, enableRestAlerts, PUSH_MESSAGE } from "@/lib/push-client";
-import { saveBackup, savePlanCardio, saveSettings, savePlanDay, setTestMode, switchPlan, type Result } from "./actions";
+import { saveBackup, saveGoalWeight, savePlanCardio, saveSettings, savePlanDay, setTestMode, switchPlan, type Result } from "./actions";
 
 export function PlanView({ data }: { data: PlanData }) {
   const [days, setDays] = useState(data.days);
@@ -22,6 +23,7 @@ export function PlanView({ data }: { data: PlanData }) {
   const [cardioOpen, setCardioOpen] = useState(false);
   const [restAlerts, setRestAlerts] = useState(data.restAlerts);
   const [bodyweight, setBodyweight] = useState(data.trackBodyweight);
+  const [goalText, setGoalText] = useState(data.goalWeightKg === null ? "" : String(data.goalWeightKg));
   const [testMode, setTestModeState] = useState(!!data.testMode);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -286,6 +288,14 @@ export function PlanView({ data }: { data: PlanData }) {
             <span className="col"><span className="t-body" style={{ fontWeight: 600 }}>Bodyweight tracking</span><span className="t-small c-2">Log your weight once a week</span></span>
             <button type="button" className="switch" role="switch" aria-checked={bodyweight} aria-label="Bodyweight tracking" onClick={() => toggle("trackBodyweight", !bodyweight)}><span className="switch-track"><span className="switch-knob"><Icon name="check" /></span></span></button>
           </div>
+          {bodyweight && (
+            <div className="list-row" style={{ gap: "var(--space-3)" }}>
+              <label className="col grow" htmlFor="goalkg"><span className="t-body" style={{ fontWeight: 600 }}>Goal weight (kg)</span><span className="t-small c-2">Shown on Progress with your 7-day average. Leave empty for none.</span></label>
+              <input autoComplete="off" id="goalkg" className="input" style={{ width: 96 }} inputMode="decimal" value={goalText} placeholder="e.g. 78" aria-label="Goal weight in kilograms"
+                onChange={(e) => setGoalText(e.target.value)}
+                onBlur={() => { const n = goalText.trim() === "" ? null : Number(goalText.replace(",", ".")); run(() => saveGoalWeight(n)); }} />
+            </div>
+          )}
           <div className="switch-row list-row">
             <span className="col"><span className="t-body" style={{ fontWeight: 600 }}>Test mode</span><span className="t-small c-2">{testMode ? "On. Turning it off deletes your test sessions." : "Start any day to try every screen. Test sessions are deleted afterwards."}</span></span>
             <button type="button" className="switch" role="switch" aria-checked={testMode} aria-label="Test mode" disabled={pending} onClick={() => flipTestMode(!testMode)}><span className="switch-track"><span className="switch-knob"><Icon name="check" /></span></span></button>
@@ -306,6 +316,7 @@ export function PlanView({ data }: { data: PlanData }) {
             <p className="t-small c-2">Clears this phone’s saved screen state and cached files, then reloads. Your data and anything not uploaded yet are kept.</p>
             <a className="btn btn-secondary btn-block" href="/api/export" download>Export data as CSV</a>
             <a className="btn btn-secondary btn-block" href="/api/backup" download>Download full backup (JSON)</a>
+            <RestoreBackup />
           </div>
         </details>
         <form action={logOut}><button type="submit" className="btn btn-tertiary btn-block">Log out{data.email ? ` (${data.email})` : ""}</button></form>
