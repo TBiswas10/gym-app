@@ -4,4 +4,5 @@ cd "$(dirname "$0")/.."
 npx tsc --noEmit 2>&1 | head -30; [ ${PIPESTATUS[0]} -eq 0 ] || { echo "TYPECHECK FAILED"; exit 1; }
 npm run lint 2>&1 | tail -25; [ ${PIPESTATUS[0]} -eq 0 ] || { echo "LINT FAILED"; exit 1; }
 npx vitest run 2>&1 | grep -E "FAIL|Tests |Test Files|Error" | head -30; [ ${PIPESTATUS[0]} -eq 0 ] || { echo "TESTS FAILED"; exit 1; }
+node scripts/tests/sw-offline.test.mjs 2>&1 | tail -3; [ ${PIPESTATUS[0]} -eq 0 ] || { echo "SW TEST FAILED"; exit 1; }
 echo "ALL CHECKS PASSED"

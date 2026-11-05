@@ -15,7 +15,18 @@ export function TabBar() {
   // Fetch every tab ahead of time so switching never waits.
   useEffect(() => {
     // After the screen has settled: loading the heavy tabs (Progress reads every set) at launch made opening feel stuck.
-    const go = () => TABS.forEach((t) => router.prefetch(t.href));
+    const go = () => {
+      TABS.forEach((t) => router.prefetch(t.href));
+      // Keep a copy of each tab on the phone (the service worker saves it) so the app opens with no signal. At most every 20 minutes.
+      try {
+        const last = Number(window.localStorage.getItem("wt.warm") || 0);
+        if (!navigator.onLine || Date.now() - last < 20 * 60_000) return;
+        window.localStorage.setItem("wt.warm", String(Date.now()));
+      } catch {
+        return;
+      }
+      TABS.forEach((t) => void fetch(t.href, { headers: { "x-wt-warm": "1" }, credentials: "same-origin" }).catch(() => undefined));
+    };
     const id = window.setTimeout(go, 4000);
     return () => window.clearTimeout(id);
   }, [router]);
