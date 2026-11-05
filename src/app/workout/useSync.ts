@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Op } from "@/lib/ops";
+import { clearStarted, hasPendingStart, setPendingCookie } from "@/lib/offline-start";
 import { afterFlush, loadQueue, saveQueue, takeBatch } from "@/lib/sync-queue";
 import { applyOpsAction } from "./actions";
 
@@ -42,6 +43,10 @@ export function useSync() {
         setOnline(true);
         saveQueue(afterFlush(loadQueue(), batch.length, res)); // re-read: more may have been added meanwhile
         setPending(loadQueue().length);
+        if (!hasPendingStart(loadQueue())) {
+          setPendingCookie(false); // the server has the session now
+          clearStarted();
+        }
         if (res.signedOut) {
           setSignedOut(true);
           break;

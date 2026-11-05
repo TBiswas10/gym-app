@@ -24,7 +24,7 @@ const nav = async (path) => {
   let out;
   handlers.fetch({ request: req, respondWith: (p) => (out = p) });
   const res = await out;
-  return res.text();
+  return res.status === 302 ? "REDIRECT " + new URL(res.headers.get("location")).pathname + new URL(res.headers.get("location")).search : res.text();
 };
 
 await cache.put("/offline", new Response("OFFLINE"));
@@ -41,5 +41,6 @@ assert.equal(await nav("/workout"), "<html>/workout</html>", "a fresh session re
 online = true;
 await nav("/complete");
 online = false;
-assert.equal(await nav("/workout"), "OFFLINE", "after finishing, the old session page is gone");
+assert.equal(await nav("/workout"), "REDIRECT /workout/offline", "after finishing, the old session page is gone and Start opens the copy kept on the phone");
+assert.equal(await nav("/workout?date=2026-11-05"), "REDIRECT /workout/offline?date=2026-11-05", "Start keeps its date");
 console.log("sw offline: all passed");

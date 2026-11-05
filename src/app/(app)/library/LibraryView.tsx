@@ -20,7 +20,7 @@ export interface LibItem {
 }
 
 const GROUPS = ["All", "My plan", "Chest", "Back", "Shoulders", "Arms", "Legs", "Core"];
-const KITS = ["Any equipment", "Machine", "Cable", "Dumbbells", "Smith machine", "Bodyweight", "Bench"];
+const KITS = ["Any equipment", "Machine", "Cable", "Dumbbells", "Barbell", "Smith machine", "Bodyweight", "Bench"];
 const TABS = ["Setup", "How to do it", "Mistakes"];
 
 export function LibraryView({ items, plan = {}, todayWeekday }: { items: LibItem[]; plan?: Record<string, number[]>; todayWeekday?: number }) {

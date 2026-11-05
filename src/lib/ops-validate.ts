@@ -19,6 +19,14 @@ const nullable = <T>(v: unknown, ok: (x: unknown) => x is T): v is T | null => v
 export function validateOp(raw: unknown): Op | null {
   if (!isObj(raw) || typeof raw.t !== "string") return null;
   switch (raw.t) {
+    case "start": {
+      const { workoutId, plannedDate, weekday, week, planType, dayName, light, startedAt } = raw;
+      if (!uuid(workoutId) || typeof plannedDate !== "string" || !DATE.test(plannedDate) || !int(weekday, 1, 7) || !int(week, 1, 12)) return null;
+      if ((planType !== "5day" && planType !== "3day") || typeof dayName !== "string" || dayName.length < 1 || dayName.length > 60 || typeof light !== "boolean") return null;
+      const ms = typeof startedAt === "string" ? Date.parse(startedAt) : NaN;
+      if (Number.isNaN(ms) || ms > Date.now() + 5 * 60_000 || ms < Date.now() - 3 * 86_400_000) return null;
+      return { t: "start", workoutId, plannedDate, weekday, week, planType, dayName, light, startedAt: new Date(ms).toISOString() };
+    }
     case "set": {
       const { id, workoutId, slug: sl, position, n, variant, kg, reps, secs, source } = raw;
       if (!uuid(id) || !uuid(workoutId) || !slug(sl) || !int(position, 1, 200) || !int(n, 1, 2)) return null;

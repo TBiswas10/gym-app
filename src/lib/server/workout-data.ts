@@ -23,6 +23,8 @@ export interface WorkoutPage {
   init: WorkoutInit;
   meta: {
     workoutId: string;
+    /** Only on a session that has not been created on the server yet (see loadWorkout preview): what the "start" operation needs. */
+    start?: { plannedDate: string; weekday: number; week: number; planType: "5day" | "3day"; light: boolean };
     sessionName: string;
     startedAt: string;
     cardioName: string;
@@ -101,6 +103,18 @@ export async function startSession(
   ctx: { startDate: string; planType: "5day" | "3day"; templateId: string; week: number; today: string },
   date: string,
 ): Promise<WorkoutRow | null> {
+  const plan = await sessionPlan(supabase, ctx, date);
+  if (!plan) return null;
+  const { data: created, error } = await supabase.from("workouts").insert(plan).select("*").single();
+  return error || !created ? null : created;
+}
+
+/** The row a session for `date` would have, or null unless it is a real session to start (see startSession). Writes nothing. */
+export async function sessionPlan(
+  supabase: ServerClient,
+  ctx: { startDate: string; planType: "5day" | "3day"; templateId: string; week: number; today: string },
+  date: string,
+) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
   const dates = weekDates(ctx.today);
   const weekday = weekdayOf(date);
@@ -111,12 +125,7 @@ export async function startSession(
   ]);
   // A skipped day can still be done later (it then shows a tick); a moved one is done from its new slot.
   if (!day || !dates.includes(date) || date < ctx.startDate || done?.length || ovr?.action === "moved") return null;
-  const { data: created, error } = await supabase
-    .from("workouts")
-    .insert({ planned_date: date, week: ctx.week, plan_type: ctx.planType, weekday, day_name: day.full_name, is_light: ovr?.action === "light" })
-    .select("*")
-    .single();
-  return error || !created ? null : created;
+  return { planned_date: date, week: ctx.week, plan_type: ctx.planType, weekday, day_name: day.full_name, is_light: ovr?.action === "light" };
 }
 
 /** Test mode only: start any template day today, flagged so it can be wiped. Returns null unless test mode is on. */
@@ -139,7 +148,11 @@ export async function startTestSession(
   return error || !created ? null : created;
 }
 
-export async function loadWorkout(supabase: ServerClient, uid: string, dateParam: string | null, now = new Date(), testWeekday: number | null = null): Promise<Loaded> {
+/**
+ * Everything the workout screen needs. With `preview`, a session that is not started yet is NOT created: the page is built for a new session id
+ * (the phone sends a "start" operation later), so it can be saved on the phone and started with no signal.
+ */
+export async function loadWorkout(supabase: ServerClient, uid: string, dateParam: string | null, now = new Date(), testWeekday: number | null = null, preview = false): Promise<Loaded> {
   const today = sydneyDate(now);
 
   const { data: state } = await supabase.from("program_state_view").select("start_date, plan_type, current_week, deload_weeks, rest_alerts").maybeSingle();
@@ -149,6 +162,8 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
 
   // Resume the session in progress, otherwise start the one asked for.
   let { data: workout } = await supabase.from("workouts").select("*").eq("status", "in_progress").maybeSingle();
+  let previewStart = false;
+  if (preview && workout) return { redirect: "/workout" };
 
   const { data: tpl } = await supabase.from("program_templates").select("id").eq("user_id", uid).eq("plan_type", planType).maybeSingle();
   if (!tpl) return { redirect: "/" };
@@ -158,7 +173,14 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
       workout = await startTestSession(supabase, { planType, templateId: tpl.id, week, today }, testWeekday);
     } else {
       if (!dateParam) return { redirect: "/" };
-      workout = await startSession(supabase, { startDate: state.start_date, planType, templateId: tpl.id, week, today }, dateParam);
+      const ctx = { startDate: state.start_date, planType, templateId: tpl.id, week, today };
+      if (preview) {
+        const plan = await sessionPlan(supabase, ctx, dateParam);
+        workout = plan && { ...plan, id: randomUUID(), user_id: uid, status: "in_progress", started_at: now.toISOString(), ended_at: null, created_at: now.toISOString(), notes: null, skipped_exercises: [], is_test: false };
+        previewStart = !!plan;
+      } else {
+        workout = await startSession(supabase, ctx, dateParam);
+      }
     }
     if (!workout) return { redirect: "/" };
   }
@@ -296,7 +318,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
     page: {
       init,
       meta: {
-        workoutId: w.id, sessionName: w.day_name, startedAt: w.started_at, cardioName: day.cardio_name, cardioLabel: day.cardio_label,
+        workoutId: w.id, start: previewStart ? { plannedDate: w.planned_date, weekday: w.weekday, week: w.week, planType, light: w.is_light } : undefined, sessionName: w.day_name, startedAt: w.started_at, cardioName: day.cardio_name, cardioLabel: day.cardio_label,
         week, deload, restAlerts: state.rest_alerts ?? true, light, setup, highSoreness: sore, hold: reviewHold,
       },
       guides, backupGuides, alternatives, formNotes, catalog, lastBySlug, lastCardio,

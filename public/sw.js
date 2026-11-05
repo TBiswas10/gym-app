@@ -78,6 +78,11 @@ async function page(req, url) {
       const saved = Number(hit.headers.get("x-wt-saved") || 0);
       if (url.pathname !== "/workout" || Date.now() - saved < WORKOUT_FRESH_MS) return hit;
     }
+    // Start (or Resume) with no usable connection: open the copy of the workout kept on this phone.
+    if (req.mode === "navigate" && url.pathname === "/workout") {
+      const d = url.searchParams.get("date");
+      return Response.redirect(url.origin + "/workout/offline" + (d ? "?date=" + encodeURIComponent(d) : ""), 302);
+    }
     // Nothing saved for this exact screen: the closest tab, then the offline page.
     if (req.mode === "navigate") {
       const home = await cache.match(key(new URL("/", url.origin)));

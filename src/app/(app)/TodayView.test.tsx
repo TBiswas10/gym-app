@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: () => {}, replace: () => {}, refresh: () => {}, prefetch: () => {} }), usePathname: () => "/" }));
 import { renderToStaticMarkup } from "react-dom/server";
 import { TodayView } from "./TodayView";
 import { buildStrip, freeDays, missedCard, type Override } from "@/lib/schedule";

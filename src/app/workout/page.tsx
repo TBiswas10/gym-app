@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loadWorkout } from "@/lib/server/workout-data";
@@ -13,6 +14,8 @@ export default async function WorkoutPage({ searchParams }: { searchParams: Prom
   const uid = auth?.claims?.sub;
   if (!uid) redirect("/login");
 
+  // A session started with no signal is still waiting to be created: let the phone send it first (never create a second one).
+  if ((await cookies()).get("wt_pending_start")?.value === "1") redirect("/workout/offline");
   let loaded;
   try {
     const tw = test && /^[1-7]$/.test(test) ? Number(test) : null;

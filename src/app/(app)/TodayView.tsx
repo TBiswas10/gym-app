@@ -1,5 +1,6 @@
 "use client";
 
+import { StartButton } from "@/components/StartButton";
 import Link from "next/link";
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
@@ -616,11 +617,11 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
       {(startable || sel !== todayIdx) && (
       <div className="bottom-bar above-tabs">
         {startable && (
-          <Link className="btn btn-primary btn-cta" href={startHref} prefetch={false}>
+          <StartButton className="btn btn-primary btn-cta" href={startHref} date={d.sessionOrigin!}>
             <Icon name="play" />
             {startLabel}
             {total > 0 && <span style={{ fontWeight: 500, opacity: 0.75 }}> · ~{total} min</span>}
-          </Link>
+          </StartButton>
         )}
         {!startable && sel !== todayIdx && (
           <button type="button" className="btn btn-secondary btn-cta" onClick={() => setSel(todayIdx)}>

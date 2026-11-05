@@ -1,34 +1,1092 @@
 [
-{"slug":"seatedcalf","name":"Seated calf raise","category":"lower","group":"Legs","kit":"Machine","kind":"weight","muscles":["Calves"],"rep_lo":10,"rep_hi":15,"step":2.5,"inc":2.5,"setup":["Sit in the machine and place the balls of your feet on the pad.","Set the pad on your thighs, just above the knees.","Adjust the seat so your knees sit comfortably under the pad."],"cues":["Push up through the balls of your feet.","Pause for a second at the top.","Lower slowly until your heels stretch down."],"mistakes":["Bouncing at the bottom of the move.","Rushing the reps instead of going slow.","Going too fast and skipping the stretch at the bottom."],"backup":"Standing calf raise","photo_query":"seated calf raise machine"},
-{"slug":"inclinelegraise","name":"Incline bench leg raise","category":"lower","group":"Core","kit":"Bench","kind":"bodyweight","muscles":["Abs","Core"],"rep_lo":8,"rep_hi":15,"step":2.5,"inc":2.5,"setup":["Lie on an incline bench and hold the sides or the top edge.","Keep your legs straight and together in front of you.","Brace your belly before you start the first rep."],"cues":["Lift your legs up until your hips start to tilt.","Lower slowly without letting your feet touch the floor.","Breathe out as you lift and in as you lower."],"mistakes":["Swinging your legs instead of using your belly.","Letting your lower back arch off the bench.","Bending your knees a lot to make it easier."],"backup":"Lying leg raise","photo_query":"incline bench leg raise"},
-{"slug":"verticalraise","name":"Vertical leg raise machine","category":"lower","group":"Core","kit":"Machine","kind":"bodyweight","muscles":["Abs","Core"],"rep_lo":8,"rep_hi":15,"step":2.5,"inc":2.5,"setup":["Stand in the machine and grip the handles firmly.","Rest your forearms on the pads and lean back.","Let your legs hang straight down in front of you."],"cues":["Tighten your belly and lift your knees toward your chest.","Pause briefly at the top of the lift.","Lower your legs slowly under control."],"mistakes":["Using momentum to swing your legs up.","Leaning forward and pulling with your arms.","Dropping your legs fast at the bottom."],"backup":"Captain's chair leg raise","photo_query":"vertical leg raise machine"},
-{"slug":"abroller","name":"Ab roller","category":"lower","group":"Core","kit":"Bodyweight","kind":"bodyweight","muscles":["Abs","Core"],"rep_lo":8,"rep_hi":15,"step":2.5,"inc":2.5,"setup":["Kneel on a mat and hold the roller with both hands.","Keep your hands shoulder-width apart on the handle.","Keep your back straight and your hips in line."],"cues":["Roll forward slowly, keeping your belly tight.","Go only as far as you can keep your back flat.","Pull back using your belly, not your hips."],"mistakes":["Letting your lower back sag toward the floor.","Rolling out too far and losing control.","Holding your breath during the whole set."],"backup":"Plank","photo_query":"ab roller exercise"},
-{"slug":"tbarrow","name":"T-bar row","category":"upper","group":"Back","kit":"Machine","kind":"weight","muscles":["Lats","Mid back"],"rep_lo":8,"rep_hi":12,"step":2.5,"inc":2.5,"setup":["Stand over the T-bar with feet set wide and knees soft.","Grip the handle with both hands and keep your back flat.","Hinge forward at the hips until your torso is near level."],"cues":["Pull the handle toward your lower chest.","Squeeze your shoulder blades together at the top.","Lower the weight slowly until your arms are straight."],"mistakes":["Rounding your back to lift the weight.","Using jerky swings to start each rep.","Shrugging your shoulders up toward your ears."],"backup":"Seated cable row","photo_query":"T-bar row"},
-{"slug":"barbellbench","name":"Barbell bench press","category":"upper","group":"Chest","kit":"Barbell","kind":"weight","muscles":["Chest","Triceps","Front shoulders"],"rep_lo":6,"rep_hi":10,"step":2.5,"inc":2.5,"setup":["Lie on a flat bench with your eyes under the bar.","Grip the bar a bit wider than your shoulders.","Plant your feet firmly and keep your back on the bench."],"cues":["Lower the bar slowly to your mid chest.","Press the bar up in a smooth line.","Keep your wrists straight above your elbows."],"mistakes":["Bouncing the bar off your chest.","Lifting your hips off the bench to push.","Letting your elbows flare out wide."],"backup":"Dumbbell bench press","photo_query":"barbell bench press"},
-{"slug":"barbellsquat","name":"Barbell back squat","category":"lower","group":"Legs","kit":"Barbell","kind":"weight","muscles":["Quads","Glutes","Hamstrings"],"rep_lo":6,"rep_hi":10,"step":2.5,"inc":5,"setup":["Set the bar on your upper back, across the shoulders.","Stand with feet about shoulder-width apart, toes slightly out.","Brace your core before you unrack the bar."],"cues":["Sit back and down until your thighs are near parallel.","Keep your chest up and your back straight.","Push through your whole foot to stand up."],"mistakes":["Letting your knees cave inward as you stand.","Rounding your lower back at the bottom.","Lifting your heels off the floor."],"backup":"Goblet squat","photo_query":"barbell back squat"},
-{"slug":"deadlift","name":"Conventional deadlift","category":"upper","group":"Back","kit":"Barbell","kind":"weight","muscles":["Lower back","Glutes","Hamstrings"],"rep_lo":5,"rep_hi":8,"step":2.5,"inc":2.5,"setup":["Stand with the bar over the middle of your feet.","Bend down and grip the bar just outside your legs.","Set your back flat and your chest up before you lift."],"cues":["Push the floor away with your legs as the bar rises.","Keep the bar close to your shins the whole way.","Stand tall and squeeze your glutes at the top."],"mistakes":["Rounding your back as you pull the bar up.","Jerking the bar off the floor instead of pulling smoothly.","Leaning back at the top instead of standing tall."],"backup":"Romanian deadlift","photo_query":"conventional deadlift"},
-{"slug":"ohpress","name":"Barbell overhead press","category":"upper","group":"Shoulders","kit":"Barbell","kind":"weight","muscles":["Front shoulders","Side shoulders","Triceps"],"rep_lo":6,"rep_hi":10,"step":2.5,"inc":2.5,"setup":["Set the bar on the rack at about collarbone height.","Grip the bar slightly wider than shoulder-width.","Stand tall with feet apart and your core braced."],"cues":["Press the bar straight up past your face.","Move your head back, then tuck it under the bar at the top.","Lower the bar slowly back to your collarbones."],"mistakes":["Arching your lower back to push the bar up.","Pressing the bar in front of your face.","Bending your knees to help push the weight."],"backup":"Dumbbell shoulder press","photo_query":"barbell overhead press"},
-{"slug":"pullup","name":"Pull-up","category":"upper","group":"Back","kit":"Bodyweight","kind":"bodyweight","muscles":["Lats","Biceps","Upper back"],"rep_lo":8,"rep_hi":15,"step":2.5,"inc":2.5,"setup":["Grip the bar a bit wider than your shoulders, palms facing away.","Hang with arms straight and your feet off the floor.","Brace your core and keep your legs together."],"cues":["Pull your chest up toward the bar.","Lead with your elbows and drive them down.","Lower yourself slowly until your arms are straight."],"mistakes":["Kicking your legs to swing up.","Stopping halfway without reaching the top.","Dropping down fast at the bottom."],"backup":"Lat pulldown","photo_query":"pull-up"},
-{"slug":"chinup","name":"Chin-up","category":"upper","group":"Back","kit":"Bodyweight","kind":"bodyweight","muscles":["Biceps","Lats","Upper back"],"rep_lo":8,"rep_hi":15,"step":2.5,"inc":2.5,"setup":["Grip the bar with palms facing you, shoulder-width apart.","Hang with your arms fully straight and feet off the floor.","Brace your core and keep your body steady."],"cues":["Pull your chest toward the bar, elbows pointing down.","Squeeze your back at the top of the move.","Lower yourself slowly until your arms are straight."],"mistakes":["Swinging your body to get your chin up.","Only going halfway up each rep.","Letting go and dropping at the bottom."],"backup":"Assisted pull-up","photo_query":"chin-up"},
-{"slug":"dips","name":"Parallel bar dips","category":"upper","group":"Chest","kit":"Bodyweight","kind":"bodyweight","muscles":["Triceps","Chest","Front shoulders"],"rep_lo":8,"rep_hi":15,"step":2.5,"inc":2.5,"setup":["Grip the parallel bars and lift yourself up with arms straight.","Keep your body upright with your legs bent behind you.","Hold your shoulders down and away from your ears."],"cues":["Lower yourself until your elbows reach about 90 degrees.","Push back up until your arms are straight.","Keep your elbows pointing back, not flared out wide."],"mistakes":["Going down too far and straining your shoulders.","Swinging your legs to push yourself up.","Shrugging your shoulders up toward your ears."],"backup":"Bench dips","photo_query":"parallel bar dips"},
-{"slug":"bbrow","name":"Barbell bent-over row","category":"upper","group":"Back","kit":"Barbell","kind":"weight","muscles":["Lats","Mid back","Biceps"],"rep_lo":6,"rep_hi":10,"step":2.5,"inc":2.5,"setup":["Stand with feet hip-width apart and the bar in front of your shins.","Hinge forward at the hips until your torso is near level.","Grip the bar just outside your knees, arms straight."],"cues":["Pull the bar toward your lower ribs.","Squeeze your shoulder blades together at the top.","Lower the bar slowly until your arms are straight."],"mistakes":["Rounding your back during each rep.","Standing up as you pull, using body swing.","Pulling the bar up toward your neck instead of your belly."],"backup":"Dumbbell row","photo_query":"barbell bent-over row"},
-{"slug":"bbhipthrust","name":"Barbell hip thrust","category":"lower","group":"Legs","kit":"Barbell","kind":"weight","muscles":["Glutes","Hamstrings"],"rep_lo":8,"rep_hi":12,"step":2.5,"inc":5,"setup":["Sit on the floor with your upper back against a bench.","Roll the bar over your hips, with a pad on it.","Plant your feet flat and hip-width apart."],"cues":["Drive through your heels and lift your hips up.","Squeeze your glutes hard at the top.","Lower your hips slowly back toward the floor."],"mistakes":["Arching your lower back at the top of the move.","Pushing through your toes instead of your heels.","Letting the bar roll off your hips."],"backup":"Glute bridge","photo_query":"barbell hip thrust"},
-{"slug":"bulgarian","name":"Bulgarian split squat","category":"lower","group":"Legs","kit":"Dumbbells","kind":"weight","muscles":["Quads","Glutes"],"rep_lo":8,"rep_hi":12,"step":2,"inc":2,"setup":["Stand a stride in front of a bench with dumbbells at your sides.","Rest the top of one foot on the bench behind you.","Keep your front foot flat and your torso upright."],"cues":["Lower your back knee toward the floor slowly.","Push through your front heel to stand back up.","Keep your front knee in line with your toes."],"mistakes":["Standing too close to the bench, so the knee bends too far.","Leaning forward too much and losing balance.","Pushing off the back foot instead of the front leg."],"backup":"Dumbbell lunge","photo_query":"Bulgarian split squat"},
-{"slug":"seatedlegcurl","name":"Seated leg curl","category":"lower","group":"Legs","kit":"Machine","kind":"weight","muscles":["Hamstrings"],"rep_lo":10,"rep_hi":15,"step":2.5,"inc":2.5,"setup":["Sit in the machine and adjust the seat so the pivot lines up with your knees.","Place the pad just above your ankles.","Hold the handles and keep your back against the seat."],"cues":["Curl the pad down toward your hips.","Squeeze your hamstrings at the bottom.","Return the weight slowly to the start."],"mistakes":["Lifting your hips off the seat to help.","Letting the weight slam back down.","Setting the pad too high on your legs."],"backup":"Lying leg curl","photo_query":"seated leg curl machine"},
-{"slug":"shrug","name":"Dumbbell shrug","category":"upper","group":"Shoulders","kit":"Dumbbells","kind":"weight","muscles":["Traps"],"rep_lo":8,"rep_hi":12,"step":2,"inc":2,"setup":["Stand tall holding a dumbbell in each hand at your sides.","Keep your arms straight and your palms facing your legs.","Stand with feet hip-width apart and your chest up."],"cues":["Lift your shoulders straight up toward your ears.","Pause for a second at the top.","Lower the weights slowly back down."],"mistakes":["Rolling your shoulders in circles.","Bending your elbows to lift the weight.","Using too much weight and rocking your body."],"backup":"Barbell shrug","photo_query":"dumbbell shrug"},
-{"slug":"skullcrusher","name":"Lying triceps extension","category":"upper","group":"Arms","kit":"Barbell","kind":"weight","muscles":["Triceps"],"rep_lo":8,"rep_hi":12,"step":2.5,"inc":2.5,"setup":["Lie on a flat bench holding a bar with arms straight above you.","Grip the bar about shoulder-width apart.","Keep your upper arms still and pointing up."],"cues":["Bend your elbows to lower the bar toward your forehead.","Keep your elbows pointing up and steady.","Straighten your arms to press the bar back up."],"mistakes":["Letting your elbows flare out wide.","Lowering the bar too fast and losing control.","Moving your shoulders instead of just your elbows."],"backup":"Triceps pushdown","photo_query":"lying triceps extension barbell"},
-{"slug":"ezcurl","name":"EZ-bar curl","category":"upper","group":"Arms","kit":"Barbell","kind":"weight","muscles":["Biceps","Forearms"],"rep_lo":8,"rep_hi":12,"step":2.5,"inc":2.5,"setup":["Stand tall holding the EZ-bar at the angled grips.","Keep your elbows close to your sides.","Let the bar hang at arm's length in front of you."],"cues":["Curl the bar up toward your shoulders.","Keep your upper arms still throughout the move.","Lower the bar slowly until your arms are straight."],"mistakes":["Swinging your body to lift the bar.","Letting your elbows drift forward.","Dropping the bar fast at the bottom."],"backup":"Barbell curl","photo_query":"EZ-bar curl"},
-{"slug":"concentration","name":"Concentration curl","category":"upper","group":"Arms","kit":"Dumbbells","kind":"weight","muscles":["Biceps"],"rep_lo":8,"rep_hi":12,"step":2,"inc":2,"setup":["Sit on a bench with your legs apart.","Hold a dumbbell in one hand between your knees.","Rest your upper arm on the inside of your thigh."],"cues":["Curl the dumbbell up toward your shoulder.","Squeeze your bicep at the top.","Lower the weight slowly until your arm is straight."],"mistakes":["Lifting your elbow off your thigh.","Leaning your body to swing the weight up.","Rushing the lowering part of the move."],"backup":"Dumbbell curl","photo_query":"concentration curl"},
-{"slug":"crunchmachine","name":"Ab crunch machine","category":"lower","group":"Core","kit":"Machine","kind":"weight","muscles":["Abs"],"rep_lo":10,"rep_hi":15,"step":2.5,"inc":2.5,"setup":["Sit on the seat and grip the handles.","Adjust the seat so the pad sits against your chest.","Keep your feet flat and your back against the pad."],"cues":["Crunch your chest down toward your hips.","Keep your hips still and only your upper back moves.","Return slowly to the start without losing tension."],"mistakes":["Pulling with your arms instead of your belly.","Going too heavy and rocking your body.","Holding your breath for the whole set."],"backup":"Cable crunch","photo_query":"ab crunch machine"},
-{"slug":"russiantwist","name":"Russian twist","category":"lower","group":"Core","kit":"Bodyweight","kind":"bodyweight","muscles":["Obliques","Abs"],"rep_lo":8,"rep_hi":15,"step":2.5,"inc":2.5,"setup":["Sit on the floor with knees bent and feet lifted slightly.","Lean back until your torso forms a V shape with your thighs.","Clasp your hands together in front of your chest."],"cues":["Rotate your upper body to one side, then the other.","Keep your back straight and your belly tight.","Move slowly and touch the floor beside your hips."],"mistakes":["Rounding your back as you twist.","Moving only your arms instead of your torso.","Rushing the reps without control."],"backup":"Side plank","photo_query":"Russian twist"},
-{"slug":"bicyclecrunch","name":"Bicycle crunch","category":"lower","group":"Core","kit":"Bodyweight","kind":"bodyweight","muscles":["Abs","Obliques"],"rep_lo":8,"rep_hi":15,"step":2.5,"inc":2.5,"setup":["Lie on your back with hands lightly behind your head.","Lift your shoulders off the floor slightly.","Lift your knees to a table-top position."],"cues":["Bring one elbow toward the opposite knee.","Straighten the other leg as you switch sides.","Move at a steady pace without pulling on your neck."],"mistakes":["Pulling your neck forward with your hands.","Moving too fast to control the twist.","Letting your lower back lift off the floor."],"backup":"Crunch","photo_query":"bicycle crunch"},
-{"slug":"woodchop","name":"Cable woodchop","category":"lower","group":"Core","kit":"Cable","kind":"weight","muscles":["Obliques","Abs"],"rep_lo":8,"rep_hi":12,"step":2.5,"inc":2.5,"setup":["Set the cable pulley high and stand side-on to the machine.","Hold the handle with both hands and step away to add tension.","Keep your feet wide and your knees slightly bent."],"cues":["Pull the handle down across your body toward the opposite hip.","Turn your torso as you move through the twist.","Return slowly to the starting position with control."],"mistakes":["Using your arms only and not turning your body.","Keeping your knees locked and stiff.","Using too much weight and losing balance."],"backup":"Pallof press","photo_query":"cable woodchop"},
-{"slug":"dbreversefly","name":"Dumbbell reverse fly","category":"upper","group":"Shoulders","kit":"Dumbbells","kind":"weight","muscles":["Rear shoulders","Upper back"],"rep_lo":10,"rep_hi":15,"step":2,"inc":2,"setup":["Hold a dumbbell in each hand and hinge forward at the hips.","Let the weights hang straight down under your shoulders.","Keep a soft bend in your elbows."],"cues":["Raise your arms out to the sides in a wide arc.","Squeeze your shoulder blades together at the top.","Lower the weights slowly back down."],"mistakes":["Swinging the weights up with your body.","Lifting your arms above shoulder height.","Using heavy weight and rounding your back."],"backup":"Face pull","photo_query":"dumbbell reverse fly"},
-{"slug":"dbfly","name":"Dumbbell fly","category":"upper","group":"Chest","kit":"Dumbbells","kind":"weight","muscles":["Chest","Front shoulders"],"rep_lo":10,"rep_hi":15,"step":2,"inc":2,"setup":["Lie on a flat bench holding a dumbbell in each hand above your chest.","Keep your palms facing each other.","Keep a soft bend in your elbows throughout."],"cues":["Open your arms out to the sides in a wide arc.","Feel a stretch across your chest at the bottom.","Bring the weights back up over your chest."],"mistakes":["Bending your elbows into a press.","Lowering the weights too far and straining the shoulders.","Bouncing the weights at the bottom."],"backup":"Cable fly","photo_query":"dumbbell fly"},
-{"slug":"wristcurl","name":"Wrist curl","category":"upper","group":"Arms","kit":"Dumbbells","kind":"weight","muscles":["Forearms"],"rep_lo":10,"rep_hi":15,"step":2,"inc":2,"setup":["Sit on a bench with your forearms resting on your thighs.","Let your wrists hang over the edge of your knees.","Hold a light dumbbell in each hand with palms up."],"cues":["Curl your wrists up as far as you can.","Lower the weights slowly down into a stretch.","Move only your wrists, keeping your forearms still."],"mistakes":["Using too much weight and moving your whole arm.","Rushing the lowering part.","Letting your forearms lift off your thighs."],"backup":"Reverse wrist curl","photo_query":"wrist curl dumbbell"},
-{"slug":"stepup","name":"Dumbbell step-up","category":"lower","group":"Legs","kit":"Dumbbells","kind":"weight","muscles":["Quads","Glutes"],"rep_lo":8,"rep_hi":12,"step":2,"inc":2,"setup":["Hold a dumbbell in each hand and stand facing a bench or step.","Place one whole foot flat on the bench.","Stand tall with your chest up."],"cues":["Push through your front heel to stand up on the bench.","Step down slowly with control.","Keep your front knee in line with your toes."],"mistakes":["Pushing off the floor with your back foot.","Using a bench that is too high.","Letting your front knee cave inward."],"backup":"Bodyweight step-up","photo_query":"dumbbell step-up"},
-{"slug":"hanglegraise","name":"Hanging leg raise","category":"lower","group":"Core","kit":"Bodyweight","kind":"bodyweight","muscles":["Abs","Core"],"rep_lo":8,"rep_hi":15,"step":2.5,"inc":2.5,"setup":["Hang from a pull-up bar with your hands shoulder-width apart.","Keep your legs straight and together.","Brace your belly before you lift."],"cues":["Lift your legs up toward the bar using your belly.","Pause briefly at the top of the lift.","Lower your legs slowly without swinging."],"mistakes":["Swinging your legs to build momentum.","Bending your knees a lot to make it easier.","Lowering your legs fast and losing control."],"backup":"Hanging knee raise","photo_query":"hanging leg raise"},
-{"slug":"declinesitup","name":"Decline sit-up","category":"lower","group":"Core","kit":"Bench","kind":"bodyweight","muscles":["Abs","Core"],"rep_lo":8,"rep_hi":15,"step":2.5,"inc":2.5,"setup":["Lock your feet under the pads of a decline bench.","Lie back with your head lower than your feet.","Cross your arms over your chest or hold a light weight."],"cues":["Curl your upper body up toward your knees.","Breathe out as you come up.","Lower slowly until your back touches the bench."],"mistakes":["Pulling on your neck with your hands.","Using momentum to swing up.","Letting your feet slip from the pads."],"backup":"Sit-up","photo_query":"decline sit-up"},
-{"slug":"inclinebb","name":"Incline barbell press","category":"upper","group":"Chest","kit":"Barbell","kind":"weight","muscles":["Upper chest","Front shoulders","Triceps"],"rep_lo":6,"rep_hi":10,"step":2.5,"inc":2.5,"setup":["Set the bench to a low incline and lie back with eyes under the bar.","Grip the bar a bit wider than your shoulders.","Plant your feet firmly and keep your back flat on the bench."],"cues":["Lower the bar slowly to your upper chest.","Press the bar up in a straight line.","Keep your elbows at a comfortable angle, not flared out."],"mistakes":["Setting the bench too steep, so it becomes a shoulder press.","Bouncing the bar off your chest.","Lifting your hips off the bench."],"backup":"Incline dumbbell press","photo_query":"incline barbell bench press"},
-{"slug":"chestsupportedtbar","name":"Chest-supported T-bar row","category":"upper","group":"Back","kit":"Machine","kind":"weight","muscles":["Lats","Mid back"],"rep_lo":8,"rep_hi":12,"step":2.5,"inc":2.5,"setup":["Set your chest on the pad and grip the handles.","Keep your feet planted and your chest against the support.","Let your arms hang straight down under you."],"cues":["Pull the handles toward your lower ribs.","Squeeze your shoulder blades together at the top.","Lower the weight slowly until your arms are straight."],"mistakes":["Lifting your chest off the pad to pull.","Using jerky swings to start each rep.","Shrugging your shoulders up toward your ears."],"backup":"Chest-supported dumbbell row","photo_query":"chest-supported T-bar row"}
+ {
+  "slug": "seatedcalf",
+  "name": "Seated calf raise",
+  "category": "lower",
+  "group": "Legs",
+  "kit": "Machine",
+  "kind": "weight",
+  "muscles": [
+   "Calves"
+  ],
+  "rep_lo": 10,
+  "rep_hi": 15,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Sit in the machine and place the balls of your feet on the pad.",
+   "Set the pad on your thighs, just above the knees.",
+   "Adjust the seat so your knees sit comfortably under the pad."
+  ],
+  "cues": [
+   "Push up through the balls of your feet.",
+   "Pause for a second at the top.",
+   "Lower slowly until your heels stretch down."
+  ],
+  "mistakes": [
+   "Bouncing at the bottom of the move.",
+   "Rushing the reps instead of going slow.",
+   "Going too fast and skipping the stretch at the bottom."
+  ],
+  "backup": "Standing calf raise",
+  "photo_query": "seated calf raise machine",
+  "photo": "Seated_Calf_Raise"
+ },
+ {
+  "slug": "inclinelegraise",
+  "name": "Incline bench leg raise",
+  "category": "lower",
+  "group": "Core",
+  "kit": "Bench",
+  "kind": "bodyweight",
+  "muscles": [
+   "Abs",
+   "Core"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 15,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Lie on an incline bench and hold the sides or the top edge.",
+   "Keep your legs straight and together in front of you.",
+   "Brace your belly before you start the first rep."
+  ],
+  "cues": [
+   "Lift your legs up until your hips start to tilt.",
+   "Lower slowly without letting your feet touch the floor.",
+   "Breathe out as you lift and in as you lower."
+  ],
+  "mistakes": [
+   "Swinging your legs instead of using your belly.",
+   "Letting your lower back arch off the bench.",
+   "Bending your knees a lot to make it easier."
+  ],
+  "backup": "Lying leg raise",
+  "photo_query": "incline bench leg raise",
+  "photo": "Incline_Bench_Pull"
+ },
+ {
+  "slug": "verticalraise",
+  "name": "Vertical leg raise machine",
+  "category": "lower",
+  "group": "Core",
+  "kit": "Machine",
+  "kind": "bodyweight",
+  "muscles": [
+   "Abs",
+   "Core"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 15,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Stand in the machine and grip the handles firmly.",
+   "Rest your forearms on the pads and lean back.",
+   "Let your legs hang straight down in front of you."
+  ],
+  "cues": [
+   "Tighten your belly and lift your knees toward your chest.",
+   "Pause briefly at the top of the lift.",
+   "Lower your legs slowly under control."
+  ],
+  "mistakes": [
+   "Using momentum to swing your legs up.",
+   "Leaning forward and pulling with your arms.",
+   "Dropping your legs fast at the bottom."
+  ],
+  "backup": "Captain's chair leg raise",
+  "photo_query": "vertical leg raise machine",
+  "photo": "Vertical_Swing"
+ },
+ {
+  "slug": "abroller",
+  "name": "Ab roller",
+  "category": "lower",
+  "group": "Core",
+  "kit": "Bodyweight",
+  "kind": "bodyweight",
+  "muscles": [
+   "Abs",
+   "Core"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 15,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Kneel on a mat and hold the roller with both hands.",
+   "Keep your hands shoulder-width apart on the handle.",
+   "Keep your back straight and your hips in line."
+  ],
+  "cues": [
+   "Roll forward slowly, keeping your belly tight.",
+   "Go only as far as you can keep your back flat.",
+   "Pull back using your belly, not your hips."
+  ],
+  "mistakes": [
+   "Letting your lower back sag toward the floor.",
+   "Rolling out too far and losing control.",
+   "Holding your breath during the whole set."
+  ],
+  "backup": "Plank",
+  "photo_query": "ab roller exercise",
+  "photo": "Ab_Roller"
+ },
+ {
+  "slug": "tbarrow",
+  "name": "T-bar row",
+  "category": "upper",
+  "group": "Back",
+  "kit": "Machine",
+  "kind": "weight",
+  "muscles": [
+   "Lats",
+   "Mid back"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 12,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Stand over the T-bar with feet set wide and knees soft.",
+   "Grip the handle with both hands and keep your back flat.",
+   "Hinge forward at the hips until your torso is near level."
+  ],
+  "cues": [
+   "Pull the handle toward your lower chest.",
+   "Squeeze your shoulder blades together at the top.",
+   "Lower the weight slowly until your arms are straight."
+  ],
+  "mistakes": [
+   "Rounding your back to lift the weight.",
+   "Using jerky swings to start each rep.",
+   "Shrugging your shoulders up toward your ears."
+  ],
+  "backup": "Seated cable row",
+  "photo_query": "T-bar row",
+  "photo": "Lying_T-Bar_Row"
+ },
+ {
+  "slug": "barbellbench",
+  "name": "Barbell bench press",
+  "category": "upper",
+  "group": "Chest",
+  "kit": "Barbell",
+  "kind": "weight",
+  "muscles": [
+   "Chest",
+   "Triceps",
+   "Front shoulders"
+  ],
+  "rep_lo": 6,
+  "rep_hi": 10,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Lie on a flat bench with your eyes under the bar.",
+   "Grip the bar a bit wider than your shoulders.",
+   "Plant your feet firmly and keep your back on the bench."
+  ],
+  "cues": [
+   "Lower the bar slowly to your mid chest.",
+   "Press the bar up in a smooth line.",
+   "Keep your wrists straight above your elbows."
+  ],
+  "mistakes": [
+   "Bouncing the bar off your chest.",
+   "Lifting your hips off the bench to push.",
+   "Letting your elbows flare out wide."
+  ],
+  "backup": "Dumbbell bench press",
+  "photo_query": "barbell bench press",
+  "photo": "Dumbbell_Bench_Press"
+ },
+ {
+  "slug": "barbellsquat",
+  "name": "Barbell back squat",
+  "category": "lower",
+  "group": "Legs",
+  "kit": "Barbell",
+  "kind": "weight",
+  "muscles": [
+   "Quads",
+   "Glutes",
+   "Hamstrings"
+  ],
+  "rep_lo": 6,
+  "rep_hi": 10,
+  "step": 2.5,
+  "inc": 5,
+  "setup": [
+   "Set the bar on your upper back, across the shoulders.",
+   "Stand with feet about shoulder-width apart, toes slightly out.",
+   "Brace your core before you unrack the bar."
+  ],
+  "cues": [
+   "Sit back and down until your thighs are near parallel.",
+   "Keep your chest up and your back straight.",
+   "Push through your whole foot to stand up."
+  ],
+  "mistakes": [
+   "Letting your knees cave inward as you stand.",
+   "Rounding your lower back at the bottom.",
+   "Lifting your heels off the floor."
+  ],
+  "backup": "Goblet squat",
+  "photo_query": "barbell back squat",
+  "photo": "Barbell_Hack_Squat"
+ },
+ {
+  "slug": "deadlift",
+  "name": "Conventional deadlift",
+  "category": "upper",
+  "group": "Back",
+  "kit": "Barbell",
+  "kind": "weight",
+  "muscles": [
+   "Lower back",
+   "Glutes",
+   "Hamstrings"
+  ],
+  "rep_lo": 5,
+  "rep_hi": 8,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Stand with the bar over the middle of your feet.",
+   "Bend down and grip the bar just outside your legs.",
+   "Set your back flat and your chest up before you lift."
+  ],
+  "cues": [
+   "Push the floor away with your legs as the bar rises.",
+   "Keep the bar close to your shins the whole way.",
+   "Stand tall and squeeze your glutes at the top."
+  ],
+  "mistakes": [
+   "Rounding your back as you pull the bar up.",
+   "Jerking the bar off the floor instead of pulling smoothly.",
+   "Leaning back at the top instead of standing tall."
+  ],
+  "backup": "Romanian deadlift",
+  "photo_query": "conventional deadlift",
+  "photo": "Car_Deadlift"
+ },
+ {
+  "slug": "ohpress",
+  "name": "Barbell overhead press",
+  "category": "upper",
+  "group": "Shoulders",
+  "kit": "Barbell",
+  "kind": "weight",
+  "muscles": [
+   "Front shoulders",
+   "Side shoulders",
+   "Triceps"
+  ],
+  "rep_lo": 6,
+  "rep_hi": 10,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Set the bar on the rack at about collarbone height.",
+   "Grip the bar slightly wider than shoulder-width.",
+   "Stand tall with feet apart and your core braced."
+  ],
+  "cues": [
+   "Press the bar straight up past your face.",
+   "Move your head back, then tuck it under the bar at the top.",
+   "Lower the bar slowly back to your collarbones."
+  ],
+  "mistakes": [
+   "Arching your lower back to push the bar up.",
+   "Pressing the bar in front of your face.",
+   "Bending your knees to help push the weight."
+  ],
+  "backup": "Dumbbell shoulder press",
+  "photo_query": "barbell overhead press",
+  "photo": "Barbell_Shoulder_Press"
+ },
+ {
+  "slug": "pullup",
+  "name": "Pull-up",
+  "category": "upper",
+  "group": "Back",
+  "kit": "Bodyweight",
+  "kind": "bodyweight",
+  "muscles": [
+   "Lats",
+   "Biceps",
+   "Upper back"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 15,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Grip the bar a bit wider than your shoulders, palms facing away.",
+   "Hang with arms straight and your feet off the floor.",
+   "Brace your core and keep your legs together."
+  ],
+  "cues": [
+   "Pull your chest up toward the bar.",
+   "Lead with your elbows and drive them down.",
+   "Lower yourself slowly until your arms are straight."
+  ],
+  "mistakes": [
+   "Kicking your legs to swing up.",
+   "Stopping halfway without reaching the top.",
+   "Dropping down fast at the bottom."
+  ],
+  "backup": "Lat pulldown",
+  "photo_query": "pull-up",
+  "photo": "Pullups"
+ },
+ {
+  "slug": "chinup",
+  "name": "Chin-up",
+  "category": "upper",
+  "group": "Back",
+  "kit": "Bodyweight",
+  "kind": "bodyweight",
+  "muscles": [
+   "Biceps",
+   "Lats",
+   "Upper back"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 15,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Grip the bar with palms facing you, shoulder-width apart.",
+   "Hang with your arms fully straight and feet off the floor.",
+   "Brace your core and keep your body steady."
+  ],
+  "cues": [
+   "Pull your chest toward the bar, elbows pointing down.",
+   "Squeeze your back at the top of the move.",
+   "Lower yourself slowly until your arms are straight."
+  ],
+  "mistakes": [
+   "Swinging your body to get your chin up.",
+   "Only going halfway up each rep.",
+   "Letting go and dropping at the bottom."
+  ],
+  "backup": "Assisted pull-up",
+  "photo_query": "chin-up",
+  "photo": "Chin-Up"
+ },
+ {
+  "slug": "dips",
+  "name": "Parallel bar dips",
+  "category": "upper",
+  "group": "Chest",
+  "kit": "Bodyweight",
+  "kind": "bodyweight",
+  "muscles": [
+   "Triceps",
+   "Chest",
+   "Front shoulders"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 15,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Grip the parallel bars and lift yourself up with arms straight.",
+   "Keep your body upright with your legs bent behind you.",
+   "Hold your shoulders down and away from your ears."
+  ],
+  "cues": [
+   "Lower yourself until your elbows reach about 90 degrees.",
+   "Push back up until your arms are straight.",
+   "Keep your elbows pointing back, not flared out wide."
+  ],
+  "mistakes": [
+   "Going down too far and straining your shoulders.",
+   "Swinging your legs to push yourself up.",
+   "Shrugging your shoulders up toward your ears."
+  ],
+  "backup": "Bench dips",
+  "photo_query": "parallel bar dips",
+  "photo": "Parallel_Bar_Dip"
+ },
+ {
+  "slug": "bbrow",
+  "name": "Barbell bent-over row",
+  "category": "upper",
+  "group": "Back",
+  "kit": "Barbell",
+  "kind": "weight",
+  "muscles": [
+   "Lats",
+   "Mid back",
+   "Biceps"
+  ],
+  "rep_lo": 6,
+  "rep_hi": 10,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Stand with feet hip-width apart and the bar in front of your shins.",
+   "Hinge forward at the hips until your torso is near level.",
+   "Grip the bar just outside your knees, arms straight."
+  ],
+  "cues": [
+   "Pull the bar toward your lower ribs.",
+   "Squeeze your shoulder blades together at the top.",
+   "Lower the bar slowly until your arms are straight."
+  ],
+  "mistakes": [
+   "Rounding your back during each rep.",
+   "Standing up as you pull, using body swing.",
+   "Pulling the bar up toward your neck instead of your belly."
+  ],
+  "backup": "Dumbbell row",
+  "photo_query": "barbell bent-over row",
+  "photo": "Reverse_Grip_Bent-Over_Rows"
+ },
+ {
+  "slug": "bbhipthrust",
+  "name": "Barbell hip thrust",
+  "category": "lower",
+  "group": "Legs",
+  "kit": "Barbell",
+  "kind": "weight",
+  "muscles": [
+   "Glutes",
+   "Hamstrings"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 12,
+  "step": 2.5,
+  "inc": 5,
+  "setup": [
+   "Sit on the floor with your upper back against a bench.",
+   "Roll the bar over your hips, with a pad on it.",
+   "Plant your feet flat and hip-width apart."
+  ],
+  "cues": [
+   "Drive through your heels and lift your hips up.",
+   "Squeeze your glutes hard at the top.",
+   "Lower your hips slowly back toward the floor."
+  ],
+  "mistakes": [
+   "Arching your lower back at the top of the move.",
+   "Pushing through your toes instead of your heels.",
+   "Letting the bar roll off your hips."
+  ],
+  "backup": "Glute bridge",
+  "photo_query": "barbell hip thrust",
+  "photo": "Barbell_Hip_Thrust"
+ },
+ {
+  "slug": "bulgarian",
+  "name": "Bulgarian split squat",
+  "category": "lower",
+  "group": "Legs",
+  "kit": "Dumbbells",
+  "kind": "weight",
+  "muscles": [
+   "Quads",
+   "Glutes"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 12,
+  "step": 2,
+  "inc": 2,
+  "setup": [
+   "Stand a stride in front of a bench with dumbbells at your sides.",
+   "Rest the top of one foot on the bench behind you.",
+   "Keep your front foot flat and your torso upright."
+  ],
+  "cues": [
+   "Lower your back knee toward the floor slowly.",
+   "Push through your front heel to stand back up.",
+   "Keep your front knee in line with your toes."
+  ],
+  "mistakes": [
+   "Standing too close to the bench, so the knee bends too far.",
+   "Leaning forward too much and losing balance.",
+   "Pushing off the back foot instead of the front leg."
+  ],
+  "backup": "Dumbbell lunge",
+  "photo_query": "Bulgarian split squat",
+  "photo": "Barbell_Side_Split_Squat"
+ },
+ {
+  "slug": "seatedlegcurl",
+  "name": "Seated leg curl",
+  "category": "lower",
+  "group": "Legs",
+  "kit": "Machine",
+  "kind": "weight",
+  "muscles": [
+   "Hamstrings"
+  ],
+  "rep_lo": 10,
+  "rep_hi": 15,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Sit in the machine and adjust the seat so the pivot lines up with your knees.",
+   "Place the pad just above your ankles.",
+   "Hold the handles and keep your back against the seat."
+  ],
+  "cues": [
+   "Curl the pad down toward your hips.",
+   "Squeeze your hamstrings at the bottom.",
+   "Return the weight slowly to the start."
+  ],
+  "mistakes": [
+   "Lifting your hips off the seat to help.",
+   "Letting the weight slam back down.",
+   "Setting the pad too high on your legs."
+  ],
+  "backup": "Lying leg curl",
+  "photo_query": "seated leg curl machine",
+  "photo": "Seated_Leg_Curl"
+ },
+ {
+  "slug": "shrug",
+  "name": "Dumbbell shrug",
+  "category": "upper",
+  "group": "Shoulders",
+  "kit": "Dumbbells",
+  "kind": "weight",
+  "muscles": [
+   "Traps"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 12,
+  "step": 2,
+  "inc": 2,
+  "setup": [
+   "Stand tall holding a dumbbell in each hand at your sides.",
+   "Keep your arms straight and your palms facing your legs.",
+   "Stand with feet hip-width apart and your chest up."
+  ],
+  "cues": [
+   "Lift your shoulders straight up toward your ears.",
+   "Pause for a second at the top.",
+   "Lower the weights slowly back down."
+  ],
+  "mistakes": [
+   "Rolling your shoulders in circles.",
+   "Bending your elbows to lift the weight.",
+   "Using too much weight and rocking your body."
+  ],
+  "backup": "Barbell shrug",
+  "photo_query": "dumbbell shrug",
+  "photo": "Dumbbell_Shrug"
+ },
+ {
+  "slug": "skullcrusher",
+  "name": "Lying triceps extension",
+  "category": "upper",
+  "group": "Arms",
+  "kit": "Barbell",
+  "kind": "weight",
+  "muscles": [
+   "Triceps"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 12,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Lie on a flat bench holding a bar with arms straight above you.",
+   "Grip the bar about shoulder-width apart.",
+   "Keep your upper arms still and pointing up."
+  ],
+  "cues": [
+   "Bend your elbows to lower the bar toward your forehead.",
+   "Keep your elbows pointing up and steady.",
+   "Straighten your arms to press the bar back up."
+  ],
+  "mistakes": [
+   "Letting your elbows flare out wide.",
+   "Lowering the bar too fast and losing control.",
+   "Moving your shoulders instead of just your elbows."
+  ],
+  "backup": "Triceps pushdown",
+  "photo_query": "lying triceps extension barbell",
+  "photo": "Cable_Lying_Triceps_Extension"
+ },
+ {
+  "slug": "ezcurl",
+  "name": "EZ-bar curl",
+  "category": "upper",
+  "group": "Arms",
+  "kit": "Barbell",
+  "kind": "weight",
+  "muscles": [
+   "Biceps",
+   "Forearms"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 12,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Stand tall holding the EZ-bar at the angled grips.",
+   "Keep your elbows close to your sides.",
+   "Let the bar hang at arm's length in front of you."
+  ],
+  "cues": [
+   "Curl the bar up toward your shoulders.",
+   "Keep your upper arms still throughout the move.",
+   "Lower the bar slowly until your arms are straight."
+  ],
+  "mistakes": [
+   "Swinging your body to lift the bar.",
+   "Letting your elbows drift forward.",
+   "Dropping the bar fast at the bottom."
+  ],
+  "backup": "Barbell curl",
+  "photo_query": "EZ-bar curl",
+  "photo": "EZ-Bar_Curl"
+ },
+ {
+  "slug": "concentration",
+  "name": "Concentration curl",
+  "category": "upper",
+  "group": "Arms",
+  "kit": "Dumbbells",
+  "kind": "weight",
+  "muscles": [
+   "Biceps"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 12,
+  "step": 2,
+  "inc": 2,
+  "setup": [
+   "Sit on a bench with your legs apart.",
+   "Hold a dumbbell in one hand between your knees.",
+   "Rest your upper arm on the inside of your thigh."
+  ],
+  "cues": [
+   "Curl the dumbbell up toward your shoulder.",
+   "Squeeze your bicep at the top.",
+   "Lower the weight slowly until your arm is straight."
+  ],
+  "mistakes": [
+   "Lifting your elbow off your thigh.",
+   "Leaning your body to swing the weight up.",
+   "Rushing the lowering part of the move."
+  ],
+  "backup": "Dumbbell curl",
+  "photo_query": "concentration curl",
+  "photo": "Concentration_Curls"
+ },
+ {
+  "slug": "crunchmachine",
+  "name": "Ab crunch machine",
+  "category": "lower",
+  "group": "Core",
+  "kit": "Machine",
+  "kind": "weight",
+  "muscles": [
+   "Abs"
+  ],
+  "rep_lo": 10,
+  "rep_hi": 15,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Sit on the seat and grip the handles.",
+   "Adjust the seat so the pad sits against your chest.",
+   "Keep your feet flat and your back against the pad."
+  ],
+  "cues": [
+   "Crunch your chest down toward your hips.",
+   "Keep your hips still and only your upper back moves.",
+   "Return slowly to the start without losing tension."
+  ],
+  "mistakes": [
+   "Pulling with your arms instead of your belly.",
+   "Going too heavy and rocking your body.",
+   "Holding your breath for the whole set."
+  ],
+  "backup": "Cable crunch",
+  "photo_query": "ab crunch machine",
+  "photo": "Ab_Crunch_Machine"
+ },
+ {
+  "slug": "russiantwist",
+  "name": "Russian twist",
+  "category": "lower",
+  "group": "Core",
+  "kit": "Bodyweight",
+  "kind": "bodyweight",
+  "muscles": [
+   "Obliques",
+   "Abs"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 15,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Sit on the floor with knees bent and feet lifted slightly.",
+   "Lean back until your torso forms a V shape with your thighs.",
+   "Clasp your hands together in front of your chest."
+  ],
+  "cues": [
+   "Rotate your upper body to one side, then the other.",
+   "Keep your back straight and your belly tight.",
+   "Move slowly and touch the floor beside your hips."
+  ],
+  "mistakes": [
+   "Rounding your back as you twist.",
+   "Moving only your arms instead of your torso.",
+   "Rushing the reps without control."
+  ],
+  "backup": "Side plank",
+  "photo_query": "Russian twist",
+  "photo": "Russian_Twist"
+ },
+ {
+  "slug": "bicyclecrunch",
+  "name": "Bicycle crunch",
+  "category": "lower",
+  "group": "Core",
+  "kit": "Bodyweight",
+  "kind": "bodyweight",
+  "muscles": [
+   "Abs",
+   "Obliques"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 15,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Lie on your back with hands lightly behind your head.",
+   "Lift your shoulders off the floor slightly.",
+   "Lift your knees to a table-top position."
+  ],
+  "cues": [
+   "Bring one elbow toward the opposite knee.",
+   "Straighten the other leg as you switch sides.",
+   "Move at a steady pace without pulling on your neck."
+  ],
+  "mistakes": [
+   "Pulling your neck forward with your hands.",
+   "Moving too fast to control the twist.",
+   "Letting your lower back lift off the floor."
+  ],
+  "backup": "Crunch",
+  "photo_query": "bicycle crunch",
+  "photo": "Cable_Crunch"
+ },
+ {
+  "slug": "woodchop",
+  "name": "Cable woodchop",
+  "category": "lower",
+  "group": "Core",
+  "kit": "Cable",
+  "kind": "weight",
+  "muscles": [
+   "Obliques",
+   "Abs"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 12,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Set the cable pulley high and stand side-on to the machine.",
+   "Hold the handle with both hands and step away to add tension.",
+   "Keep your feet wide and your knees slightly bent."
+  ],
+  "cues": [
+   "Pull the handle down across your body toward the opposite hip.",
+   "Turn your torso as you move through the twist.",
+   "Return slowly to the starting position with control."
+  ],
+  "mistakes": [
+   "Using your arms only and not turning your body.",
+   "Keeping your knees locked and stiff.",
+   "Using too much weight and losing balance."
+  ],
+  "backup": "Pallof press",
+  "photo_query": "cable woodchop",
+  "photo": "Standing_Cable_Wood_Chop"
+ },
+ {
+  "slug": "dbreversefly",
+  "name": "Dumbbell reverse fly",
+  "category": "upper",
+  "group": "Shoulders",
+  "kit": "Dumbbells",
+  "kind": "weight",
+  "muscles": [
+   "Rear shoulders",
+   "Upper back"
+  ],
+  "rep_lo": 10,
+  "rep_hi": 15,
+  "step": 2,
+  "inc": 2,
+  "setup": [
+   "Hold a dumbbell in each hand and hinge forward at the hips.",
+   "Let the weights hang straight down under your shoulders.",
+   "Keep a soft bend in your elbows."
+  ],
+  "cues": [
+   "Raise your arms out to the sides in a wide arc.",
+   "Squeeze your shoulder blades together at the top.",
+   "Lower the weights slowly back down."
+  ],
+  "mistakes": [
+   "Swinging the weights up with your body.",
+   "Lifting your arms above shoulder height.",
+   "Using heavy weight and rounding your back."
+  ],
+  "backup": "Face pull",
+  "photo_query": "dumbbell reverse fly",
+  "photo": "Standing_Dumbbell_Reverse_Curl"
+ },
+ {
+  "slug": "dbfly",
+  "name": "Dumbbell fly",
+  "category": "upper",
+  "group": "Chest",
+  "kit": "Dumbbells",
+  "kind": "weight",
+  "muscles": [
+   "Chest",
+   "Front shoulders"
+  ],
+  "rep_lo": 10,
+  "rep_hi": 15,
+  "step": 2,
+  "inc": 2,
+  "setup": [
+   "Lie on a flat bench holding a dumbbell in each hand above your chest.",
+   "Keep your palms facing each other.",
+   "Keep a soft bend in your elbows throughout."
+  ],
+  "cues": [
+   "Open your arms out to the sides in a wide arc.",
+   "Feel a stretch across your chest at the bottom.",
+   "Bring the weights back up over your chest."
+  ],
+  "mistakes": [
+   "Bending your elbows into a press.",
+   "Lowering the weights too far and straining the shoulders.",
+   "Bouncing the weights at the bottom."
+  ],
+  "backup": "Cable fly",
+  "photo_query": "dumbbell fly",
+  "photo": "Dumbbell_Flyes"
+ },
+ {
+  "slug": "wristcurl",
+  "name": "Wrist curl",
+  "category": "upper",
+  "group": "Arms",
+  "kit": "Dumbbells",
+  "kind": "weight",
+  "muscles": [
+   "Forearms"
+  ],
+  "rep_lo": 10,
+  "rep_hi": 15,
+  "step": 2,
+  "inc": 2,
+  "setup": [
+   "Sit on a bench with your forearms resting on your thighs.",
+   "Let your wrists hang over the edge of your knees.",
+   "Hold a light dumbbell in each hand with palms up."
+  ],
+  "cues": [
+   "Curl your wrists up as far as you can.",
+   "Lower the weights slowly down into a stretch.",
+   "Move only your wrists, keeping your forearms still."
+  ],
+  "mistakes": [
+   "Using too much weight and moving your whole arm.",
+   "Rushing the lowering part.",
+   "Letting your forearms lift off your thighs."
+  ],
+  "backup": "Reverse wrist curl",
+  "photo_query": "wrist curl dumbbell",
+  "photo": "Wrist_Circles"
+ },
+ {
+  "slug": "stepup",
+  "name": "Dumbbell step-up",
+  "category": "lower",
+  "group": "Legs",
+  "kit": "Dumbbells",
+  "kind": "weight",
+  "muscles": [
+   "Quads",
+   "Glutes"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 12,
+  "step": 2,
+  "inc": 2,
+  "setup": [
+   "Hold a dumbbell in each hand and stand facing a bench or step.",
+   "Place one whole foot flat on the bench.",
+   "Stand tall with your chest up."
+  ],
+  "cues": [
+   "Push through your front heel to stand up on the bench.",
+   "Step down slowly with control.",
+   "Keep your front knee in line with your toes."
+  ],
+  "mistakes": [
+   "Pushing off the floor with your back foot.",
+   "Using a bench that is too high.",
+   "Letting your front knee cave inward."
+  ],
+  "backup": "Bodyweight step-up",
+  "photo_query": "dumbbell step-up",
+  "photo": "Dumbbell_Step_Ups"
+ },
+ {
+  "slug": "hanglegraise",
+  "name": "Hanging leg raise",
+  "category": "lower",
+  "group": "Core",
+  "kit": "Bodyweight",
+  "kind": "bodyweight",
+  "muscles": [
+   "Abs",
+   "Core"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 15,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Hang from a pull-up bar with your hands shoulder-width apart.",
+   "Keep your legs straight and together.",
+   "Brace your belly before you lift."
+  ],
+  "cues": [
+   "Lift your legs up toward the bar using your belly.",
+   "Pause briefly at the top of the lift.",
+   "Lower your legs slowly without swinging."
+  ],
+  "mistakes": [
+   "Swinging your legs to build momentum.",
+   "Bending your knees a lot to make it easier.",
+   "Lowering your legs fast and losing control."
+  ],
+  "backup": "Hanging knee raise",
+  "photo_query": "hanging leg raise",
+  "photo": "Hanging_Leg_Raise"
+ },
+ {
+  "slug": "declinesitup",
+  "name": "Decline sit-up",
+  "category": "lower",
+  "group": "Core",
+  "kit": "Bench",
+  "kind": "bodyweight",
+  "muscles": [
+   "Abs",
+   "Core"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 15,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Lock your feet under the pads of a decline bench.",
+   "Lie back with your head lower than your feet.",
+   "Cross your arms over your chest or hold a light weight."
+  ],
+  "cues": [
+   "Curl your upper body up toward your knees.",
+   "Breathe out as you come up.",
+   "Lower slowly until your back touches the bench."
+  ],
+  "mistakes": [
+   "Pulling on your neck with your hands.",
+   "Using momentum to swing up.",
+   "Letting your feet slip from the pads."
+  ],
+  "backup": "Sit-up",
+  "photo_query": "decline sit-up",
+  "photo": "Decline_Push-Up"
+ },
+ {
+  "slug": "inclinebb",
+  "name": "Incline barbell press",
+  "category": "upper",
+  "group": "Chest",
+  "kit": "Barbell",
+  "kind": "weight",
+  "muscles": [
+   "Upper chest",
+   "Front shoulders",
+   "Triceps"
+  ],
+  "rep_lo": 6,
+  "rep_hi": 10,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Set the bench to a low incline and lie back with eyes under the bar.",
+   "Grip the bar a bit wider than your shoulders.",
+   "Plant your feet firmly and keep your back flat on the bench."
+  ],
+  "cues": [
+   "Lower the bar slowly to your upper chest.",
+   "Press the bar up in a straight line.",
+   "Keep your elbows at a comfortable angle, not flared out."
+  ],
+  "mistakes": [
+   "Setting the bench too steep, so it becomes a shoulder press.",
+   "Bouncing the bar off your chest.",
+   "Lifting your hips off the bench."
+  ],
+  "backup": "Incline dumbbell press",
+  "photo_query": "incline barbell bench press",
+  "photo": "Decline_Barbell_Bench_Press"
+ },
+ {
+  "slug": "chestsupportedtbar",
+  "name": "Chest-supported T-bar row",
+  "category": "upper",
+  "group": "Back",
+  "kit": "Machine",
+  "kind": "weight",
+  "muscles": [
+   "Lats",
+   "Mid back"
+  ],
+  "rep_lo": 8,
+  "rep_hi": 12,
+  "step": 2.5,
+  "inc": 2.5,
+  "setup": [
+   "Set your chest on the pad and grip the handles.",
+   "Keep your feet planted and your chest against the support.",
+   "Let your arms hang straight down under you."
+  ],
+  "cues": [
+   "Pull the handles toward your lower ribs.",
+   "Squeeze your shoulder blades together at the top.",
+   "Lower the weight slowly until your arms are straight."
+  ],
+  "mistakes": [
+   "Lifting your chest off the pad to pull.",
+   "Using jerky swings to start each rep.",
+   "Shrugging your shoulders up toward your ears."
+  ],
+  "backup": "Chest-supported dumbbell row",
+  "photo_query": "chest-supported T-bar row",
+  "photo": "Upright_Barbell_Row"
+ }
 ]

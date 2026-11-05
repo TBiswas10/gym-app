@@ -6,6 +6,7 @@ import type { MachineId, Feel } from "./cardio";
 export type Source = "app" | "chat" | "mcp"; // "mcp" is set by the server only; phones may not send it
 
 export type Op =
+  | { t: "start"; workoutId: string; plannedDate: string; weekday: number; week: number; planType: "5day" | "3day"; dayName: string; light: boolean; startedAt: string }
   | { t: "set"; id: string; workoutId: string; slug: string; position: number; n: number; variant: string | null; kg: number | null; reps: number | null; secs: number | null; source: Source }
   | { t: "delset"; workoutId: string; slug: string; n: number }
   | { t: "skips"; workoutId: string; slugs: string[] }

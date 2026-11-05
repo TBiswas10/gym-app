@@ -10,6 +10,15 @@ const classify = (error: { code?: string } | null): Outcome => (!error ? "ok" : 
 /** Apply one validated operation as the signed-in user (row-level security applies). */
 export async function applyOne(supabase: ServerClient, op: Op): Promise<Outcome> {
   switch (op.t) {
+    case "start": {
+      // Created from a session started with no signal. Safe to send twice (same id). If another session is already in progress
+      // the database refuses (one at a time) and this is dropped as permanent.
+      const { error } = await supabase.from("workouts").upsert(
+        { id: op.workoutId, planned_date: op.plannedDate, weekday: op.weekday, week: op.week, plan_type: op.planType, day_name: op.dayName, is_light: op.light, started_at: op.startedAt, status: "in_progress" },
+        { onConflict: "id", ignoreDuplicates: true },
+      );
+      return classify(error);
+    }
     case "set": {
       const { error } = await supabase.from("sets").upsert(
         {

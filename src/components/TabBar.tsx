@@ -25,7 +25,7 @@ export function TabBar() {
       } catch {
         return;
       }
-      TABS.forEach((t) => void fetch(t.href, { headers: { "x-wt-warm": "1" }, credentials: "same-origin" }).catch(() => undefined));
+      [...TABS.map((t) => t.href), "/workout/offline"].forEach((href) => void fetch(href, { headers: { "x-wt-warm": "1" }, credentials: "same-origin" }).catch(() => undefined));
     };
     const id = window.setTimeout(go, 4000);
     return () => window.clearTimeout(id);
