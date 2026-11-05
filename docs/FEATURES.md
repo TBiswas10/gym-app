@@ -171,3 +171,4 @@ Deload suggestion around week 7 (half the sets). Check-in "Add a set" was droppe
 
 ## Backups
 `/api/backup` (Plan > Download full backup) returns everything of yours as JSON (not notification subscriptions or request logs). `/api/export` is the CSV of workouts.
+- Progress redesign (2026-11-05): a summary card sits above the tabs (week N of 12 with a bar, "x of y lifts are up", streak, this week's sessions/sets/new PBs, and the check-in link when one is due). Tabs are now Lifts (chart for the picked lift FIRST, then "Your lifts" list that scrolls the chart into view, new PBs, volume, goals, records, weekly review), Body (body map, balance, bodyweight, how you've felt) and 12 weeks (programme grid, consistency, activity). The chart opens on the biggest gain among weighted lifts. The per-muscle-group bars were dropped from the screen (`thisWeek.groups` stays for the MCP).

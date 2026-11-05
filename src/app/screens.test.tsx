@@ -30,7 +30,7 @@ const progress = (over: Partial<ProgressData> = {}): ProgressData => ({
 describe("Progress", () => {
   it("renders the design's sections", () => {
     const out = renderToStaticMarkup(<ProgressView data={progress()} />);
-    for (const t of ["Week 3 of 12", "Chest press", "30 kg", "+10 kg over", "Top set, last 8 sessions", "lifts are up", "This week", "3/5", "32", "NEW PBS", "Legs", "8 sets", "How you’ve felt", "Lower is better", "Higher is better", "Easing", "12-week program", "Week 4 check-in next"]) expect(out).toContain(t);
+    for (const t of ["Week 3 of 12", "Chest press", "30 kg", "+10 kg over", "Top set, last 8 sessions", "lifts are up", "Your lifts", "3/5", "32", "NEW PBS", "New PBs this week","How you’ve felt", "Lower is better", "Higher is better", "Easing", "12-week program", "Week 4 check-in next"]) expect(out).toContain(t);
     expect(out).toContain("wk-now");
     expect(out).toContain("wk-check");
   });
