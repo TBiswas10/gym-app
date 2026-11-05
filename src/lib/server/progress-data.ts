@@ -5,11 +5,14 @@ import { activityGrid, checkInDue, consistency, e1rmSeries, records, exercisesWi
 import { fmtNum } from "../format";
 import { balance, type Balance } from "../balance";
 import { rollingAverage, summarise, type WeightSummary } from "../bodyweight";
+import { muscleLoad, type MapMuscle, type MuscleState } from "../bodymap";
 import { loadGoals, loadReviews, type GoalView, type ReviewView } from "./v2-data";
 
 export interface ProgressData {
   week: number;
   empty: boolean;
+  /** per muscle: weighted sets this week and days since last trained */
+  bodyMap?: Record<MapMuscle, MuscleState>;
   /** weigh-ins (7-day average), the goal and the summary; only when bodyweight tracking is on */
   bodyweight?: { avg: number[]; goal: number | null; summary: WeightSummary };
   /** finished sessions as a calendar: 16 weeks, Monday to Sunday */
@@ -80,7 +83,13 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
   const weigh = (bwRes.data ?? []).map((r) => ({ date: r.checked_on as string, kg: Number(r.bodyweight_kg) }));
   const goalKg = psRes.data?.goal_weight_kg != null ? Number(psRes.data.goal_weight_kg) : null;
   const bwSummary = psRes.data?.track_bodyweight ? summarise(weigh, goalKg) : null;
+  const dateOf = new Map(workouts.map((w) => [w.id, w.planned_date as string]));
+  const bodyMap = muscleLoad(
+    sets.filter((s) => !s.variant && dateOf.has(s.workout_id)).map((s) => ({ date: dateOf.get(s.workout_id)!, muscles: (info.get(s.exercise_slug)?.muscles as string[] | undefined) ?? [] })),
+    today,
+  );
   return {
+    bodyMap,
     bodyweight: bwSummary ? { avg: rollingAverage(weigh).slice(-30), goal: goalKg, summary: bwSummary } : undefined,
     activity: activityGrid(workouts, today),
     goals,

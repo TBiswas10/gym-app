@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState, type CSSProperties } from "react";
+import { BodyMap } from "@/components/BodyMap";
 import { Icon } from "@/components/Icon";
 import { LineChart } from "@/components/LineChart";
 import { GoalsCard, ReviewCard } from "@/components/V2Cards";
@@ -174,6 +175,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
 
         <div hidden={tab !== "week"} className="col g4" role="tabpanel">
         {data.volume && data.volume.some((v) => v.kg > 0) && <VolumeCard weeks={data.volume} point={data.volumeNow} />}
+        {data.bodyMap && <BodyMap load={data.bodyMap} />}
         {data.balance && data.balance.total > 0 && <BalanceCard b={data.balance} />}
         <section className="card">
           <h2 className="t-heading">This week</h2>
