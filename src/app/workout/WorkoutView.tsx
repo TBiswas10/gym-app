@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { sheetDrag } from "@/components/sheetDrag";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
@@ -926,7 +927,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
       {leaveOpen && (
         <>
           <div className="scrim anim-fade" onClick={() => setLeaveOpen(false)} />
-          <div className="sheet-wrap">
+          <div className="sheet-wrap" {...sheetDrag(() => setLeaveOpen(false))}>
             <div className="sheet" role="dialog" aria-label="Pause or end workout">
               <span className="sheet-grab" />
               <h2 className="t-title">Workout in progress</h2>
@@ -950,7 +951,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
         return (
           <>
             <div className="scrim" onClick={() => setSwapOpen(false)} />
-            <div className="sheet-wrap">
+            <div className="sheet-wrap" {...sheetDrag(() => setSwapOpen(false))}>
               <div className="sheet" role="dialog" aria-label={`Swap ${ex.name}`}>
                 <span className="sheet-grab" />
                 <h2 className="t-title">Swap {ex.name}</h2>

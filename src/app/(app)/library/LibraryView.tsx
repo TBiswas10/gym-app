@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { sheetDrag } from "@/components/sheetDrag";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ExerciseMedia } from "@/components/ExerciseMedia";
@@ -112,7 +113,7 @@ export function LibraryView({ items, plan = {}, todayWeekday }: { items: LibItem
       {open && (
         <>
           <div className="scrim" onClick={() => setOpen(null)} />
-          <div className="sheet-wrap">
+          <div className="sheet-wrap" {...sheetDrag(() => setOpen(null))}>
             <div className="sheet" role="dialog" aria-label="Exercise guide" style={{ maxHeight: 700, overflowY: "auto" }}>
               <span className="sheet-grab" />
               <div className="row between g3 start">

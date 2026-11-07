@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { sheetDrag } from "./sheetDrag";
 import { Icon, type IconName } from "./Icon";
 
 const CARDS: { icon: IconName; title: string; text: string }[] = [
@@ -35,7 +36,7 @@ export function GestureTour() {
   return (
     <>
       <div className="scrim anim-fade" onClick={close} />
-      <div className="sheet-wrap">
+      <div className="sheet-wrap" {...sheetDrag(close)}>
         <div className="sheet" role="dialog" aria-label="Quick tour" style={{ alignItems: "center", textAlign: "center" }}>
           <span className="sheet-grab" />
           <span className="done-mini" style={{ width: "var(--space-12)", height: "var(--space-12)" }}><Icon name={c.icon} /></span>

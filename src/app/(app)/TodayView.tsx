@@ -1,6 +1,7 @@
 "use client";
 
 import { StartButton } from "@/components/StartButton";
+import { sheetDrag } from "@/components/sheetDrag";
 import Link from "next/link";
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
@@ -584,7 +585,7 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
         return (
           <>
             <div className="scrim anim-fade" onClick={close} />
-            <div className="sheet-wrap">
+            <div className="sheet-wrap" {...sheetDrag(close)}>
               <div className="sheet" role="dialog" aria-label={`${longDay(q.weekday)} quick actions`}>
                 <span className="sheet-grab" />
                 <div className="row between">

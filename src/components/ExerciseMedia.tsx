@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { sheetDrag } from "./sheetDrag";
 import { createPortal } from "react-dom";
 import { RENDER_META } from "@/lib/rendered-exercises";
 import { muscleLabel, tempoHint } from "@/lib/render-text";
@@ -79,7 +80,7 @@ function Viewer({ slug, name, onClose }: { slug: string; name: string; onClose: 
   return createPortal(
     <>
       <div className="scrim" onClick={onClose} />
-      <div className="sheet-wrap">
+      <div className="sheet-wrap" {...sheetDrag(onClose)}>
         <div className="sheet" role="dialog" aria-label={`${name} movement`}>
           <span className="sheet-grab" />
           <h2 className="t-title">{name}</h2>

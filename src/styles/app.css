@@ -17,3 +17,13 @@ input,textarea,select{font-size:16px}
 html{-webkit-text-size-adjust:100%}
 /* taste pass: no single orphaned word on the last line of body copy */
 .t-body,.t-small{text-wrap:pretty}
+.t-heading,.t-eyebrow{text-wrap:balance}
+/* digits that are counts or amounts line up and never jitter as they change */
+.chip,.tag,.stat,.week,.rec-row,.list-row,.consistency-col .t-caption,.ch-lbl,.ch-tipbox{font-variant-numeric:tabular-nums}
+/* continuous (squircle) corners where the browser draws them (Chromium); everything else keeps the border-radius */
+@supports (corner-shape:squircle){
+  .card,.sheet,.btn,.input,.stat,.attn-row,.srow,.set,.toast,.pb-row,.t5{corner-shape:squircle}
+}
+/* view transitions (tab switches on one screen): a quick cross-fade, none at all with reduced motion */
+::view-transition-old(root),::view-transition-new(root){animation-duration:160ms;animation-timing-function:var(--ease-out)}
+@media (prefers-reduced-motion:reduce){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}

@@ -11,6 +11,7 @@ import { shareOf } from "@/lib/balance";
 import { direction, wordFor } from "@/lib/checkin-scale";
 import { fmtNum } from "@/lib/format";
 import type { ProgressData } from "@/lib/server/progress-data";
+import { withTransition } from "@/lib/view-transition";
 
 const CELL_CLASS = { done: "wk-done", now: "wk-now", check: "wk-check", todo: "" } as const;
 const SHOWN = 4;
@@ -101,7 +102,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
 
         <div className="segmented" role="tablist" aria-label="Progress sections">
           {([["lifts", "Lifts"], ["body", "Body"], ["plan", "12 weeks"]] as const).map(([id, label]) => (
-            <button key={id} type="button" className="seg" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>
+            <button key={id} type="button" className="seg" role="tab" aria-selected={tab === id} onClick={() => withTransition(() => setTab(id))}>{label}</button>
           ))}
         </div>
 

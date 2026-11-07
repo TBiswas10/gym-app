@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { sheetDrag } from "@/components/sheetDrag";
 import { useState } from "react";
 import { ExerciseMedia } from "@/components/ExerciseMedia";
 import { Icon } from "@/components/Icon";
@@ -18,7 +19,7 @@ export function GuideSheet({ guide, slug, onClose: done, bare = false }: { guide
   return (
     <>
       <div className={`scrim ${leaving ? "anim-out" : "anim-fade"}`} onClick={onClose} />
-      <div className={`sheet-wrap ${leaving ? "anim-out" : ""}`} onAnimationEnd={() => leaving && done()}>
+      <div className={`sheet-wrap ${leaving ? "anim-out" : ""}`} onAnimationEnd={() => leaving && done()} {...sheetDrag(done)}>
         <div className="sheet" role="dialog" aria-label="Form guide" style={{ maxHeight: 640, overflowY: "auto" }}>
           <span className="sheet-grab" />
           <div className="row between g3 start">

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { sheetDrag } from "@/components/sheetDrag";
 import { useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { RestoreBackup } from "@/components/RestoreBackup";
@@ -326,7 +327,7 @@ export function PlanView({ data }: { data: PlanData }) {
       {adding && (
         <>
           <div className="scrim" onClick={() => setAdding(false)} />
-          <div className="sheet-wrap">
+          <div className="sheet-wrap" {...sheetDrag(() => setAdding(false))}>
             <div className="sheet" role="dialog" aria-label="Add exercise" style={{ maxHeight: 640, overflowY: "auto" }}>
               <span className="sheet-grab" />
               <div className="row between g3 start">
