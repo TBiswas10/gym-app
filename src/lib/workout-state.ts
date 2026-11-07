@@ -182,7 +182,7 @@ const setToStepper = (e: ExStep, v: SetVal): Partial<ExStep> =>
 export function adjust(s: WState, field: "kg" | "reps" | "secs", dir: 1 | -1): WState {
   const e = currentStep(s);
   if (!isEx(e)) return s;
-  if (field === "kg") return replaceStep(s, s.cur, { kg: Math.max(0, Math.round((e.kg + dir * Math.min(e.step, e.increment || e.step)) * 100) / 100) });
+  if (field === "kg") return replaceStep(s, s.cur, { kg: Math.max(0, Math.round((e.kg + dir * e.step) * 100) / 100) });
   if (field === "reps") return replaceStep(s, s.cur, { reps: Math.max(0, e.reps + dir) });
   return replaceStep(s, s.cur, { secs: Math.max(5, e.secs + dir * 5) });
 }

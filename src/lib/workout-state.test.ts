@@ -77,6 +77,11 @@ describe("logging sets", () => {
     s = logSet(s, "p1");
     expect(ex0(s, "plank").sets[0]).toEqual({ id: "p1", kg: null, reps: null, secs: 35 });
   });
+  it("moves the weight by the machine's step, whatever the progression jump is", () => {
+    const s0 = buildState({ ...init(), exercises: [ex("chest", "Chest press", { step: 2.5, increment: 1 })] });
+    const before = ex0(s0, "chest").kg;
+    expect(ex0(adjust(s0, "kg", 1), "chest").kg).toBe(before + 2.5);
+  });
   it("never lets the steppers go below zero (or below 5 s)", () => {
     let s = start();
     for (let i = 0; i < 30; i++) s = adjust(s, "kg", -1);
