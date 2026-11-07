@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef, useState, type CSSProperties } from "react";
 import { BodyMap } from "@/components/BodyMap";
-import { Icon } from "@/components/Icon";
+import { Icon, type IconName } from "@/components/Icon";
 import { LineChart } from "@/components/LineChart";
 import { GoalsCard, ReviewCard } from "@/components/V2Cards";
 import type { Balance } from "@/lib/balance";
@@ -100,7 +100,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
           )}
         </section>
 
-        <div className="segmented" role="tablist" aria-label="Progress sections">
+        <div className="segmented is-sticky" role="tablist" aria-label="Progress sections">
           {([["lifts", "Lifts"], ["body", "Body"], ["plan", "12 weeks"]] as const).map(([id, label]) => (
             <button key={id} type="button" className="seg" role="tab" aria-selected={tab === id} onClick={() => withTransition(() => setTab(id))}>{label}</button>
           ))}
@@ -187,11 +187,17 @@ export function ProgressView({ data }: { data: ProgressData }) {
             </section>
           )}
 
-          {data.volume && data.volume.some((v) => v.kg > 0) && <VolumeCard weeks={data.volume} point={data.volumeNow} />}
+          {data.volume && data.volume.some((v) => v.kg > 0) ? (
+            <VolumeCard weeks={data.volume} point={data.volumeNow} />
+          ) : (
+            <Waiting label="Training volume" icon="dumbbell" title="Your weekly total shows here" text="Log sets with weight and the kilograms you lift each week fill in here." />
+          )}
 
           <GoalsCard goals={data.goals ?? []} choices={data.chips.map((c) => ({ slug: c.slug, name: c.name, unit: c.unit }))} />
 
-          {data.records.length > 0 && (
+          {data.records.length === 0 ? (
+            <Waiting label="Records" icon="chart" title="Your records show here" text="Your best set for each lift is kept here. Finish a workout to start." />
+          ) : (
             <details className="card fold" aria-label="Records">
               <summary><h2 className="t-heading">Records</h2><span className="t-small c-2">{data.records.length}</span></summary>
               <div className="col g2">
@@ -212,10 +218,18 @@ export function ProgressView({ data }: { data: ProgressData }) {
         </div>
 
         <div hidden={tab !== "body"} className="col g4" role="tabpanel">
-          {data.bodyMap && <BodyMap load={data.bodyMap} />}
-          {data.balance && data.balance.total > 0 && <BalanceCard b={data.balance} />}
+          {data.bodyMap && Object.values(data.bodyMap).some((m) => m.sets > 0 || m.daysAgo !== null) ? (
+            <BodyMap load={data.bodyMap} />
+          ) : (
+            <Waiting label="Body map" icon="dumbbell" title="Your body map lights up here" text="Each muscle you train lights up for the week. Log a session and it fills in." />
+          )}
+          {data.balance && data.balance.total > 0 ? (
+            <BalanceCard b={data.balance} />
+          ) : (
+            <Waiting label="Muscle balance" icon="chart" title="Your balance shows here" text="Push against pull, front against back and upper against lower, from your last four weeks of sets." />
+          )}
 
-          {data.bodyweight && (
+          {data.bodyweight ? (
             <section className="card" aria-label="Bodyweight">
               <div className="row between baseline">
                 <h2 className="t-heading">Bodyweight</h2>
@@ -238,6 +252,8 @@ export function ProgressView({ data }: { data: ProgressData }) {
                     : `${fmtNum(data.bodyweight.summary.toGo ?? 0)} kg to go to ${fmtNum(data.bodyweight.goal)} kg.`}
               </p>
             </section>
+          ) : (
+            <Waiting label="Bodyweight" icon="calendar" title="Your bodyweight shows here" text="Turn on bodyweight tracking in Plan, then add your weight at a check-in." />
           )}
 
           <section className="card" aria-label="How you have felt">
@@ -321,6 +337,19 @@ export function ProgressView({ data }: { data: ProgressData }) {
         </div>
       </div>
     </>
+  );
+}
+
+/** A section with nothing in it yet: says what will appear and how to make it appear. Never fills in fake numbers. */
+function Waiting({ label, icon, title, text }: { label: string; icon: IconName; title: string; text: string }) {
+  return (
+    <section className="card" aria-label={label}>
+      <div className="empty">
+        <span className="round round-subtle"><Icon name={icon} /></span>
+        <h2 className="t-heading">{title}</h2>
+        <p className="t-small c-2">{text}</p>
+      </div>
+    </section>
   );
 }
 

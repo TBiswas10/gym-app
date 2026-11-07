@@ -55,6 +55,15 @@ describe("Today header and list", () => {
     expect(out).toContain("Last 30 kg");
     expect(out).not.toContain("Last undefined");
   });
+  it("shows the all-time best under a lift, next to last time", () => {
+    const out = htmlWith(base, { lasts: { chest: "30 kg" }, bests: { chest: "Best 32.5 kg × 10" }, briefing: null, nudges: [], review: null });
+    expect(out).toContain("Last 30 kg");
+    expect(out).toContain("Best 32.5 kg × 10");
+  });
+  it("shows no best line when there is none", () => {
+    const out = htmlWith(base, { lasts: { chest: "30 kg" }, briefing: null, nudges: [], review: null });
+    expect(out).not.toContain("Best ");
+  });
 });
 
 describe("Today screen", () => {
@@ -66,7 +75,7 @@ describe("Today screen", () => {
     expect(out).toContain("Upper (light)");
     expect(out).toContain("6 exercises · 2 sets each");
     expect(out).toContain("~40"); // 30 lifts + 10 cardio (cardio is the warm-up)
-    expect(out).toContain("Start workout");
+    expect(out).toContain("Start Upper");
     expect(out).toContain("Go light today");
     expect(out).toContain("Cardio · Bike or treadmill");
     // the missed day is one row until you open it
@@ -120,7 +129,14 @@ describe("Today screen", () => {
     expect(out).toContain("Rest day");
     expect(out).toContain("Easy walk");
     expect(out).toContain("Stretch");
-    expect(out).not.toContain("Start workout");
+    expect(out).not.toContain("Start Upper");
+  });
+
+  it("says Resume on the day that has a session open", () => {
+    const d = { ...make({ today: "2026-10-08", start: "2026-09-21", completed: ["2026-10-05", "2026-10-07"] }), inProgress: { id: "w1", dayName: "Upper (light)", startedAt: "2026-10-08T06:00:00Z" } };
+    const out = html(d);
+    expect(out).toContain("Resume Upper");
+    expect(out).not.toContain("Start Upper");
   });
 
   it("shows the light confirmation with a start button", () => {

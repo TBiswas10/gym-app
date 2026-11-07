@@ -39,7 +39,9 @@ export function ChangesView({ rows }: { rows: ChangeRow[] }) {
 
       {rows.length === 0 ? (
         <div className="empty">
-          <p className="t-body">Nothing has changed yet.</p>
+          <span className="round round-subtle"><Icon name="rotate-ccw" /></span>
+          <h2 className="t-heading">Nothing has changed yet.</h2>
+          <p className="t-small c-2">Edits you make to your plan and settings show here, and so do changes Claude makes. Undo puts the old version back.</p>
         </div>
       ) : (
         <ol className="col g2" style={{ listStyle: "none", margin: 0, padding: 0 }}>

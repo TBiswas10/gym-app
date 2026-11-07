@@ -5,7 +5,7 @@ import { goalProgress, goalUnit, recordNumber, type GoalUnit } from "../goals";
 import { computeNudges, type Nudge } from "../nudges";
 import { estimateMinutes, type ExerciseKind } from "../plan";
 import { goalText, stallCheck } from "../progression";
-import { records } from "../stats";
+import { bestHint, records, type RecordRow } from "../stats";
 import { loadCx, overloadFor, suggestionFor, type Cx } from "./mcp/context";
 import { cardioLine, nextLine } from "./mcp/format";
 import type { TodayData } from "./today-data";
@@ -44,6 +44,8 @@ export interface V2Today {
   lasts?: Record<string, string>;
   /** slug -> today's goal, e.g. "30 kg × 11" (what to aim for to beat last time) */
   goals?: Record<string, string>;
+  /** slug -> all-time best, e.g. "Best 32.5 kg × 10", only when it differs from last time */
+  bests?: Record<string, string>;
   briefing: Briefing | null;
   nudges: Nudge[];
   review: ReviewView | null;
@@ -73,6 +75,19 @@ export async function loadGoals(supabase: ServerClient): Promise<GoalView[]> {
     const p = goalProgress(start, current, target);
     return { id: r.id, slug: r.exercise_slug, name: ex.name, unit: goalUnit(kind), start, current, target, fraction: p.fraction, toGo: p.toGo, reached: p.reached };
   });
+}
+
+/** The all-time best set for each lift, from every completed session: one query for the whole plan. */
+async function loadBests(supabase: ServerClient, kinds: Record<string, ExerciseKind>): Promise<RecordRow[]> {
+  const slugs = Object.keys(kinds);
+  if (!slugs.length) return [];
+  const { data } = await supabase
+    .from("sets")
+    .select("workout_id, exercise_slug, set_number, weight_kg, reps, seconds, variant, workouts!inner(status, is_test)")
+    .in("exercise_slug", slugs)
+    .eq("workouts.status", "completed")
+    .eq("workouts.is_test", false);
+  return records(data ?? [], kinds);
 }
 
 export async function loadReviews(supabase: ServerClient, limit = 8): Promise<ReviewView[]> {
@@ -126,13 +141,18 @@ export async function loadV2Today(supabase: ServerClient, t: TodayData, pre: Ret
   const cx = await pre.cx;
   if (!cx) return { briefing: null, nudges: [], review: null };
 
-  const [feelRes, cardioRes, answeredRes, goals, reviews, stalls] = await Promise.all([
+  // Every lift in the plan and its kind: the all-time best query needs the slugs.
+  const kinds: Record<string, ExerciseKind> = {};
+  for (const d of Object.values(t.days)) for (const e of d.exercises) kinds[e.slug] = e.kind;
+
+  const [feelRes, cardioRes, answeredRes, goals, reviews, stalls, bestRows] = await Promise.all([
     pre.feel,
     pre.cardio,
     pre.answered,
     pre.goals,
     pre.reviews,
     loadStalls(supabase, cx, t).catch(() => []),
+    loadBests(supabase, kinds).catch(() => [] as RecordRow[]),
   ]);
   const feel = (feelRes.data ?? []).map((f) => ({ soreness: f.soreness, energy: f.energy }));
 
@@ -160,12 +180,16 @@ export async function loadV2Today(supabase: ServerClient, t: TodayData, pre: Ret
     });
   }
 
-  // Last time, short, for every lift in the plan (shown on Today's list).
+  // Last time, short, and the all-time best, for every lift in the plan (shown on Today's list).
   const lasts: Record<string, string> = {};
   const goalMap: Record<string, string> = {};
+  const bests: Record<string, string> = {};
+  const bestBySlug = new Map(bestRows.map((r) => [r.slug, r.value]));
   for (const d of Object.values(t.days)) {
     for (const e of d.exercises) {
       const l = cx.lastBySlug[e.slug];
+      const b = bestHint(e.kind, bestBySlug.get(e.slug), l ?? null);
+      if (b) bests[e.slug] = b;
       if (!l) continue;
       const g = goalText(e.kind, overloadFor(cx, e.slug, [e.repLo, e.repHi]));
       if (g) goalMap[e.slug] = g;
@@ -192,5 +216,5 @@ export async function loadV2Today(supabase: ServerClient, t: TodayData, pre: Ret
   const latest = reviews[0];
   const review = latest && latest.weekStart >= addDays(t.today, -13) ? latest : null;
 
-  return { lasts, goals: goalMap, briefing, nudges, review };
+  return { lasts, goals: goalMap, bests, briefing, nudges, review };
 }

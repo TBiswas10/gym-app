@@ -1,7 +1,8 @@
 // Progress numbers. Pure functions over rows already loaded from the database.
 
 import { addDays, programmeWeek, startOfWeek, weekDates } from "./dates";
-import { bestSet, isPB, type LastTime } from "./progression";
+import { bestSet, describeSet, isPB, type LastTime } from "./progression";
+import { recordNumber } from "./goals";
 import type { ExerciseKind } from "./plan";
 
 export interface HistWorkout {
@@ -227,6 +228,15 @@ export function records(sets: HistSet[], kinds: Record<string, ExerciseKind>): R
     if (better) best.set(s.exercise_slug, v);
   }
   return [...best].map(([slug, value]) => ({ slug, value }));
+}
+
+/** Today's "Best" line under a lift: "Best 32.5 kg × 10", or null when there is no best yet or it is the same as last time. */
+export function bestHint(kind: ExerciseKind, best: RecordRow["value"] | undefined, last: LastTime | null): string | null {
+  if (!best || recordNumber(kind, best) <= 0) return null;
+  const top = (xs: number[]) => (xs.length ? Math.max(...xs) : null);
+  const lastText = last ? describeSet(kind, { kg: last.kg, reps: top(last.reps), secs: top(last.secs) }) : "";
+  const text = describeSet(kind, best);
+  return text === lastText ? null : `Best ${text}`;
 }
 
 export interface VolumeWeek {

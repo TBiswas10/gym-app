@@ -77,9 +77,26 @@ describe("Progress: bodyweight", () => {
     const out = renderToStaticMarkup(<ProgressView data={progress({ bodyweight: { avg: [82, 81, 80], goal: 76, summary: { now: 80, start: 82, change: -2, toGo: 4, direction: "down", reached: false } } })} />);
     for (const t of ["Bodyweight", "7-day average", "80 kg", "since you started", "4 kg to go to 76 kg"]) expect(out).toContain(t);
   });
-  it("asks for a goal when there is none, and is hidden when tracking is off", () => {
+  it("asks for a goal when there is none, and says how to turn it on when tracking is off", () => {
     expect(renderToStaticMarkup(<ProgressView data={progress({ bodyweight: { avg: [80], goal: null, summary: { now: 80, start: 80, change: 0, toGo: null, direction: null, reached: false } } })} />)).toContain("Set a goal weight in Plan");
-    expect(renderToStaticMarkup(<ProgressView data={progress()} />)).not.toContain("aria-label=\"Bodyweight\"");
+    const off = renderToStaticMarkup(<ProgressView data={progress()} />);
+    expect(off).toContain("Your bodyweight shows here");
+    expect(off).toContain("Turn on bodyweight tracking in Plan");
+  });
+});
+
+describe("Progress: empty sections", () => {
+  it("says what fills each section when there is no data yet, without fake numbers", () => {
+    const out = renderToStaticMarkup(<ProgressView data={progress({ records: [], volume: [], balance: { total: 0, push: 0, pull: 0, front: 0, back: 0, upper: 0, lower: 0, notes: [], enough: false }, bodyMap: undefined })} />);
+    for (const t of ["Your weekly total shows here", "Your body map lights up here", "Your balance shows here", "Your records show here", "Your bodyweight shows here"]) expect(out).toContain(t);
+  });
+  it("shows the volume and balance cards once there is data", () => {
+    const out = renderToStaticMarkup(<ProgressView data={progress({ volume: [{ weekStart: "2026-11-02", kg: 4200 }, { weekStart: "2026-11-09", kg: 1800 }], volumeNow: { now: 1800, lastSame: 1500, lastWeek: 4200 } })} />);
+    expect(out).toContain("Training volume");
+    expect(out).not.toContain("Your weekly total shows here");
+  });
+  it("pins the tab switcher while the page scrolls", () => {
+    expect(renderToStaticMarkup(<ProgressView data={progress()} />)).toContain("segmented is-sticky");
   });
 });
 
@@ -108,6 +125,21 @@ describe("Library", () => {
     expect(out).toContain("Chest press");
     expect(out).toContain("Chest · Machine");
     for (const g of ["All", "Back", "Shoulders", "Arms", "Legs", "Core"]) expect(out).toContain(`>${g}<`);
+  });
+  it("shows recently used exercises above the full list, newest first, using the same rows", () => {
+    const out = renderToStaticMarkup(<LibraryView items={items} recent={["lat", "chest", "missing"]} />);
+    expect(out).toContain("Recently used");
+    expect(out).toContain("All exercises");
+    expect(out.indexOf("Recently used")).toBeLessThan(out.indexOf("All exercises"));
+    expect(out.indexOf("Open guide for Lat pulldown")).toBeLessThan(out.indexOf("Open guide for Chest press"));
+    // each exercise appears once in Recently used and once in the full list; the unknown slug is skipped
+    expect(out.match(/Open guide for Lat pulldown/g)?.length).toBe(2);
+    expect(out.match(/Open guide for Chest press/g)?.length).toBe(2);
+  });
+  it("has no recently used box until something has been logged", () => {
+    const out = renderToStaticMarkup(<LibraryView items={items} recent={[]} />);
+    expect(out).not.toContain("Recently used");
+    expect(out).not.toContain("All exercises");
   });
   it("has a search box that never zooms the page and no clear button until you type", () => {
     const out = renderToStaticMarkup(<LibraryView items={items} />);
@@ -142,6 +174,13 @@ describe("Plan", () => {
     const out = renderToStaticMarkup(<PlanView data={data} />);
     for (const t of ["5-day split", "3-day full body", "Mon to Thu and Sat. Fri and Sun are rest days.", "Push · 1 exercises", "About 15 min with cardio first. Cap is 50.", "Chest press", "2 sets × 8–12 reps", "Cardio · Bike or cross-trainer", "Add exercise", "Notify me when rest ends", "Bodyweight tracking", "Export data as CSV", "Log out (me@example.com)"]) expect(out).toContain(t);
     expect(out).not.toContain("Delete my account");
+  });
+  it("groups the controls under Training, Body and Data in that order", () => {
+    const out = renderToStaticMarkup(<PlanView data={data} />);
+    const at = (t: string) => out.indexOf(t);
+    const order = [">Training<", "Add exercise", "Notify me when rest ends", "Test mode", ">Body<", "Bodyweight tracking", ">Data<", "Export data as CSV", "Share your week", "Log out"];
+    for (const t of order) expect(at(t)).toBeGreaterThan(-1);
+    for (let i = 1; i < order.length; i++) expect(at(order[i - 1])).toBeLessThan(at(order[i]));
   });
   it("shows the 3-day wording", () => {
     const out = renderToStaticMarkup(<PlanView data={{ ...data, planType: "3day" }} />);

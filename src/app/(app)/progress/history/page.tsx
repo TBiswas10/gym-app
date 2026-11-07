@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Icon } from "@/components/Icon";
 import { createClient } from "@/lib/supabase/server";
 import { wordFor } from "@/lib/checkin-scale";
 import { mmss } from "@/lib/timers";
@@ -44,8 +45,9 @@ export default async function HistoryPage() {
       </div>
       {(workouts ?? []).length === 0 ? (
         <div className="empty">
-          <h2 className="t-heading">Nothing here yet</h2>
-          <p className="t-small c-2">Finish a workout and it shows up here.</p>
+          <span className="round round-subtle"><Icon name="list-checks" /></span>
+          <h2 className="t-heading">No finished sessions yet</h2>
+          <p className="t-small c-2">Finish a workout and it shows up here, newest first.</p>
         </div>
       ) : (
         <div className="col g2">

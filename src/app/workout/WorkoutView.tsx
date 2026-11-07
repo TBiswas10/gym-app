@@ -34,6 +34,7 @@ import { cancelRestPush, disableRestAlerts, enableRestAlerts, PUSH_MESSAGE, push
 import { restAlertText } from "@/lib/push";
 import { saveSettings } from "@/app/(app)/plan/actions";
 import { loadQueue } from "@/lib/sync-queue";
+import { warmupLine } from "@/lib/warmup";
 
 const WS_KEY = (id: string) => `wt.ws.${id}`;
 const REST_KEY = "wt.rest";
@@ -302,6 +303,8 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const overload = ex && !ex.swapped && ex.last ? overloadTarget(exSpec(ex), ex.last, { setup: meta.setup, highSoreness: meta.highSoreness, hold: meta.hold }) : null;
   const goalKg = overload && overload.kg !== null ? (ex?.light ? lighten(overload.kg, ex.step) : overload.kg) : null;
   const goalLine = ex && overload ? goalText(ex.exKind, { ...overload, kg: goalKg }) : "";
+  // Advice only: a warm-up ramp under the first lift, before its first set. It adds no sets and changes no weights.
+  const warmLine = ex && exs[0]?.slug === ex.slug && !ex.swapped && ex.sets.length === 0 && ex.exKind === "weight" ? warmupLine(goalKg ?? ex.last?.kg ?? null, ex.step) : null;
   // Your own form cues, editable from the form check (saved straight away).
   const [myCues, setMyCues] = useState<Record<string, string>>(page.formNotes ?? {});
   const saveCue = (slug: string, text: string) => {
@@ -573,6 +576,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
             <div className="row between start g3">
               <div className="col g2 grow">
                 <h1 className="t-title">{dispName(ex)}</h1>
+                {warmLine && <p className="t-small c-2">{warmLine}</p>}
                 <div className="row g2 wrap">
                   <span className="tag tag-accent">{ex.planned} {ex.planned === 1 ? "set" : "sets"} · {targetLabel(ex)}</span>
                   {ex.swapped && <span className="tag">Swapped from {ex.name}</span>}

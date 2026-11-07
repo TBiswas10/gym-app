@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkInDue, consistency, records, exercisesWithData, nextCheckIn, strengthChange, topSeries, topValue, weekCells, volumeSamePoint, weeklyVolume, weekStats, type HistSet, type HistWorkout } from "./stats";
+import { bestHint, checkInDue, consistency, records, exercisesWithData, nextCheckIn, strengthChange, topSeries, topValue, weekCells, volumeSamePoint, weeklyVolume, weekStats, type HistSet, type HistWorkout } from "./stats";
 import { average, effectOf, reasonFor, recommend, suggestDeload } from "./review";
 
 const W = (id: string, d: string): HistWorkout => ({ id, planned_date: d });
@@ -226,5 +226,25 @@ describe("activity calendar", () => {
     expect(g[2][2]).toMatchObject({ date: "2026-10-21", id: "w1", future: false });
     expect(g[2][4].future).toBe(true);
     expect(g[0][0].date).toBe("2026-10-05");
+  });
+});
+
+describe("bestHint", () => {
+  const best = { kg: 32.5, reps: 10, secs: null };
+  it("shows the all-time best when it differs from last time", () => {
+    expect(bestHint("weight", best, { kg: 30, reps: [10, 9], secs: [] })).toBe("Best 32.5 kg × 10");
+  });
+  it("shows nothing when last time already was the best", () => {
+    expect(bestHint("weight", best, { kg: 32.5, reps: [10, 8], secs: [] })).toBeNull();
+  });
+  it("shows the best when there is no last time for the lift", () => {
+    expect(bestHint("weight", best, null)).toBe("Best 32.5 kg × 10");
+  });
+  it("shows nothing when there is no best yet", () => {
+    expect(bestHint("weight", undefined, null)).toBeNull();
+  });
+  it("uses seconds for holds and reps for bodyweight", () => {
+    expect(bestHint("timed", { kg: null, reps: null, secs: 45 }, { kg: null, reps: [], secs: [40] })).toBe("Best 45 s");
+    expect(bestHint("bodyweight", { kg: null, reps: 14, secs: null }, { kg: null, reps: [12], secs: [] })).toBe("Best Bodyweight × 14");
   });
 });

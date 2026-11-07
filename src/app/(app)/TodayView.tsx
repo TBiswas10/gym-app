@@ -112,7 +112,10 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
   // In weeks 1-2 an exercise with no starting weight goes through "Find your weight" first.
   // No separate setup step: weeks 1 and 2 find their weights inside the workout itself, and those sets count.
   const startHref = `/workout?date=${d.sessionOrigin}`;
-  const startLabel = light ? "Start light workout" : d.status === "today" ? "Start workout" : d.status === "next" ? `Start ${longName} workout early` : `Start ${longName}’s workout`;
+  // The one primary action on a training day. It names the day it starts; a session already open for this day says Resume.
+  const dayShort = plan?.shortName ?? "";
+  const resuming = !!data.inProgress && data.inProgress.dayName === plan?.fullName;
+  const startLabel = resuming ? `Resume ${dayShort}` : light ? `Start light ${dayShort}` : d.status === "next" ? `Start ${dayShort} early` : `Start ${dayShort}`;
   const showLightToggle = !!plan && d.status !== "missed" && d.status !== "done";
 
   // ----- missed card
@@ -344,7 +347,7 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
                   </div>
                 </div>
                 {m.state === "light" && (
-                  <Link className="btn btn-primary btn-block" href={`/workout?date=${m.origin}`} prefetch={false}>
+                  <Link className="btn btn-secondary btn-block" href={`/workout?date=${m.origin}`} prefetch={false}>
                     Start light {mPlan.shortName}
                   </Link>
                 )}
@@ -443,6 +446,11 @@ export function TodayView({ data, v2 }: { data: TodayData; v2?: V2Today }) {
                     {(v2?.goals?.[e.slug] || v2?.lasts?.[e.slug]) && (
                       <span className="t-caption c-accent" style={{ textTransform: "none", letterSpacing: 0, whiteSpace: "nowrap" }}>
                         {v2?.goals?.[e.slug] ? `Goal ${v2.goals[e.slug]}` : `Last ${v2?.lasts?.[e.slug]}`}
+                      </span>
+                    )}
+                    {v2?.bests?.[e.slug] && (
+                      <span className="t-caption c-2" style={{ textTransform: "none", letterSpacing: 0, whiteSpace: "nowrap" }}>
+                        {v2.bests[e.slug]}
                       </span>
                     )}
                   </span>

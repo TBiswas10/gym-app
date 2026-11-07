@@ -1,4 +1,5 @@
 import { sydneyDate, weekdayOf } from "@/lib/dates";
+import { recentSlugs } from "@/lib/recent-exercises";
 import { createClient } from "@/lib/supabase/server";
 import { LibraryView } from "./LibraryView";
 
@@ -34,5 +35,21 @@ export default async function LibraryPage() {
     /* no plan marks */
   }
 
-  return <LibraryView plan={plan} todayWeekday={weekdayOf(sydneyDate())} items={data.map((e) => ({ slug: e.slug, name: e.name, group: e.muscle_group, kit: e.kit, muscles: e.muscles, setup: e.setup, cues: e.cues, mistakes: e.mistakes }))} />;
+  // Recently used: the exercises in your latest completed workouts, newest first. One query; RLS keeps it to your own sets.
+  let recent: string[] = [];
+  try {
+    const { data: logged } = await supabase
+      .from("sets")
+      .select("exercise_slug, workouts!inner(planned_date, status, is_test)")
+      .eq("workouts.status", "completed")
+      .eq("workouts.is_test", false)
+      .order("planned_date", { referencedTable: "workouts", ascending: false })
+      .order("logged_at", { ascending: false })
+      .limit(60);
+    recent = recentSlugs((logged ?? []).map((r) => r.exercise_slug));
+  } catch {
+    /* no recent list */
+  }
+
+  return <LibraryView plan={plan} recent={recent} todayWeekday={weekdayOf(sydneyDate())} items={data.map((e) => ({ slug: e.slug, name: e.name, group: e.muscle_group, kit: e.kit, muscles: e.muscles, setup: e.setup, cues: e.cues, mistakes: e.mistakes }))} />;
 }

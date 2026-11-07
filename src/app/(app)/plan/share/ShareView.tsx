@@ -76,7 +76,13 @@ export function ShareView({ links }: { links: LinkRow[] }) {
 
       <section className="col g3" aria-label="Active links">
         <h2 className="t-heading">Active links</h2>
-        {live.length === 0 && <p className="t-small c-2">No links yet.</p>}
+        {live.length === 0 && (
+          <div className="empty">
+            <span className="round round-subtle"><Icon name="share" /></span>
+            <h2 className="t-heading">No live links</h2>
+            <p className="t-small c-2">Create a link above and it appears here, with the day it stops working.</p>
+          </div>
+        )}
         {live.map((l) => (
           <div key={l.id} className="card">
             <div className="col g1">

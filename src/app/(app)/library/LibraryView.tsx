@@ -24,8 +24,36 @@ const GROUPS = ["All", "My plan", "Chest", "Back", "Shoulders", "Arms", "Legs", 
 const KITS = ["Any equipment", "Machine", "Cable", "Dumbbells", "Barbell", "Smith machine", "Bodyweight", "Bench"];
 const TABS = ["Setup", "How to do it", "Mistakes"];
 
-export function LibraryView({ items, plan = {}, todayWeekday }: { items: LibItem[]; plan?: Record<string, number[]>; todayWeekday?: number }) {
+function LibRow({ e, days, todayWeekday, onOpen }: { e: LibItem; days: number[]; todayWeekday?: number; onOpen: (e: LibItem) => void }) {
   const router = useRouter();
+  const inPlan = days.length > 0;
+  return (
+    <button
+      type="button"
+      className={`card${inPlan ? " lib-in" : ""}`}
+      style={{ flexDirection: "row", alignItems: "center", gap: "var(--space-3)", textAlign: "left", color: "var(--text)", minHeight: 72, padding: "var(--space-3) var(--space-4)" }}
+      aria-label={`Open guide for ${e.name}`}
+      onPointerDown={() => router.prefetch(`/library/${e.slug}`)}
+      onClick={() => onOpen(e)}
+    >
+      <ExerciseMedia slug={e.slug} name={e.name} thumb />
+      <span className="col" style={{ flex: 1, minWidth: 0 }}>
+        <strong className="t-heading">{e.name}</strong>
+        <span className="t-small c-2">{e.group} · {e.kit}</span>
+        {inPlan && (
+          <span className="lib-days" aria-label={`In your plan: ${days.map((d) => shortDay(d)).join(", ")}`}>
+            {days.map((d) => (
+              <span key={d} className={`lib-day${d === todayWeekday ? " is-today" : ""}`}>{d === todayWeekday ? "Today" : shortDay(d)}</span>
+            ))}
+          </span>
+        )}
+      </span>
+      <span className="c-2"><Icon name="chevron-right" /></span>
+    </button>
+  );
+}
+
+export function LibraryView({ items, plan = {}, recent = [], todayWeekday }: { items: LibItem[]; plan?: Record<string, number[]>; recent?: string[]; todayWeekday?: number }) {
   const [filter, setFilter] = useState("All");
   const [kit, setKit] = useState("Any equipment");
   const [query, setQuery] = useState("");
@@ -35,6 +63,9 @@ export function LibraryView({ items, plan = {}, todayWeekday }: { items: LibItem
   const planCount = items.filter((e) => inPlan(e.slug)).length;
   const rows = items.filter((e) => (filter === "All" || (filter === "My plan" ? inPlan(e.slug) : e.group === filter)) && (kit === "Any equipment" || e.kit === kit) && matchesQuery(e, query));
   const list = open ? [open.setup, open.cues, open.mistakes][tab] : [];
+  const recentItems = recent.map((slug) => items.find((e) => e.slug === slug)).filter((e): e is LibItem => e !== undefined);
+  const showRecent = recentItems.length > 0 && !query.trim() && filter === "All" && kit === "Any equipment";
+  const openGuide = (e: LibItem) => { setOpen(e); setTab(0); };
 
   return (
     <>
@@ -73,32 +104,19 @@ export function LibraryView({ items, plan = {}, todayWeekday }: { items: LibItem
             <button key={k} type="button" className="chip" role="tab" aria-selected={kit === k} onClick={() => setKit(k)}>{k}</button>
           ))}
         </div>
-        <div className="col g2 lib-grid">
-          {rows.map((e) => (
-            <button
-              key={e.slug}
-              type="button"
-              className={`card${inPlan(e.slug) ? " lib-in" : ""}`}
-              style={{ flexDirection: "row", alignItems: "center", gap: "var(--space-3)", textAlign: "left", color: "var(--text)", minHeight: 72, padding: "var(--space-3) var(--space-4)" }}
-              aria-label={`Open guide for ${e.name}`}
-              onPointerDown={() => router.prefetch(`/library/${e.slug}`)}
-              onClick={() => { setOpen(e); setTab(0); }}
-            >
-              <ExerciseMedia slug={e.slug} name={e.name} thumb />
-              <span className="col" style={{ flex: 1, minWidth: 0 }}>
-                <strong className="t-heading">{e.name}</strong>
-                <span className="t-small c-2">{e.group} · {e.kit}</span>
-                {inPlan(e.slug) && (
-                  <span className="lib-days" aria-label={`In your plan: ${plan[e.slug].map((d) => shortDay(d)).join(", ")}`}>
-                    {plan[e.slug].map((d) => (
-                      <span key={d} className={`lib-day${d === todayWeekday ? " is-today" : ""}`}>{d === todayWeekday ? "Today" : shortDay(d)}</span>
-                    ))}
-                  </span>
-                )}
-              </span>
-              <span className="c-2"><Icon name="chevron-right" /></span>
-            </button>
-          ))}
+        {showRecent && (
+          <div className="col g2">
+            <h2 className="t-eyebrow">Recently used</h2>
+            <div className="col g2 lib-grid">
+              {recentItems.map((e) => <LibRow key={e.slug} e={e} days={plan[e.slug] ?? []} todayWeekday={todayWeekday} onOpen={openGuide} />)}
+            </div>
+          </div>
+        )}
+        <div className="col g2">
+          {showRecent && <h2 className="t-eyebrow">All exercises</h2>}
+          <div className="col g2 lib-grid">
+            {rows.map((e) => <LibRow key={e.slug} e={e} days={plan[e.slug] ?? []} todayWeekday={todayWeekday} onOpen={openGuide} />)}
+          </div>
         </div>
         {rows.length === 0 && (
           <div className="empty">
