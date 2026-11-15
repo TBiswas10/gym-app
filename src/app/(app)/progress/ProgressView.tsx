@@ -204,8 +204,8 @@ export function ProgressView({ data }: { data: ProgressData }) {
             <section className="card" aria-label="New personal bests">
               <h2 className="t-heading">New PBs this week</h2>
               <div className="col g2">
-                {t.pbs.map((p) => (
-                  <div key={p.name} className="pb-row">
+                {t.pbs.map((p, i) => (
+                  <div key={`${p.name}-${i}`} className="pb-row">
                     <span className="badge-pb">PB</span>
                     <span className="t-body" style={{ flex: 1, fontWeight: 700 }}>{p.name}</span>
                     <span className="t-body" style={{ fontWeight: 700 }}>{p.text}</span>
