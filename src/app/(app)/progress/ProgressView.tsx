@@ -446,11 +446,12 @@ function VolumeCard({ weeks, point }: { weeks: { weekStart: string; kg: number }
   const to = weeks[weeks.length - 1].weekStart;
   const long = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-AU", { timeZone: "UTC", day: "numeric", month: "short" });
   return (
-    <section className="card" aria-label="Training volume">
-      <div className="row between baseline g2">
+    <details className="card fold" aria-label="Training volume">
+      <summary>
         <h2 className="t-heading">Training volume</h2>
-        {pct !== null && <span className={`tag ${pct >= 0 ? "tag-accent" : ""}`}>{pct >= 0 ? "+" : "−"}{Math.abs(pct)}% vs same point last week</span>}
-      </div>
+        <span className="t-small c-2">{kg(now)} this week</span>
+      </summary>
+      {pct !== null && <span className={`tag ${pct >= 0 ? "tag-accent" : ""}`} style={{ alignSelf: "flex-start" }}>{pct >= 0 ? "+" : "−"}{Math.abs(pct)}% vs same point last week</span>}
       <div className="col g1">
         <span className="num-m">{kg(now)}</span>
         <span className="t-small c-2">weight × reps so far this week{point ? `. Last week in full: ${kg(point.lastWeek)}.` : "."}</span>
@@ -464,7 +465,7 @@ function VolumeCard({ weeks, point }: { weeks: { weekStart: string; kg: number }
         ))}
       </div>
       <p className="t-small c-2">Weeks start on Monday ({long(from)} to {long(to)}). Progressive overload is doing a little more over time: more weight, or more reps at the same weight. The bars are the total of both.</p>
-    </section>
+    </details>
   );
 }
 

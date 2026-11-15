@@ -7,8 +7,12 @@ import { BACK, FRONT, intensity, LABEL, recovery, RECOVERY_WORD, type MapMuscle,
 export function BodyMap({ load }: { load: Record<MapMuscle, MuscleState> }) {
   const [view, setView] = useState<"front" | "back">("front");
   const [sel, setSel] = useState<MapMuscle | null>(null);
+  const [showAll, setShowAll] = useState(false);
   const muscles = view === "front" ? FRONT : BACK;
   const ordered = [...muscles].sort((a, b) => load[b].sets - load[a].sets);
+  // Only what you have trained in the last two weeks, unless nothing was or you ask for the rest.
+  const trained = ordered.filter((m) => load[m].sets > 0 || load[m].daysAgo !== null);
+  const listed = showAll || trained.length === 0 || trained.length === ordered.length ? ordered : trained;
   const cur = sel && muscles.includes(sel) ? sel : null;
   const lit = (m: MapMuscle): { color: string; opacity: number } | null => {
     const s = load[m];
@@ -40,11 +44,14 @@ export function BodyMap({ load }: { load: Record<MapMuscle, MuscleState> }) {
         })}
       </div>
       <div className="chip-row-tight" role="listbox" aria-label="Muscles">
-        {ordered.map((m) => (
+        {listed.map((m) => (
           <button key={m} type="button" className="chip" role="option" aria-selected={cur === m} onClick={() => setSel(cur === m ? null : m)}>
             {LABEL[m]} · {load[m].sets}
           </button>
         ))}
+        {listed.length < ordered.length && (
+          <button type="button" className="chip" onClick={() => setShowAll(true)}>Show all {ordered.length}</button>
+        )}
       </div>
       <p className="t-small c-2" role="status">
         {cur

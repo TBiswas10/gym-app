@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { Icon } from "./Icon";
 
 interface Cmd { label: string; href: string; key?: string; words: string }
@@ -28,13 +29,18 @@ export function CommandMenu() {
   const [q, setQ] = useState("");
   const [at, setAt] = useState(0);
   const [mod, setMod] = useState("Ctrl");
+  const [lifts, setLifts] = useState<Cmd[]>([]);
+  const loaded = useRef(false);
   const input = useRef<HTMLInputElement>(null);
   const list = useId();
 
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase();
-    return t ? COMMANDS.filter((c) => `${c.label} ${c.words}`.toLowerCase().includes(t)) : COMMANDS;
-  }, [q]);
+    if (!t) return COMMANDS;
+    const pages = COMMANDS.filter((c) => `${c.label} ${c.words}`.toLowerCase().includes(t));
+    // Exercises only show once you type, so the list stays short.
+    return [...pages, ...lifts.filter((c) => c.label.toLowerCase().includes(t)).slice(0, 6)];
+  }, [q, lifts]);
   const go = (c: Cmd) => {
     setOpen(false);
     router.push(c.href);
@@ -58,7 +64,14 @@ export function CommandMenu() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, router]);
   useEffect(() => {
-    if (open) input.current?.focus();
+    if (!open) return;
+    input.current?.focus();
+    if (loaded.current) return;
+    loaded.current = true; // the library is read-only for everyone, so one fetch on first open is enough
+    void createClient().from("exercises").select("slug, name").order("name").then(({ data, error }) => {
+      if (error) loaded.current = false;
+      setLifts((data ?? []).map((e) => ({ label: e.name, href: `/library/${e.slug}`, words: "exercise guide" })));
+    });
   }, [open]);
 
   return (
@@ -100,7 +113,7 @@ export function CommandMenu() {
               ))}
               {shown.length === 0 && <p className="t-small c-2" role="status">Nothing matches that.</p>}
             </div>
-            <p className="t-small c-2">↑ ↓ to move, Enter to open, Esc to close</p>
+            <p className="t-small c-2">Type an exercise name to open its guide. ↑ ↓ to move, Enter to open, Esc to close.</p>
           </div>
         </>
       )}

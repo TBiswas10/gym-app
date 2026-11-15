@@ -10,7 +10,8 @@ describe("body map", () => {
     expect(out).toContain("/bodymap/front.webp");
     expect(out).toContain("/bodymap/chest.webp");
     expect(out).toContain("Chest · 2");
-    expect(out).toContain("Front shoulders · 0");
+    expect(out).not.toContain("Front shoulders · 0"); // not trained in 2 weeks: behind "Show all"
+    expect(out).toContain("Show all 8");
     expect(out).toContain("/bodymap/quads.webp"); // trained 10 days ago: shown dimmer, in blue
     expect(out).not.toContain("/bodymap/abs.webp"); // not trained in 2 weeks: unlit
   });
