@@ -13,7 +13,6 @@ describe("validateOp", () => {
     expect(validateOp({ ...set, slug: "plank", kg: null, reps: null, secs: 35 })).not.toBeNull();
     expect(validateOp({ t: "delset", workoutId: W, slug: "chest", n: 2 })).not.toBeNull();
     expect(validateOp({ t: "skips", workoutId: W, slugs: ["lat", "lat", "row"] })).toEqual({ t: "skips", workoutId: W, slugs: ["lat", "row"] });
-    expect(validateOp({ t: "notes", slug: "chest", notes: "  Seat 3  " })).toEqual({ t: "notes", slug: "chest", notes: "Seat 3" });
     expect(validateOp({ t: "cardio", id: S, workoutId: W, kind: "bike", minutes: 10, params: { res: 5, rpm: 70, min: 10 }, feel: "easy", loggedOn: "2026-10-08" })).not.toBeNull();
     expect(validateOp({ t: "delcardio", id: S })).not.toBeNull();
     expect(validateOp({ t: "finish", workoutId: W, endedAt: new Date().toISOString() })).not.toBeNull();
@@ -60,8 +59,7 @@ describe("validateOp", () => {
     expect(validateOp({ t: "finish", workoutId: W, endedAt: "2020-01-01T00:00:00Z" })).toBeNull();
     expect(validateOp({ t: "finish", workoutId: W, endedAt: "not a date" })).toBeNull();
   });
-  it("rejects over-long notes and skip lists", () => {
-    expect(validateOp({ t: "notes", slug: "chest", notes: "x".repeat(201) })).toBeNull();
+  it("rejects over-long skip lists", () => {
     expect(validateOp({ t: "skips", workoutId: W, slugs: Array(31).fill("lat") })).toBeNull();
   });
 });

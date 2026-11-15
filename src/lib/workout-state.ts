@@ -33,7 +33,6 @@ export interface ExStep {
   sets: SetVal[];
   status: Status;
   swapped: boolean;
-  notes: string;
   light: boolean;
   // stepper values
   kg: number;
@@ -89,7 +88,6 @@ export interface InitExercise {
   last: LastTime | null;
   stall?: Stall | null;
   startWeightKg: number | null;
-  notes: string;
   backup: string;
   logged: SetVal[];
   variant: string | null; // backup name if it was swapped
@@ -127,7 +125,7 @@ export function buildState(init: WorkoutInit): WState {
       kind: "ex", slug: e.slug, name: e.name, backup: e.backup, exKind: e.kind, range: [e.repLo, e.repHi], planned: e.sets,
       step: e.step, increment: e.increment, last: e.last, stall: swapped ? null : e.stall ?? null, sets: e.logged,
       status: e.logged.length >= e.sets ? "done" : init.skipped.includes(e.slug) ? "skipped" : "todo",
-      swapped, notes: e.notes, light: pre.light && !swapped,
+      swapped, light: pre.light && !swapped,
       kg: lastSet ? (lastSet.kg ?? 0) : pre.kg,
       reps: lastSet ? (lastSet.reps ?? pre.reps) : pre.reps,
       secs: lastSet ? (lastSet.secs ?? pre.secs) : pre.secs,
@@ -313,10 +311,6 @@ export function swapTo(s: WState, name: string): WState {
   return replaceStep(s, s.cur, { backup: name, swapped: true, sets: [], status: "todo", editIdx: -1 } as Partial<ExStep>);
 }
 
-export const setNotes = (s: WState, notes: string): WState => {
-  const e = currentStep(s);
-  return isEx(e) ? replaceStep(s, s.cur, { notes }) : s;
-};
 
 // ---------------------------------------------------------------- chat quick log
 

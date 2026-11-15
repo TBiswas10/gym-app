@@ -190,10 +190,10 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
     supabase.from("template_days").select("full_name, cardio_name, cardio_label, cardio_minutes").eq("template_id", tpl.id).eq("weekday", w.weekday).maybeSingle(),
     supabase
       .from("template_exercises")
-      .select("position, sets, rep_lo, rep_hi, exercise_slug, exercises(name, kind, muscle_group, muscles, setup, cues, mistakes, weight_step_kg, default_increment_kg, default_notes, backup_name)")
+      .select("position, sets, rep_lo, rep_hi, exercise_slug, exercises(name, kind, muscle_group, muscles, setup, cues, mistakes, weight_step_kg, default_increment_kg, backup_name)")
       .eq("template_id", tpl.id).eq("weekday", w.weekday).order("position"),
     supabase.from("workouts").select("id").eq("status", "completed").neq("id", w.id).order("planned_date", { ascending: false }).limit(12),
-    supabase.from("user_exercise_settings").select("exercise_slug, increment_kg, start_weight_kg, notes, backup_name, form_note"),
+    supabase.from("user_exercise_settings").select("exercise_slug, increment_kg, start_weight_kg, backup_name, form_note"),
     supabase.from("sets").select("id, exercise_slug, set_number, variant, weight_kg, reps, seconds").eq("workout_id", w.id).order("set_number"),
     supabase.from("cardio_entries").select("id, kind, params, feel").eq("workout_id", w.id).limit(1),
     supabase.from("cardio_entries").select("kind, params, minutes").not("kind", "in", "(walk,stretch)").order("logged_at", { ascending: false }).limit(40),
@@ -223,7 +223,7 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
 
   const guides: Record<string, Guide> = {};
   const exercises: InitExercise[] = (exRes.data ?? []).map((e) => {
-    const ex = e.exercises as unknown as { name: string; kind: string; muscle_group: string; muscles: string[]; setup: string[]; cues: string[]; mistakes: string[]; weight_step_kg: number; default_increment_kg: number; default_notes: string; backup_name: string | null };
+    const ex = e.exercises as unknown as { name: string; kind: string; muscle_group: string; muscles: string[]; setup: string[]; cues: string[]; mistakes: string[]; weight_step_kg: number; default_increment_kg: number; backup_name: string | null };
     const s = settings.get(e.exercise_slug);
     guides[e.exercise_slug] = { name: ex.name, group: ex.muscle_group, muscles: ex.muscles, setup: ex.setup, cues: ex.cues, mistakes: ex.mistakes };
     const logged: SetVal[] = mySets.filter((m) => m.exercise_slug === e.exercise_slug).map((m) => ({ id: m.id, kg: m.weight_kg, reps: m.reps, secs: m.seconds }));
@@ -239,7 +239,6 @@ export async function loadWorkout(supabase: ServerClient, uid: string, dateParam
       last: lastBySlug[e.exercise_slug] ?? null,
       stall: setup ? null : stallCheck({ kind: asKind(ex.kind), repLo: e.rep_lo, repHi: e.rep_hi, step: Number(ex.weight_step_kg) }, recentBySlug[e.exercise_slug] ?? []),
       startWeightKg: s?.start_weight_kg != null ? Number(s.start_weight_kg) : null,
-      notes: s?.notes ?? ex.default_notes ?? "",
       backup: s?.backup_name ?? ex.backup_name ?? "a similar exercise",
       logged,
       variant: mySets.find((m) => m.exercise_slug === e.exercise_slug && m.variant)?.variant ?? null,

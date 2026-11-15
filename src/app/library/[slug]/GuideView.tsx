@@ -8,7 +8,7 @@ import { Icon } from "@/components/Icon";
 import { LineChart } from "@/components/LineChart";
 import { fmtNum } from "@/lib/format";
 import type { ExerciseKind } from "@/lib/plan";
-import { saveIncrement, saveFormNote, saveMachineNotes } from "./actions";
+import { saveIncrement, saveFormNote } from "./actions";
 
 const TABS = ["Setup", "How to do it", "Mistakes"];
 
@@ -23,14 +23,12 @@ interface Props {
   step: number;
   defaultIncrement: number;
   increment: number | null;
-  notes: string;
   formNote?: string;
   hasActive: boolean;
 }
 
-export function GuideView({ slug, name, kit, kind, muscles, tabs, series, step, defaultIncrement, increment, notes, formNote = "", hasActive }: Props) {
+export function GuideView({ slug, name, kit, kind, muscles, tabs, series, step, defaultIncrement, increment, formNote = "", hasActive }: Props) {
   const [tab, setTab] = useState(0);
-  const [note, setNote] = useState(notes);
   const [cue, setCue] = useState(formNote);
   const [jump, setJump] = useState<number | null>(increment);
   const [error, setError] = useState<string | null>(null);
@@ -127,15 +125,6 @@ export function GuideView({ slug, name, kit, kind, muscles, tabs, series, step, 
           <span className="t-small c-2">The one thing you keep getting wrong. It shows under this lift in your workout.</span>
         </section>
 
-        <section className="card">
-          <label className="t-heading" htmlFor="mnotes">Machine notes</label>
-          <input autoComplete="off"
-            id="mnotes" className="input" type="text" maxLength={200} value={note} placeholder="Seat height, pad position…"
-            onChange={(e) => setNote(e.target.value)}
-            onBlur={() => startTransition(async () => { const r = await saveMachineNotes(slug, note); setError(r.ok ? null : r.error); })}
-          />
-          <span className="t-small c-2">Saved to your account. Shows up in your workout.</span>
-        </section>
       </div>
       <div className="bottom-bar">
         <Link className="btn btn-primary btn-cta" href={hasActive ? "/workout" : "/library"}>{hasActive ? "Back to workout" : "Back to Library"}</Link>

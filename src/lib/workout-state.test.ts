@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addKg, moveExercise, adjust, adjustCardio, advance, applyEntry, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exercises,
-  finishCardio, goTo, logSet, nextIndex, sameAsLast, setFeel, setNotes, skip, startEdit, setValue, swap, totalSets, updateSet, restoreLast, wrapUp, restoreState,
+  finishCardio, goTo, logSet, nextIndex, sameAsLast, setFeel, skip, startEdit, setValue, swap, totalSets, updateSet, restoreLast, wrapUp, restoreState,
   type ExStep, type InitExercise, type SetVal, type WState, type WorkoutInit,
 } from "./workout-state";
 import type { Entry } from "./parser";
@@ -9,7 +9,7 @@ import type { Entry } from "./parser";
 const W = "w-1";
 const ex = (slug: string, name: string, over: Partial<InitExercise> = {}): InitExercise => ({
   slug, name, kind: "weight", repLo: 8, repHi: 12, sets: 2, step: 2.5, increment: 2.5,
-  last: { kg: 30, reps: [12, 12], secs: [] }, startWeightKg: null, notes: "", backup: `${name} backup`, logged: [], variant: null, ...over,
+  last: { kg: 30, reps: [12, 12], secs: [] }, startWeightKg: null, backup: `${name} backup`, logged: [], variant: null, ...over,
 });
 const init = (over: Partial<WorkoutInit> = {}): WorkoutInit => ({
   workoutId: W, loggedOn: "2026-10-08", light: false, setup: false, highSoreness: false, hold: false,
@@ -174,12 +174,6 @@ describe("swap", () => {
   });
 });
 
-describe("notes", () => {
-  it("keeps notes on the exercise", () => {
-    expect(ex0(setNotes(start(), "Seat 3"), "chest").notes).toBe("Seat 3");
-  });
-});
-
 describe("chat quick log", () => {
   const entry = (over: Partial<Entry>): Entry => ({ slug: "lat", name: "Lat pulldown", kind: "weight", kg: 35, reps: [10, 10], secs: [], total: 2, same: false, ...over });
   it("replaces an exercise's sets and marks it done when it is not the open one", () => {
@@ -309,7 +303,7 @@ describe("reordering and finishing a skipped lift", () => {
 
 describe("restoreState: the copy saved on the phone is only used when it still fits", () => {
   const exInit = (slug: string, logged: SetVal[] = []): InitExercise => ({
-    slug, name: slug, kind: "weight", repLo: 8, repHi: 12, sets: 2, step: 2.5, increment: 2.5, last: null, startWeightKg: null, notes: "", backup: "x", logged, variant: null,
+    slug, name: slug, kind: "weight", repLo: 8, repHi: 12, sets: 2, step: 2.5, increment: 2.5, last: null, startWeightKg: null, backup: "x", logged, variant: null,
   });
   const init = (exercises: InitExercise[]): WorkoutInit => ({
     workoutId: "w", loggedOn: "2026-10-12", light: false, setup: false, highSoreness: false, hold: false, skipped: [], exercises, extras: [],

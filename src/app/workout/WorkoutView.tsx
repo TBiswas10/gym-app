@@ -15,7 +15,7 @@ import { bestOfLast, bestSet, describeSet, goalText, isPB, lighten, overloadTarg
 import type { Op, Source } from "@/lib/ops";
 import { restoreState,
   addKg, adjust, adjustCardio, advance, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exSpec, exercises,
-  finishCardio, goTo, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setNotes, setValue, skip, startEdit, swap, swapTo,
+  finishCardio, goTo, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setValue, skip, startEdit, swap, swapTo,
   moveExercise, updateSet, restoreLast, wrapUp, type ExStep, type Step, type WState,
 } from "@/lib/workout-state";
 import type { Guide, WorkoutPage } from "@/lib/server/workout-data";
@@ -702,14 +702,6 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
             </div>
             {ex.swapped && <p className="t-small c-2">Machine busy? Backup: {ex.backup}. Tap Undo swap when the machine frees up.</p>}
 
-            <div className="field">
-              <label className="field-label" htmlFor="notes">Machine notes</label>
-              <input autoComplete="off"
-                className="input" id="notes" value={ex.notes} placeholder="Seat height, pad position…"
-                onChange={(e) => local(setNotes(ws, e.target.value))}
-                onBlur={() => enqueue([{ t: "notes", slug: ex.slug, notes: ex.notes.slice(0, 200) }])}
-              />
-            </div>
           </section>
         )}
 

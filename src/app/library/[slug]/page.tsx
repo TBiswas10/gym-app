@@ -16,7 +16,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
   // One round trip, all at once (the database is far from the server, so every extra query costs time).
   const [{ data: ex }, { data: mine }, { data: active }, { data: rows }] = await Promise.all([
     supabase.from("exercises").select("*").eq("slug", slug).maybeSingle(),
-    supabase.from("user_exercise_settings").select("increment_kg, notes, form_note").eq("exercise_slug", slug).maybeSingle(),
+    supabase.from("user_exercise_settings").select("increment_kg, form_note").eq("exercise_slug", slug).maybeSingle(),
     supabase.from("workouts").select("id").eq("status", "in_progress").maybeSingle(),
     supabase
       .from("sets")
@@ -41,7 +41,6 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       step={Number(ex.weight_step_kg)}
       defaultIncrement={Number(ex.default_increment_kg)}
       increment={mine?.increment_kg != null ? Number(mine.increment_kg) : null}
-      notes={mine?.notes ?? ex.default_notes ?? ""}
       formNote={mine?.form_note ?? ""}
       hasActive={!!active}
     />

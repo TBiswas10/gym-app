@@ -64,11 +64,6 @@ export function validateOp(raw: unknown): Op | null {
     case "delcardio": {
       return uuid(raw.id) ? { t: "delcardio", id: raw.id } : null;
     }
-    case "notes": {
-      const { slug: sl, notes } = raw;
-      if (!slug(sl) || typeof notes !== "string" || notes.length > 200) return null;
-      return { t: "notes", slug: sl, notes: notes.trim() };
-    }
     case "finish": {
       const { workoutId, endedAt } = raw;
       if (!uuid(workoutId) || typeof endedAt !== "string") return null;

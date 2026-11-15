@@ -126,7 +126,7 @@ export function registerMoreTools(server: McpServer, { supabase, uid }: Ctx): vo
     "get_settings",
     {
       title: "Settings",
-      description: "Alerts, bodyweight tracking, deload weeks, test mode, and the per-exercise weight jumps, start weights and machine notes. Read-only.",
+      description: "Alerts, bodyweight tracking, deload weeks, test mode, and the per-exercise weight jumps, start weights and form cues. Read-only.",
       annotations: READ,
     },
     async () => {
@@ -134,7 +134,7 @@ export function registerMoreTools(server: McpServer, { supabase, uid }: Ctx): vo
       if (!cx) return errorResult(NO_PROGRAM);
       const [ps, ex] = await Promise.all([
         supabase.from("program_state").select("rest_alerts, track_bodyweight, deload_weeks, test_mode").maybeSingle(),
-        supabase.from("user_exercise_settings").select("exercise_slug, increment_kg, start_weight_kg, notes, backup_name, form_note"),
+        supabase.from("user_exercise_settings").select("exercise_slug, increment_kg, start_weight_kg, backup_name, form_note"),
       ]);
       return textResult(
         json({
@@ -146,7 +146,6 @@ export function registerMoreTools(server: McpServer, { supabase, uid }: Ctx): vo
             exercise: cx.exercises.get(e.exercise_slug)?.name ?? e.exercise_slug,
             weight_jump_kg: e.increment_kg ?? undefined,
             start_weight_kg: e.start_weight_kg ?? undefined,
-            notes: e.notes ?? undefined,
             swap_substitute: e.backup_name ?? undefined,
             form_cue: e.form_note ?? undefined,
           })),

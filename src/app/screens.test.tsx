@@ -153,7 +153,7 @@ describe("Form guide", () => {
   const props = { slug: "lat", name: "Lat pulldown", kit: "Cable", kind: "weight" as const, muscles: ["Lats", "Biceps"], tabs: [["Set the pad."], ["Pull."], ["Swinging."]], step: 2.5, defaultIncrement: 2.5, increment: null, notes: "Notch 5", hasActive: false };
   it("shows steps, progress, weight jump and notes", () => {
     const out = renderToStaticMarkup(<GuideView {...props} series={[27.5, 30, 35]} />);
-    for (const t of ["Lat pulldown", "Set the pad.", "35 kg", "+7.5 kg overall", "Weight jump", "Default", "Machine notes", "Back to Library"]) expect(out).toContain(t);
+    for (const t of ["Lat pulldown", "Set the pad.", "35 kg", "+7.5 kg overall", "Weight jump", "Default", "My form cue", "Back to Library"]) expect(out).toContain(t);
   });
   it("copes with no history, and uses seconds for planks", () => {
     expect(renderToStaticMarkup(<GuideView {...props} series={[]} />)).toContain("No sessions yet");

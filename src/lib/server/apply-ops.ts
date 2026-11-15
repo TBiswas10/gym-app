@@ -48,10 +48,6 @@ export async function applyOne(supabase: ServerClient, op: Op): Promise<Outcome>
       const { error } = await supabase.from("cardio_entries").delete().eq("id", op.id);
       return classify(error);
     }
-    case "notes": {
-      const { error } = await supabase.from("user_exercise_settings").upsert({ exercise_slug: op.slug, notes: op.notes || null }, { onConflict: "user_id,exercise_slug" });
-      return classify(error);
-    }
     case "finish": {
       const { error } = await supabase.from("workouts").update({ status: "completed", ended_at: op.endedAt }).eq("id", op.workoutId).eq("status", "in_progress");
       return classify(error);
