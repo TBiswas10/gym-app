@@ -1,7 +1,7 @@
 import type { ServerClient } from "../supabase/server";
 import { addDays, programmeWeek, sydneyDate, weekDates } from "../dates";
 import type { ExerciseKind } from "../plan";
-import { activityGrid, checkInDue, consistency, e1rmSeries, records, exercisesWithData, nextCheckIn, topSeries, weekCells, volumeSamePoint, weeklyVolume, weekStats, type VolumeWeek, type WeekCell } from "../stats";
+import { activityGrid, checkInDue, consistency, e1rmSeries, records, type SeriesPoint, exercisesWithData, nextCheckIn, topSeries, weekCells, volumeSamePoint, weeklyVolume, weekStats, type VolumeWeek, type WeekCell } from "../stats";
 import { fmtNum } from "../format";
 import { balance, type Balance } from "../balance";
 import { rollingAverage, summarise, type WeightSummary } from "../bodyweight";
@@ -17,7 +17,10 @@ export interface ProgressData {
   bodyweight?: { avg: number[]; goal: number | null; summary: WeightSummary };
   /** finished sessions as a calendar: 16 weeks, Monday to Sunday */
   activity?: import("../stats").ActivityCell[][];
-  chips: { slug: string; name: string; kind: ExerciseKind; values: number[]; unit: "kg" | "s" | "reps"; e1rm?: number[] }[];
+  /** every logged session of a lift, oldest first (the screen picks the range); `e1rm` only for weighted lifts */
+  chips: { slug: string; name: string; kind: ExerciseKind; points: SeriesPoint[]; unit: "kg" | "s" | "reps"; e1rm?: SeriesPoint[] }[];
+  /** today in Sydney, so ranges are counted back from the right day */
+  today: string;
   thisWeek: { sessions: number; planned: number; sets: number; groups: [string, number][]; pbs: { name: string; text: string }[] };
   trend: { soreness: number; energy: number }[];
   cells: { week: number; cell: WeekCell }[];
@@ -28,7 +31,7 @@ export interface ProgressData {
   goals?: GoalView[];
   reviews?: ReviewView[];
   volume?: VolumeWeek[];
-  volumeNow?: { now: number; lastSame: number; lastWeek: number };
+  volumeNow?: { now: number; lastSame: number; lastWeek: number; setsNow: number; setsLastSame: number };
   /** push/pull, front/back and upper/lower sets over the last 4 weeks */
   balance?: Balance;
 }
@@ -67,8 +70,8 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
     const kind = kindOf(e.kind);
     return {
       slug, name: e.name, kind,
-      values: topSeries(workouts, sets, slug, kind, 8).map((p) => p.value),
-      e1rm: kind === "weight" ? e1rmSeries(workouts, sets, slug, 8).map((p) => p.value) : undefined,
+      points: topSeries(workouts, sets, slug, kind, 60),
+      e1rm: kind === "weight" ? e1rmSeries(workouts, sets, slug, 60) : undefined,
       unit: (kind === "timed" ? "s" : kind === "bodyweight" ? "reps" : "kg") as "kg" | "s" | "reps",
     };
   });
@@ -102,6 +105,7 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
       return balance(sets.filter((s) => recent.has(s.workout_id) && !s.variant).map((s) => ({ muscles: (info.get(s.exercise_slug)?.muscles as string[] | undefined) ?? [] })));
     })(),
     week,
+    today,
     empty: workouts.length === 0,
     chips,
     thisWeek: {

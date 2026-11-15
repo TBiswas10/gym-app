@@ -17,6 +17,19 @@ export interface ChartGeometry {
 
 const pct = (n: number, whole: number): string => `${((n / whole) * 100).toFixed(2)}%`;
 
+/** Round-number tick values inside [lo, hi]: steps of 1, 2, 2.5 or 5 (times a power of ten), three to five of them. */
+export function niceTicks(lo: number, hi: number): number[] {
+  const rough = Math.max(hi - lo, 1e-9) / 4;
+  const mag = 10 ** Math.floor(Math.log10(rough));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((x) => x >= rough) ?? 10 * mag;
+  const out: number[] = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(Math.round(v * 100) / 100);
+  return out;
+}
+
+/** The point (0-based) nearest an x position in chart units, for charts with too many points for one tap target each. */
+export const nearestIndex = (x: number, n: number): number => (n <= 1 ? 0 : Math.min(n - 1, Math.max(0, Math.round(((x - X0) / (X1 - X0)) * (n - 1)))));
+
 export function chartGeometry(values: number[], selected: number): ChartGeometry {
   const n = values.length;
   const mx = Math.max(...values);
@@ -29,8 +42,7 @@ export function chartGeometry(values: number[], selected: number): ChartGeometry
 
   const dots = values.map((v, i) => ({ i, x: px(i), y: py(v), left: pct(px(i), W) }));
   const path = dots.map((d, i) => `${i ? "L" : "M"}${d.x.toFixed(1)} ${d.y.toFixed(1)}`).join(" ");
-  const gridValues = [hi - (hi - lo) * 0.1, (hi + lo) / 2, lo + (hi - lo) * 0.1];
-  const grid = gridValues.map((v) => ({ y: py(v), left: pct(44, W), top: pct(py(v), H), label: Math.round(v) }));
+  const grid = niceTicks(lo, hi).map((v) => ({ y: py(v), left: pct(44, W), top: pct(py(v), H), label: v }));
 
   const sel = Math.min(Math.max(selected, 0), n - 1);
   const tx = Math.min(Math.max(px(sel), 40), 300);

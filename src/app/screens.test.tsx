@@ -17,10 +17,10 @@ import NotFound from "./not-found";
 import ErrorScreen from "./error";
 
 const progress = (over: Partial<ProgressData> = {}): ProgressData => ({
-  week: 3, empty: false,
+  week: 3, today: "2026-10-20", empty: false,
   chips: [
-    { slug: "chest", name: "Chest press", kind: "weight", values: [20, 22.5, 22.5, 25, 25, 27.5, 27.5, 30], unit: "kg" },
-    { slug: "lat", name: "Lat pulldown", kind: "weight", values: [27.5, 30, 35], unit: "kg" },
+    { slug: "chest", name: "Chest press", kind: "weight", points: [{ date: "2026-10-01", value: 20 }, { date: "2026-10-03", value: 22.5 }, { date: "2026-10-05", value: 22.5 }, { date: "2026-10-07", value: 25 }, { date: "2026-10-09", value: 25 }, { date: "2026-10-11", value: 27.5 }, { date: "2026-10-13", value: 27.5 }, { date: "2026-10-15", value: 30 }], unit: "kg" },
+    { slug: "lat", name: "Lat pulldown", kind: "weight", points: [{ date: "2026-10-03", value: 27.5 }, { date: "2026-10-05", value: 30 }, { date: "2026-10-07", value: 35 }], unit: "kg" },
   ],
   thisWeek: { sessions: 3, planned: 5, sets: 32, groups: [["Legs", 8], ["Chest", 6], ["Shoulders", 6], ["Arms", 6], ["Back", 4], ["Core", 2]], pbs: [{ name: "Chest press", text: "30 kg × 12" }] },
   trend: [{ soreness: 4, energy: 2 }, { soreness: 3, energy: 3 }, { soreness: 2, energy: 4 }],
@@ -30,9 +30,15 @@ const progress = (over: Partial<ProgressData> = {}): ProgressData => ({
 describe("Progress", () => {
   it("renders the design's sections", () => {
     const out = renderToStaticMarkup(<ProgressView data={progress()} />);
-    for (const t of ["Week 3 of 12", "Chest press", "30 kg", "+10 kg over", "Top set, last 8 sessions", "lifts are up", "Your lifts", "3/5", "32", "NEW PBS", "New PBs this week","How you’ve felt", "Lower is better", "Higher is better", "Easing", "12-week program", "Week 4 check-in next"]) expect(out).toContain(t);
+    for (const t of ["Week 3 of 12", "Chest press", "30 kg", "+10 kg over", "Top set, 8 sessions", "lifts are up", "Your lifts", "3/5", "32", "NEW PBS", "New PBs this week","How you’ve felt", "Lower is better", "Higher is better", "Easing", "12-week program", "Week 4 check-in next"]) expect(out).toContain(t);
     expect(out).toContain("wk-now");
     expect(out).toContain("wk-check");
+  });
+  it("compares this week with last, and offers 4 weeks, 12 weeks and all as the chart's range", () => {
+    const out = renderToStaticMarkup(<ProgressView data={progress({ volumeNow: { now: 540, lastSame: 500, lastWeek: 900, setsNow: 12, setsLastSame: 8 } })} />);
+    expect(out).toContain("Against the same point last week: +4 sets, +8% volume.");
+    for (const t of ["4 weeks", "12 weeks", ">All<"]) expect(out).toContain(t);
+    expect(out).toContain("1 Oct"); // the chart is labelled with dates, not session numbers
   });
   it("shows consistency and the run of full weeks", () => {
     const out = renderToStaticMarkup(<ProgressView data={progress()} />);
@@ -91,7 +97,7 @@ describe("Progress: empty sections", () => {
     for (const t of ["Your weekly total shows here", "Your body map lights up here", "Your balance shows here", "Your records show here", "Your bodyweight shows here"]) expect(out).toContain(t);
   });
   it("shows the volume and balance cards once there is data", () => {
-    const out = renderToStaticMarkup(<ProgressView data={progress({ volume: [{ weekStart: "2026-11-02", kg: 4200 }, { weekStart: "2026-11-09", kg: 1800 }], volumeNow: { now: 1800, lastSame: 1500, lastWeek: 4200 } })} />);
+    const out = renderToStaticMarkup(<ProgressView data={progress({ volume: [{ weekStart: "2026-11-02", kg: 4200 }, { weekStart: "2026-11-09", kg: 1800 }], volumeNow: { now: 1800, lastSame: 1500, lastWeek: 4200, setsNow: 9, setsLastSame: 8 } })} />);
     expect(out).toContain("Training volume");
     expect(out).not.toContain("Your weekly total shows here");
   });

@@ -55,6 +55,8 @@ export function buildBriefing(i: BriefInput): Briefing {
   if (i.highSoreness) notes.push("Soreness has been high. Hold your weights today.");
   else if (i.feel?.soreness != null && i.feel.soreness >= 4) notes.push("You were quite sore last time. Warm up well and move smoothly.");
   if (i.feel?.energy != null && i.feel.energy <= 2) notes.push("Energy was low last time. Stop a rep short if it drags.");
+  // Nothing above changed the plan: say so, with the numbers it is based on.
+  if (notes.length === 0 && i.feel?.energy != null && i.feel.soreness != null) notes.push(`Last session felt fine (energy ${i.feel.energy} of 5, soreness ${i.feel.soreness} of 5), so the plan stays as is.`);
   if (i.cardio.last) notes.push(`Last cardio: ${i.cardio.last}.`);
   if (i.goal) notes.push(`Goal: ${i.goal.name}, ${i.goal.toGo} to go.`);
 

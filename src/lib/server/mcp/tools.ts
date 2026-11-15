@@ -412,7 +412,7 @@ export function registerTools(server: McpServer, ctx: McpContext): void {
       return textResult(json({
         programme_week: `${p.week} of 12`,
         this_week: { sessions: `${p.thisWeek.sessions}/${p.thisWeek.planned}`, sets: p.thisWeek.sets, personal_bests: p.thisWeek.pbs.map((b) => `${b.name}: ${b.text}`), sets_per_muscle_group: Object.fromEntries(p.thisWeek.groups) },
-        strength: chips.slice(0, exercise ? 1 : 6).map((c) => ({ exercise: c.name, unit: c.unit, top_by_session_oldest_first: c.values, change: c.values.length > 1 ? Math.round((c.values[c.values.length - 1] - c.values[0]) * 10) / 10 : 0 })),
+        strength: chips.slice(0, exercise ? 1 : 6).map((c) => ({ exercise: c.name, unit: c.unit, top_by_session_oldest_first: c.points.slice(-8).map((q) => q.value), change: c.points.length > 1 ? Math.round((c.points[c.points.length - 1].value - c.points[Math.max(0, c.points.length - 8)].value) * 10) / 10 : 0 })),
         soreness_energy_recent: p.trend,
         next_check_in: p.due ? `Week ${p.due} (ready now)` : p.next ? `Week ${p.next}` : "all done",
       }));

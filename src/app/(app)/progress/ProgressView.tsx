@@ -9,19 +9,32 @@ import { GoalsCard, ReviewCard } from "@/components/V2Cards";
 import type { Balance } from "@/lib/balance";
 import { shareOf } from "@/lib/balance";
 import { direction, wordFor } from "@/lib/checkin-scale";
+import { addDays } from "@/lib/dates";
 import { fmtNum } from "@/lib/format";
 import type { ProgressData } from "@/lib/server/progress-data";
+import { weekCompare, type SeriesPoint } from "@/lib/stats";
 import { withTransition } from "@/lib/view-transition";
 
 const CELL_CLASS = { done: "wk-done", now: "wk-now", check: "wk-check", todo: "" } as const;
 const SHOWN = 4;
 
+type Range = "4w" | "12w" | "all";
+const RANGES: [Range, string][] = [["4w", "4 weeks"], ["12w", "12 weeks"], ["all", "All"]];
+const RANGE_DAYS = { "4w": 28, "12w": 84 } as const;
+const shortDate = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-AU", { timeZone: "UTC", day: "numeric", month: "short" });
+
 export function ProgressView({ data }: { data: ProgressData }) {
-  // Every lift with a number, biggest gain first. The one you tap gets the full chart on top.
-  const rows = data.chips.map((c, i) => {
-    const first = c.values[0];
-    const last = c.values[c.values.length - 1];
-    return { c, i, last, delta: last - first, pct: first ? (last - first) / first : 0, moved: c.values.length > 1 };
+  const [range, setRange] = useState<Range>("12w");
+  const since = range === "all" ? "" : addDays(data.today, -RANGE_DAYS[range]);
+  const within = (pts: SeriesPoint[]) => (since ? pts.filter((q) => q.date >= since) : pts);
+
+  // Every lift logged in the range, biggest gain first. The one you tap gets the full chart on top.
+  const rows = data.chips.flatMap((c, i) => {
+    const values = within(c.points).map((q) => q.value);
+    if (values.length === 0) return [];
+    const first = values[0];
+    const last = values[values.length - 1];
+    return [{ c, i, values, last, delta: last - first, pct: first ? (last - first) / first : 0, moved: values.length > 1 }];
   });
   const ordered = [...rows].sort((a, b) => b.pct - a.pct);
   const withChange = rows.filter((r) => r.moved);
@@ -34,12 +47,13 @@ export function ProgressView({ data }: { data: ProgressData }) {
   const [sel, setSel] = useState(lead ? lead.i : 0);
   const [all, setAll] = useState(false);
   const [metric, setMetric] = useState<"top" | "e1rm">("top");
-  const base = data.chips[sel];
-  const chip = base && metric === "e1rm" && base.e1rm && base.e1rm.length > 0 ? { ...base, values: base.e1rm } : base;
-  const showE1rm = metric === "e1rm" && chip !== base;
+  const chip = data.chips[sel];
+  const showE1rm = metric === "e1rm" && !!chip?.e1rm && chip.e1rm.length > 0;
+  const pts = chip ? within(showE1rm ? chip.e1rm! : chip.points) : [];
+  const values = pts.map((q) => q.value);
   const unit = chip?.unit ?? "kg";
   const fmt = (v: number) => `${fmtNum(v)} ${unit}`;
-  const delta = chip && chip.values.length > 1 ? chip.values[chip.values.length - 1] - chip.values[0] : 0;
+  const delta = values.length > 1 ? values[values.length - 1] - values[0] : 0;
   const shown = all ? ordered : ordered.slice(0, SHOWN);
 
   // Tapping a lift or a record brings its chart into view at the top.
@@ -49,8 +63,8 @@ export function ProgressView({ data }: { data: ProgressData }) {
     chartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   const openLift = (name: string) => {
-    const r = rows.find((x) => x.c.name === name);
-    if (r) showChart(r.i);
+    const r = data.chips.findIndex((x) => x.name === name);
+    if (r >= 0) showChart(r);
   };
 
   const streak = data.consistency.streak;
@@ -58,6 +72,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
     withChange.length > 0 ? `${up} of ${withChange.length} lifts are up.` : "",
     streak > 0 ? `${streak} full ${streak === 1 ? "week" : "weeks"} in a row.` : "",
   ].filter(Boolean).join(" ");
+  const compare = data.volumeNow ? weekCompare(data.volumeNow) : null;
   const energy = data.trend.map((t) => t.energy);
   const soreness = data.trend.map((t) => t.soreness);
   const t = data.thisWeek;
@@ -81,6 +96,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
           ) : (
             <>
               {story && <p className="t-small c-2">{story}</p>}
+              {compare && <p className="t-small c-2">{compare}</p>}
               <div className="grid3">
                 <div className="stat"><span className="num-m">{t.sessions}/{t.planned}</span><span className="t-caption c-2">SESSIONS</span></div>
                 <div className="stat"><span className="num-m">{t.sets}</span><span className="t-caption c-2">SETS</span></div>
@@ -110,26 +126,38 @@ export function ProgressView({ data }: { data: ProgressData }) {
           <section className="card" aria-label="Strength" ref={chartRef}>
             {chip ? (
               <>
-                {base?.e1rm && base.e1rm.length > 0 && (
+                {chip.e1rm && chip.e1rm.length > 0 && (
                   <div className="chip-row-tight" role="tablist" aria-label="What the chart shows">
                     <button type="button" className="chip" role="tab" aria-selected={!showE1rm} onClick={() => setMetric("top")}>Top set</button>
                     <button type="button" className="chip" role="tab" aria-selected={showE1rm} onClick={() => setMetric("e1rm")}>Estimated 1RM</button>
                   </div>
                 )}
-                <div className="row between g2" style={{ alignItems: "flex-end" }}>
-                  <span className="col" style={{ minWidth: 0 }}>
-                    <span className="t-caption c-2">{chip.name.toUpperCase()}</span>
-                    <span className="num-m">{fmt(chip.values[chip.values.length - 1])}</span>
-                  </span>
-                  {chip.values.length > 1 && <span className="tag tag-accent">{delta >= 0 ? "+" : "−"}{fmtNum(Math.abs(delta))} {unit} over {chip.values.length} sessions</span>}
+                {values.length > 0 ? (
+                  <>
+                    <div className="row between g2" style={{ alignItems: "flex-end" }}>
+                      <span className="col" style={{ minWidth: 0 }}>
+                        <span className="t-caption c-2">{chip.name.toUpperCase()}</span>
+                        <span className="num-m">{fmt(values[values.length - 1])}</span>
+                      </span>
+                      {values.length > 1 && <span className="tag tag-accent">{delta >= 0 ? "+" : "−"}{fmtNum(Math.abs(delta))} {unit} over {values.length} sessions</span>}
+                    </div>
+                    <LineChart
+                      key={`${chip.slug}-${showE1rm}-${range}`}
+                      values={values}
+                      labels={pts.map((q) => shortDate(q.date))}
+                      format={fmt}
+                      ariaLabel={`${chip.name} ${showE1rm ? "estimated one-rep max" : chip.kind === "timed" ? "longest hold" : chip.kind === "bodyweight" ? "best set" : "top set"} by session: ${values.map(fmtNum).join(", ")} ${unit}`}
+                    />
+                    <p className="t-small c-2">{showE1rm ? "Estimated 1RM (the most you could lift once, worked out from your best set)" : chip.kind === "timed" ? "Longest hold" : chip.kind === "bodyweight" ? "Best set" : "Top set"}, {values.length} {values.length === 1 ? "session" : "sessions"}. Tap the chart to read a point.</p>
+                  </>
+                ) : (
+                  <p className="t-small c-2">{chip.name} has no sessions in this range. Pick a longer one.</p>
+                )}
+                <div className="segmented" role="radiogroup" aria-label="How far back">
+                  {RANGES.map(([id, label]) => (
+                    <button key={id} type="button" className="seg" role="radio" aria-checked={range === id} onClick={() => setRange(id)}>{label}</button>
+                  ))}
                 </div>
-                <LineChart
-                  key={`${chip.slug}-${showE1rm}`}
-                  values={chip.values}
-                  format={fmt}
-                  ariaLabel={`${chip.name} ${showE1rm ? "estimated one-rep max" : chip.kind === "timed" ? "longest hold" : chip.kind === "bodyweight" ? "best set" : "top set"} by session: ${chip.values.map(fmtNum).join(", ")} ${unit}`}
-                />
-                <p className="t-small c-2">{showE1rm ? "Estimated 1RM (the most you could lift once, worked out from your best set)" : chip.kind === "timed" ? "Longest hold" : chip.kind === "bodyweight" ? "Best set" : "Top set"}, last {chip.values.length} sessions. Tap a point.</p>
               </>
             ) : (
               <div className="empty">
@@ -153,7 +181,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
                   return (
                     <button key={r.c.slug} type="button" className="srow" aria-pressed={r.i === sel} onClick={() => showChart(r.i)}>
                       <span className="srow-name">{r.c.name}</span>
-                      <Spark values={r.c.values} />
+                      <Spark values={r.values} />
                       <span className="srow-val">
                         <b>{fmtNum(r.last)} {r.c.unit}</b>
                         <span className={`t-caption ${dir}`} style={{ textTransform: "none", letterSpacing: 0 }}>

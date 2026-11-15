@@ -269,7 +269,7 @@ export function weeklyVolume(workouts: HistWorkout[], sets: HistSet[], today: st
  * This week so far against the SAME POINT of last week (Monday to today's weekday), so a Tuesday is not compared with a
  * whole finished week. `lastWeek` is last week in full, for reference.
  */
-export function volumeSamePoint(workouts: HistWorkout[], sets: HistSet[], today: string): { now: number; lastSame: number; lastWeek: number } {
+export function volumeSamePoint(workouts: HistWorkout[], sets: HistSet[], today: string): { now: number; lastSame: number; lastWeek: number; setsNow: number; setsLastSame: number } {
   const week = weekDates(today);
   const idx = week.indexOf(today);
   const lastMonday = addDays(week[0], -7);
@@ -278,13 +278,28 @@ export function volumeSamePoint(workouts: HistWorkout[], sets: HistSet[], today:
   let now = 0;
   let lastSame = 0;
   let lastWeek = 0;
+  let setsNow = 0;
+  let setsLastSame = 0;
   for (const s of sets) {
     const d = date.get(s.workout_id);
-    if (!d || !s.weight_kg || !s.reps) continue;
+    if (!d) continue;
+    if (d >= week[0] && d <= today) setsNow++;
+    if (d >= lastMonday && d <= lastCut) setsLastSame++;
+    if (!s.weight_kg || !s.reps) continue;
     const v = s.weight_kg * s.reps;
     if (d >= week[0] && d <= today) now += v;
     if (d >= lastMonday && d <= addDays(lastMonday, 6)) lastWeek += v;
     if (d >= lastMonday && d <= lastCut) lastSame += v;
   }
-  return { now: Math.round(now), lastSame: Math.round(lastSame), lastWeek: Math.round(lastWeek) };
+  return { now: Math.round(now), lastSame: Math.round(lastSame), lastWeek: Math.round(lastWeek), setsNow, setsLastSame };
+}
+
+/** One line: this week so far against the same point of last week, in sets and volume. null until last week has something to compare with. */
+export function weekCompare(p: { now: number; lastSame: number; setsNow: number; setsLastSame: number }): string | null {
+  if (p.setsLastSame === 0) return null;
+  const ds = p.setsNow - p.setsLastSame;
+  const sets = ds === 0 ? "the same sets" : `${ds > 0 ? "+" : "−"}${Math.abs(ds)} ${Math.abs(ds) === 1 ? "set" : "sets"}`;
+  const vol = p.lastSame > 0 ? Math.round(((p.now - p.lastSame) / p.lastSame) * 100) : null;
+  const volText = vol === null ? "" : vol === 0 ? ", the same volume" : `, ${vol > 0 ? "+" : "−"}${Math.abs(vol)}% volume`;
+  return `Against the same point last week: ${sets}${volText}.`;
 }

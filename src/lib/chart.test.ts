@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chartGeometry } from "./chart";
+import { chartGeometry, niceTicks, nearestIndex } from "./chart";
 
 describe("chart geometry", () => {
   it("spreads points across the plot area and draws a line", () => {
@@ -26,10 +26,18 @@ describe("chart geometry", () => {
     const flat = chartGeometry([30, 30, 30], 1);
     expect(flat.dots.every((d) => Number.isFinite(d.y))).toBe(true);
   });
-  it("gives three grid lines with rounded labels", () => {
-    const g = chartGeometry([20, 30], 0);
-    expect(g.grid).toHaveLength(3);
-    expect(g.grid.every((l) => Number.isInteger(l.label))).toBe(true);
+  it("labels the grid with round numbers inside the chart", () => {
+    const g = chartGeometry([27.5, 30, 35, 45], 0);
+    expect(g.grid.length).toBeGreaterThanOrEqual(2);
+    expect(g.grid.every((l) => l.label % 2.5 === 0)).toBe(true);
+    expect(g.grid.every((l) => l.y >= 30 && l.y <= 150)).toBe(true);
+  });
+  it("picks round tick steps and the nearest point to a tap", () => {
+    expect(niceTicks(19, 36)).toEqual([20, 25, 30, 35]);
+    expect(niceTicks(0.2, 1.1)).toEqual([0.25, 0.5, 0.75, 1]);
+    expect(nearestIndex(52, 5)).toBe(0);
+    expect(nearestIndex(322, 5)).toBe(4);
+    expect(nearestIndex(187, 5)).toBe(2);
   });
   it("keeps the tooltip on the chart and clamps a bad selection", () => {
     const first = chartGeometry([20, 30], 0);

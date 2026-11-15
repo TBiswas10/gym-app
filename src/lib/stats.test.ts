@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bestHint, checkInDue, consistency, records, exercisesWithData, nextCheckIn, strengthChange, topSeries, topValue, weekCells, volumeSamePoint, weeklyVolume, weekStats, type HistSet, type HistWorkout } from "./stats";
+import { bestHint, checkInDue, consistency, records, exercisesWithData, nextCheckIn, strengthChange, topSeries, weekCompare, topValue, weekCells, volumeSamePoint, weeklyVolume, weekStats, type HistSet, type HistWorkout } from "./stats";
 import { average, effectOf, reasonFor, recommend, suggestDeload } from "./review";
 
 const W = (id: string, d: string): HistWorkout => ({ id, planned_date: d });
@@ -185,15 +185,26 @@ describe("weeklyVolume (kg x reps per week)", () => {
   });
 });
 
+describe("weekCompare", () => {
+  it("says nothing until last week has sets to compare with", () => {
+    expect(weekCompare({ now: 100, lastSame: 0, setsNow: 4, setsLastSame: 0 })).toBeNull();
+  });
+  it("gives the change in sets and volume", () => {
+    expect(weekCompare({ now: 540, lastSame: 500, setsNow: 12, setsLastSame: 8 })).toBe("Against the same point last week: +4 sets, +8% volume.");
+    expect(weekCompare({ now: 400, lastSame: 500, setsNow: 7, setsLastSame: 8 })).toBe("Against the same point last week: −1 set, −20% volume.");
+    expect(weekCompare({ now: 500, lastSame: 500, setsNow: 8, setsLastSame: 8 })).toBe("Against the same point last week: the same sets, the same volume.");
+  });
+});
+
 describe("volumeSamePoint: compare a part-week with the same part of last week", () => {
   // Tuesday 20 Oct 2026. Last week: Mon 12 (300 kg), Thu 15 (600 kg). This week: Mon 19 (450 kg).
   const workouts = [W("a", "2026-10-12"), W("b", "2026-10-15"), W("c", "2026-10-19")];
   const sets = [S("a", "chest", 1, 30, 10), S("b", "chest", 1, 30, 20), S("c", "chest", 1, 30, 15)];
   it("on a Tuesday, compares Monday-Tuesday with last Monday-Tuesday, not with the whole of last week", () => {
-    expect(volumeSamePoint(workouts, sets, "2026-10-20")).toEqual({ now: 450, lastSame: 300, lastWeek: 900 });
+    expect(volumeSamePoint(workouts, sets, "2026-10-20")).toEqual({ now: 450, lastSame: 300, lastWeek: 900, setsNow: 1, setsLastSame: 1 });
   });
   it("by Sunday it is the whole week against the whole week", () => {
-    expect(volumeSamePoint(workouts, sets, "2026-10-25")).toEqual({ now: 450, lastSame: 900, lastWeek: 900 });
+    expect(volumeSamePoint(workouts, sets, "2026-10-25")).toEqual({ now: 450, lastSame: 900, lastWeek: 900, setsNow: 1, setsLastSame: 2 });
   });
   it("ignores sets with no weight or no reps", () => {
     expect(volumeSamePoint(workouts, [S("c", "plank", 1, null, null, 40), S("c", "back", 1, null, 12)], "2026-10-20").now).toBe(0);

@@ -20,6 +20,11 @@ describe("Today briefing", () => {
     expect(b.headline).toBe("Push, about 38 min");
     expect(b.sub).toBe("2 lifts, then bike or cross-trainer (10 min) to finish.");
   });
+  it("says why the plan stays as is when last session felt fine", () => {
+    expect(buildBriefing(brief({ feel: { soreness: 2, energy: 4 } })).notes[0]).toBe("Last session felt fine (energy 4 of 5, soreness 2 of 5), so the plan stays as is.");
+    expect(buildBriefing(brief({ feel: { soreness: 4, energy: 4 } })).notes.join(" ")).not.toContain("stays as is");
+    expect(buildBriefing(brief({ feel: null })).notes.join(" ")).not.toContain("stays as is");
+  });
   it("lists only the lifts that go up, as things to try", () => {
     expect(buildBriefing(brief()).tries).toEqual(["Chest press: go up to 32.5 kg"]);
   });
