@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { GestureTour } from "@/components/GestureTour";
 import { Icon } from "@/components/Icon";
+import { RefreshOnNewDay } from "@/components/RefreshOnNewDay";
 import { OnlineBanner } from "@/components/OnlineBanner";
 import { SwipeTabs } from "@/components/SwipeTabs";
 import { SyncKeeper } from "@/components/SyncKeeper";
 import { CommandMenu } from "@/components/CommandMenu";
 import { TabBar } from "@/components/TabBar";
+import { sydneyDate } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 
 // Screens with the bottom tab bar. Each page renders its own .scroll area and optional .bottom-bar.
@@ -30,6 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </Link>
       )}
       <SyncKeeper />
+      <RefreshOnNewDay renderedOn={sydneyDate(new Date())} />
       <SwipeTabs>{children}</SwipeTabs>
       <TabBar />
       <CommandMenu />
