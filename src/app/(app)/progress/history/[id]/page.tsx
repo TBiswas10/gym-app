@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { wordFor } from "@/lib/checkin-scale";
 import type { ExerciseKind } from "@/lib/plan";
 import { cardioLine, setLine } from "@/lib/server/mcp/format";
+import { EditSetRow } from "./EditSetRow";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
   const { data: w } = await supabase.from("workouts").select("id, planned_date, day_name, status, is_light").eq("id", id).maybeSingle();
   if (!w) notFound();
   const [setsRes, cardioRes, checkRes, exRes] = await Promise.all([
-    supabase.from("sets").select("exercise_slug, set_number, position, variant, weight_kg, reps, seconds").eq("workout_id", id).order("position").order("set_number"),
+    supabase.from("sets").select("id, exercise_slug, set_number, position, variant, weight_kg, reps, seconds").eq("workout_id", id).order("position").order("set_number"),
     supabase.from("cardio_entries").select("kind, minutes, feel, params").eq("workout_id", id),
     supabase.from("checkins").select("soreness, energy, notes, bodyweight_kg").eq("workout_id", id).maybeSingle(),
     supabase.from("exercises").select("slug, name, kind"),
@@ -54,10 +55,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
                 <div key={slug} className="col g1">
                   <strong className="t-body">{e?.name ?? slug}{rows[0].variant ? ` (swapped to ${rows[0].variant})` : ""}</strong>
                   {rows.map((r) => (
-                    <div key={r.set_number} className="row between">
-                      <span className="t-small c-2">Set {r.set_number}</span>
-                      <span className="t-body" style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{setLine(kind, r)}</span>
-                    </div>
+                    <EditSetRow key={r.id} set={r} kind={kind} exercise={e?.name ?? slug} line={setLine(kind, r)} />
                   ))}
                 </div>
               );

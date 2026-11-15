@@ -273,6 +273,11 @@ export function ProgressView({ data }: { data: ProgressData }) {
                 <LineChart values={data.bodyweight.avg} format={(v) => `${fmtNum(v)} kg`} ariaLabel={`Bodyweight 7-day average: ${data.bodyweight.avg.map(fmtNum).join(", ")} kg`} />
               )}
               <p className="t-small c-2">
+                {data.bodyweight.rate == null
+                  ? "A few more weigh-ins over the next week and you get a weekly trend."
+                  : `Trend: ${data.bodyweight.rate > 0 ? "+" : data.bodyweight.rate < 0 ? "−" : ""}${fmtNum(Math.abs(data.bodyweight.rate))} kg a week.`}
+              </p>
+              <p className="t-small c-2">
                 {data.bodyweight.goal === null
                   ? "Set a goal weight in Plan to see how far to go."
                   : data.bodyweight.summary.reached

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { sheetDrag } from "@/components/sheetDrag";
+import { againstLast, looksLikeTypo } from "@/lib/set-check";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
@@ -15,7 +16,7 @@ import { bestOfLast, bestSet, describeSet, goalText, isPB, lighten, overloadTarg
 import type { Op, Source } from "@/lib/ops";
 import { restoreState,
   addKg, adjust, adjustCardio, advance, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exSpec, exercises,
-  finishCardio, goTo, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, setValue, skip, startEdit, swap, swapTo,
+  finishCardio, goTo, logSet, nextIndex, sameAsLast, setCardioMinutes, setFeel, sessionVolume, setValue, skip, startEdit, swap, swapTo,
   moveExercise, updateSet, restoreLast, wrapUp, type ExStep, type Step, type WState,
 } from "@/lib/workout-state";
 import type { Guide, WorkoutPage } from "@/lib/server/workout-data";
@@ -290,6 +291,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   const editing = !!ex && ws.editIdx >= 0 && ws.editIdx < ex.sets.length;
   const complete = !!ex && ex.sets.length >= ex.planned;
   const exNo = steps.slice(0, ws.cur + 1).filter((x) => x.kind === "ex").length;
+  const volume = sessionVolume(ws);
   const ni = nextIndex(steps, ws.cur);
   const next = steps[ni] && steps[ni].status === "todo" && ni > ws.cur ? steps[ni] : null;
   const level = clock.level;
@@ -421,8 +423,16 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
   };
 
   // ---- actions
+  // A weight far above last time is asked about once: tap Log again to keep it.
+  const [typoAsked, setTypoAsked] = useState("");
+  const typoKey = ex ? `${ex.slug}:${ex.kg}` : "";
+  const suspicious = !!ex && ex.exKind === "weight" && looksLikeTypo(ex.kg, ex.last?.kg);
   const onLog = () => {
     if (!ex) return;
+    if (suspicious && typoAsked !== typoKey) {
+      setTypoAsked(typoKey);
+      return;
+    }
     const n = ex.sets.length + 1;
     haptic("tap");
     if (soundOn) primeAudio();
@@ -499,6 +509,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
             <i key={i} className={x.status === "done" ? "done" : x.status === "skipped" ? "skip" : i === ws.cur ? "now" : ""} />
           ))}
         </div>
+        {volume > 0 && <p className="t-small c-2 tnum" aria-label="Weight lifted so far">{volume.toLocaleString("en-AU")} kg lifted so far</p>}
 
         <details className="safety-pill">
           <summary><Icon name="triangle-alert" size={16} />Pain? Stop.</summary>
@@ -610,9 +621,14 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                 const isEd = editing && ws.editIdx === i;
                 const value = v ? setText(ex, v) : isCur ? "Now" : "";
                 const cls = isEd ? "logged editing" : v ? "logged" : isCur ? "now" : "todo";
+                const trend = v ? againstLast(ex.exKind, ex.swapped ? null : ex.last, i, v) : null;
                 return v ? (
                   <button key={i} type="button" className={`set ${cls}${just === i ? " anim-pop" : ""}`} aria-label={`Edit set ${i + 1}: ${value}`} onClick={() => local(startEdit(ws, i))}>
-                    <span className="set-n">Set {i + 1}</span><span className="set-v">{value}</span>
+                    <span className="set-n">Set {i + 1}</span>
+                    <span className="set-v">
+                      {trend && <span className={`set-trend set-trend-${trend}`} role="img" aria-label={trend === "up" ? "Better than last time" : trend === "down" ? "Lower than last time" : "Same as last time"}>{trend === "up" ? "↑" : trend === "down" ? "↓" : "="}</span>}
+                      {value}
+                    </span>
                   </button>
                 ) : (
                   <div key={i} className={`set ${cls}`}>
@@ -663,6 +679,9 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
                     {ex.last && <button type="button" className="chip" onClick={() => local(restoreLast(ws))}>Same as last time</button>}
                     {ex.exKind === "weight" && ex.increment > 0 && <button type="button" className="chip" onClick={() => local(addKg(ws, ex.increment))}>+{fmtNum(ex.increment)} kg</button>}
                   </div>
+                )}
+                {suspicious && typoAsked === typoKey && !editing && (
+                  <p className="t-small c-warning" role="alert">{fmtNum(ex.kg)} kg is far above last time ({fmtNum(ex.last?.kg ?? 0)} kg). Fix it, or tap Log again to keep it.</p>
                 )}
               </div>
             )}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rollingAverage, summarise } from "./bodyweight";
+import { rollingAverage, summarise, weightRate } from "./bodyweight";
 
 const p = (date: string, kg: number) => ({ date, kg });
 
@@ -19,5 +19,28 @@ describe("bodyweight", () => {
   });
   it("has nothing to say with no weigh-ins", () => {
     expect(summarise([], 70)).toBeNull();
+  });
+});
+
+describe("weightRate", () => {
+  const today = "2026-11-15";
+  it("is zero when the weight is flat", () => {
+    expect(weightRate([p("2026-11-01", 80), p("2026-11-04", 80), p("2026-11-08", 80), p("2026-11-15", 80)], today)).toBe(0);
+  });
+  it("is negative when the weight falls", () => {
+    expect(weightRate([p("2026-11-01", 80), p("2026-11-04", 79.7), p("2026-11-08", 79.3), p("2026-11-15", 78.6)], today)).toBe(-0.7);
+  });
+  it("is positive when the weight rises", () => {
+    expect(weightRate([p("2026-11-01", 80), p("2026-11-04", 80.3), p("2026-11-08", 80.7), p("2026-11-15", 81.4)], today)).toBe(0.7);
+  });
+  it("ignores weigh-ins older than 21 days", () => {
+    const old = p("2026-10-01", 95);
+    expect(weightRate([old, p("2026-11-01", 80), p("2026-11-04", 79.7), p("2026-11-08", 79.3), p("2026-11-15", 78.6)], today)).toBe(-0.7);
+  });
+  it("needs at least four weigh-ins", () => {
+    expect(weightRate([p("2026-11-01", 80), p("2026-11-08", 79.3), p("2026-11-15", 78.6)], today)).toBeNull();
+  });
+  it("needs the weigh-ins to span at least seven days", () => {
+    expect(weightRate([p("2026-11-09", 80), p("2026-11-10", 79.9), p("2026-11-12", 79.8), p("2026-11-15", 79.6)], today)).toBeNull();
   });
 });

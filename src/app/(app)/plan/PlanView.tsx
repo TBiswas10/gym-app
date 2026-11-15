@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { sheetDrag } from "@/components/sheetDrag";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition, type MouseEvent } from "react";
 import { Icon } from "@/components/Icon";
 import { RestoreBackup } from "@/components/RestoreBackup";
 import { ThemePicker } from "@/components/ThemePicker";
 import { logOut } from "@/lib/auth-actions";
 import { shortDay } from "@/lib/dates";
+import { loadQueue, unsentLogoutMessage } from "@/lib/sync-queue";
 import { defaultMachine, MACHINES, machineLabel, type MachineId } from "@/lib/cardio";
 import { estimateMinutes } from "@/lib/plan";
 import { add, estimateNote, move, rangeLabel, rangesFor, removeAt, setRange, setSets, type Row } from "@/lib/plan-edit";
@@ -28,6 +29,20 @@ export function PlanView({ data }: { data: PlanData }) {
   const [testMode, setTestModeState] = useState(!!data.testMode);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [unsentWarning, setUnsentWarning] = useState<string | null>(null);
+  const [logoutArmed, setLogoutArmed] = useState(false);
+
+  useEffect(() => setUnsentWarning(unsentLogoutMessage(loadQueue())), []);
+
+  /** With unsent changes the first tap only warns; the second tap logs out. The queue is re-read on each tap. */
+  const tapLogOut = (e: MouseEvent<HTMLButtonElement>) => {
+    if (logoutArmed) return;
+    const warning = unsentLogoutMessage(loadQueue());
+    setUnsentWarning(warning);
+    if (!warning) return;
+    e.preventDefault();
+    setLogoutArmed(true);
+  };
 
   const is5 = data.planType === "5day";
   const day = days[Math.min(dayIdx, days.length - 1)];
@@ -335,7 +350,12 @@ export function PlanView({ data }: { data: PlanData }) {
             </details>
           </section>
 
-          <form action={logOut}><button type="submit" className="btn btn-tertiary btn-block">Log out{data.email ? ` (${data.email})` : ""}</button></form>
+          <form action={logOut} className="col g2">
+            {unsentWarning && <p className="t-small c-2">{unsentWarning}</p>}
+            <button type="submit" className="btn btn-tertiary btn-block" onClick={tapLogOut}>
+              {logoutArmed && unsentWarning ? "Log out and lose them" : `Log out${data.email ? ` (${data.email})` : ""}`}
+            </button>
+          </form>
         </section>
         {pending && <span className="sr" role="status">Saving</span>}
       </div>

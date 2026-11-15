@@ -477,3 +477,10 @@ export function restoreState(saved: unknown, fresh: WState): WState | null {
   const editOk = Number.isInteger(s.editIdx) && s.editIdx >= 0 && cur?.kind === "ex" && s.editIdx < cur.sets.length;
   return { ...s, steps, editIdx: editOk ? s.editIdx : -1 };
 }
+
+/** Kilograms lifted so far today: weight × reps over every logged set (holds and bodyweight-only sets add nothing). */
+export function sessionVolume(s: WState): number {
+  let total = 0;
+  for (const e of exercises(s)) for (const v of e.sets) if (v.kg && v.reps) total += v.kg * v.reps;
+  return Math.round(total);
+}

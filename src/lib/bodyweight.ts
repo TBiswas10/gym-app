@@ -28,6 +28,21 @@ export interface WeightSummary {
   reached: boolean;
 }
 
+/** kg a week: the least-squares slope of the weigh-ins in the last 21 days. Null until there are 4 spanning 7 days. */
+export function weightRate(weigh: WeightPoint[], today: string): number | null {
+  const end = t(today);
+  const win = weigh.filter((p) => t(p.date) >= end - 20 * DAY && t(p.date) <= end);
+  if (win.length < 4) return null;
+  const xs = win.map((p) => (t(p.date) - end) / DAY);
+  const ys = win.map((p) => p.kg);
+  if (Math.max(...xs) - Math.min(...xs) < 7) return null;
+  const mx = xs.reduce((n, x) => n + x, 0) / xs.length;
+  const my = ys.reduce((n, y) => n + y, 0) / ys.length;
+  const cov = xs.reduce((n, x, i) => n + (x - mx) * (ys[i] - my), 0);
+  const varx = xs.reduce((n, x) => n + (x - mx) ** 2, 0);
+  return r1((cov / varx) * 7) || 0; // || 0 turns a rounded -0 into 0
+}
+
 export function summarise(points: WeightPoint[], goal: number | null): WeightSummary | null {
   if (points.length === 0) return null;
   const avg = rollingAverage(points);

@@ -16,6 +16,14 @@ export const takeBatch = (queue: Op[], max = MAX_OPS_PER_CALL): Op[] => queue.sl
 /** The queue after a send: everything the server finished is removed, the rest waits. */
 export const afterFlush = (queue: Op[], sent: number, result: FlushResult): Op[] => queue.slice(Math.min(Math.max(0, result.done), sent));
 
+/** The warning before logging out with unsent changes, or null when everything has been sent. */
+export function unsentLogoutMessage(queue: Op[]): string | null {
+  const n = queue.length;
+  if (n === 0) return null;
+  if (n === 1) return "1 change saved on this phone has not been sent yet. Log out anyway and it is lost.";
+  return `${n} changes saved on this phone have not been sent yet. Log out anyway and they are lost.`;
+}
+
 export function loadQueue(): Op[] {
   try {
     const raw = window.localStorage.getItem(KEY);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addKg, moveExercise, adjust, adjustCardio, advance, applyEntry, buildState, cancelEdit, chooseMachine, currentStep, deleteSet, diffOps, exercises,
-  finishCardio, goTo, logSet, nextIndex, sameAsLast, setFeel, skip, startEdit, setValue, swap, totalSets, updateSet, restoreLast, wrapUp, restoreState,
+  finishCardio, goTo, logSet, nextIndex, sameAsLast, setFeel, sessionVolume, skip, startEdit, setValue, swap, totalSets, updateSet, restoreLast, wrapUp, restoreState,
   type ExStep, type InitExercise, type SetVal, type WState, type WorkoutInit,
 } from "./workout-state";
 import type { Entry } from "./parser";
@@ -352,5 +352,14 @@ describe("restoreState: the copy saved on the phone is only used when it still f
     const out = restoreState(clone(fresh), withServerSet)!;
     const chest = out.steps.find((s) => s.kind === "ex" && s.slug === "chest") as ExStep;
     expect(chest.sets).toHaveLength(1);
+  });
+});
+
+describe("sessionVolume", () => {
+  it("adds weight × reps over logged sets only", () => {
+    let s = start();
+    expect(sessionVolume(s)).toBe(0);
+    s = logSet(s, "v1");
+    expect(sessionVolume(s)).toBe(ex0(s, "chest").sets[0].kg! * ex0(s, "chest").sets[0].reps!);
   });
 });

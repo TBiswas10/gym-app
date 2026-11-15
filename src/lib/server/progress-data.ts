@@ -4,7 +4,7 @@ import type { ExerciseKind } from "../plan";
 import { activityGrid, checkInDue, consistency, e1rmSeries, records, type SeriesPoint, exercisesWithData, nextCheckIn, topSeries, weekCells, volumeSamePoint, weeklyVolume, weekStats, type VolumeWeek, type WeekCell } from "../stats";
 import { fmtNum } from "../format";
 import { balance, type Balance } from "../balance";
-import { rollingAverage, summarise, type WeightSummary } from "../bodyweight";
+import { rollingAverage, summarise, weightRate, type WeightSummary } from "../bodyweight";
 import { muscleLoad, type MapMuscle, type MuscleState } from "../bodymap";
 import { loadGoals, loadReviews, type GoalView, type ReviewView } from "./v2-data";
 
@@ -14,7 +14,7 @@ export interface ProgressData {
   /** per muscle: weighted sets this week and days since last trained */
   bodyMap?: Record<MapMuscle, MuscleState>;
   /** weigh-ins (7-day average), the goal and the summary; only when bodyweight tracking is on */
-  bodyweight?: { avg: number[]; goal: number | null; summary: WeightSummary };
+  bodyweight?: { avg: number[]; goal: number | null; summary: WeightSummary; rate?: number | null };
   /** finished sessions as a calendar: 16 weeks, Monday to Sunday */
   activity?: import("../stats").ActivityCell[][];
   /** every logged session of a lift, oldest first (the screen picks the range); `e1rm` only for weighted lifts */
@@ -93,7 +93,7 @@ export async function loadProgress(supabase: ServerClient, now = new Date()): Pr
   );
   return {
     bodyMap,
-    bodyweight: bwSummary ? { avg: rollingAverage(weigh).slice(-30), goal: goalKg, summary: bwSummary } : undefined,
+    bodyweight: bwSummary ? { avg: rollingAverage(weigh).slice(-30), goal: goalKg, summary: bwSummary, rate: weightRate(weigh, today) } : undefined,
     activity: activityGrid(workouts, today),
     goals,
     reviews,

@@ -83,6 +83,11 @@ describe("Progress: bodyweight", () => {
     const out = renderToStaticMarkup(<ProgressView data={progress({ bodyweight: { avg: [82, 81, 80], goal: 76, summary: { now: 80, start: 82, change: -2, toGo: 4, direction: "down", reached: false } } })} />);
     for (const t of ["Bodyweight", "7-day average", "80 kg", "since you started", "4 kg to go to 76 kg"]) expect(out).toContain(t);
   });
+  it("shows the weekly trend, or says when there are not enough weigh-ins for one", () => {
+    const summary = { now: 80, start: 82, change: -2, toGo: 4, direction: "down" as const, reached: false };
+    expect(renderToStaticMarkup(<ProgressView data={progress({ bodyweight: { avg: [82, 81, 80], goal: 76, summary, rate: -0.4 } })} />)).toContain("Trend: −0.4 kg a week.");
+    expect(renderToStaticMarkup(<ProgressView data={progress({ bodyweight: { avg: [82, 81, 80], goal: 76, summary, rate: null } })} />)).toContain("A few more weigh-ins over the next week and you get a weekly trend.");
+  });
   it("asks for a goal when there is none, and says how to turn it on when tracking is off", () => {
     expect(renderToStaticMarkup(<ProgressView data={progress({ bodyweight: { avg: [80], goal: null, summary: { now: 80, start: 80, change: 0, toGo: null, direction: null, reached: false } } })} />)).toContain("Set a goal weight in Plan");
     const off = renderToStaticMarkup(<ProgressView data={progress()} />);

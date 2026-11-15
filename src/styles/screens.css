@@ -380,3 +380,7 @@ a.verdict:active{transform:scale(.985);transition-duration:var(--dur-press)}
 .skel-screen{animation:fade var(--dur-base) var(--ease-out) 300ms both}
 @media (prefers-reduced-motion:reduce){.skel-screen{animation:fade 1ms linear 300ms both}}
 .ch-hit-all{position:absolute;left:0;right:0;top:5%;height:84%;cursor:pointer}
+.set-trend{margin-right:var(--space-2);font-weight:800}
+.set-trend-up{color:var(--success)}
+.set-trend-down{color:var(--warning)}
+.set-trend-same{color:var(--text-2)}
