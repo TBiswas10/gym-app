@@ -10,7 +10,7 @@ Full feature and architecture notes live in `docs/FEATURES.md` (read it when tou
 - Database changes: `supabase-change` skill. Exercise animations: `render-exercise` skill (Blender 5.2 headless, `scripts/exercise-renders`).
 
 ## Plan facts (never change)
-Mon Push, Tue Pull, Wed Legs + Core, Thu Upper (light), Sat Lower + Core + Cardio, Fri and Sun rest. All exercises 2 sets. Cardio at the END. Sessions 45-50 min. 12 weeks: 1-2 find your weight, 3-12 build; check-ins 4, 8, 12.
+Mon Push, Tue Pull, Wed Legs + Core, Thu Upper, Sat Lower + Core + Cardio, Fri and Sun rest. All exercises 2 sets. Cardio at the END. Sessions 45-50 min. 12 weeks: 1-2 find your weight, 3-12 build; check-ins 4, 8, 12.
 
 ## Rules that are easy to break
 - Styling ONLY from tokens (`tailwind.config.js`, `src/styles/tokens.css`, `components.css`; one-offs in `screens.css`). No new colours, sizes, radii, fonts, hex values.

@@ -18,7 +18,7 @@ const DAYS: Record<number, PlanDay> = {
   1: day(1, "Push", "Push", "Bike or cross-trainer", "10 min", 10, [ex("chest", "Chest press"), ex("incline", "Incline dumbbell press"), ex("shoulder", "Shoulder press"), ex("lateral", "Lateral raise"), ex("triceps", "Triceps pushdown")]),
   2: day(2, "Pull", "Pull", "Rower or bike", "8–10 min", 9, [ex("lat", "Lat pulldown"), ex("row", "Seated row"), ex("reardelt", "Rear delt fly"), ex("hammer", "Hammer curl"), ex("cablecurl", "Cable curl")]),
   3: day(3, "Legs", "Legs + Core", "Easy treadmill walk", "10 min", 10, [ex("legpress", "Leg press"), ex("legcurl", "Seated leg curl", "weight", 10, 12), ex("legext", "Leg extension"), ex("calf", "Calf raise", "weight", 12, 15), ex("plank", "Plank", "timed", 20, 40)]),
-  4: day(4, "Upper", "Upper (light)", "Bike or treadmill", "10 min", 10, [ex("chest", "Chest press"), ex("lat", "Lat pulldown"), ex("shoulder", "Shoulder press"), ex("row", "Seated row"), ex("triceps", "Triceps pushdown"), ex("cablecurl", "Cable curl")], true),
+  4: day(4, "Upper", "Upper", "Bike or treadmill", "10 min", 10, [ex("chest", "Chest press"), ex("lat", "Lat pulldown"), ex("shoulder", "Shoulder press"), ex("row", "Seated row"), ex("triceps", "Triceps pushdown"), ex("cablecurl", "Cable curl")], true),
   6: day(6, "Lower", "Lower + Core + Cardio", "Incline treadmill walk or stair machine", "15 min", 15, [ex("legpress", "Leg press"), ex("legcurl", "Seated leg curl", "weight", 10, 12), ex("back", "Back extension", "bodyweight", 10, 12), ex("glute", "Glute bridge / hip thrust", "weight", 10, 12), ex("calf", "Calf raise", "weight", 12, 15), ex("plank", "Plank", "timed", 20, 40)]),
 };
 
@@ -70,9 +70,9 @@ describe("Today screen", () => {
   it("renders the week 3 example from the design", () => {
     const out = html(make({ today: "2026-10-08", start: "2026-09-21", completed: ["2026-10-05", "2026-10-07"], totalDone: 9, weekDone: 2, weekSets: 20, toGo: ["Thursday", "Saturday"] }));
     expect(out).toContain("Thursday 8 October · Week 3 of 12");
-    expect(out).toContain("Upper (light) today"); // the header says what today is
+    expect(out).toContain("Upper today"); // the header says what today is
     expect(out).toContain("Today · Thursday");
-    expect(out).toContain("Upper (light)");
+    expect(out).toContain("Upper");
     expect(out).toContain("6 exercises · 2 sets each");
     expect(out).toContain("~40"); // 30 lifts + 10 cardio (cardio is the warm-up)
     expect(out).toContain("Start Upper");
@@ -133,7 +133,7 @@ describe("Today screen", () => {
   });
 
   it("says Resume on the day that has a session open", () => {
-    const d = { ...make({ today: "2026-10-08", start: "2026-09-21", completed: ["2026-10-05", "2026-10-07"] }), inProgress: { id: "w1", dayName: "Upper (light)", startedAt: "2026-10-08T06:00:00Z" } };
+    const d = { ...make({ today: "2026-10-08", start: "2026-09-21", completed: ["2026-10-05", "2026-10-07"] }), inProgress: { id: "w1", dayName: "Upper", startedAt: "2026-10-08T06:00:00Z" } };
     const out = html(d);
     expect(out).toContain("Resume Upper");
     expect(out).not.toContain("Start Upper");

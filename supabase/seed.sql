@@ -36,12 +36,12 @@ insert into public.program_templates (id, user_id, plan_type, name) values
   ('00000000-0000-4000-8000-000000000003', null, '3day', '3-day full body')
 on conflict (id) do update set name = excluded.name;
 
--- 5-day split: Mon Push, Tue Pull, Wed Legs + Core, Thu Upper (light), Sat Lower + Core + Cardio. Fri and Sun rest.
+-- 5-day split: Mon Push, Tue Pull, Wed Legs + Core, Thu Upper, Sat Lower + Core + Cardio. Fri and Sun rest.
 insert into public.template_days (template_id, weekday, short_name, full_name, is_light, cardio_name, cardio_label, cardio_minutes) values
   ('00000000-0000-4000-8000-000000000005', 1, 'Push',  'Push',                  false, 'Bike or cross-trainer',                         '10 min',   10),
   ('00000000-0000-4000-8000-000000000005', 2, 'Pull',  'Pull',                  false, 'Rower or bike',                                 '8–10 min',  9),
   ('00000000-0000-4000-8000-000000000005', 3, 'Legs',  'Legs + Core',           false, 'Easy treadmill walk',                           '10 min',   10),
-  ('00000000-0000-4000-8000-000000000005', 4, 'Upper', 'Upper (light)',         true,  'Bike or treadmill',                             '10 min',   10),
+  ('00000000-0000-4000-8000-000000000005', 4, 'Upper', 'Upper',                 true,  'Bike or treadmill',                             '10 min',   10),
   ('00000000-0000-4000-8000-000000000005', 6, 'Lower', 'Lower + Core + Cardio', false, 'Incline treadmill walk or stair machine',       '15 min',   15)
 on conflict (template_id, weekday) do update set
   short_name = excluded.short_name, full_name = excluded.full_name, is_light = excluded.is_light,
@@ -76,7 +76,7 @@ insert into public.template_exercises (template_id, weekday, position, exercise_
   ('00000000-0000-4000-8000-000000000005', 3, 3, 'legext',    2, 8, 12),
   ('00000000-0000-4000-8000-000000000005', 3, 4, 'calf',      2, 12, 15),
   ('00000000-0000-4000-8000-000000000005', 3, 5, 'plank',     2, 20, 40),
-  -- 5-day: Thu Upper (light)
+  -- 5-day: Thu Upper
   ('00000000-0000-4000-8000-000000000005', 4, 1, 'chest',     2, 8, 12),
   ('00000000-0000-4000-8000-000000000005', 4, 2, 'lat',       2, 8, 12),
   ('00000000-0000-4000-8000-000000000005', 4, 3, 'shoulder',  2, 8, 12),

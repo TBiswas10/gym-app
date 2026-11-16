@@ -324,7 +324,7 @@ export function ProgressView({ data }: { data: ProgressData }) {
             <details className="fold-in">
               <summary>How the 12 weeks work</summary>
               <div className="col g1 t-small c-2" style={{ paddingTop: "var(--space-2)" }}>
-                <span><strong className="c-text">Every week:</strong> Mon Push, Tue Pull, Wed Legs + Core, Thu Upper (light), Sat Lower + Core + Cardio. Fri and Sun rest.</span>
+                <span><strong className="c-text">Every week:</strong> Mon Push, Tue Pull, Wed Legs + Core, Thu Upper, Sat Lower + Core + Cardio. Fri and Sun rest.</span>
                 <span>Weeks 1 and 2: find your weight. Weeks 3 to 12: build.</span>
               </div>
             </details>

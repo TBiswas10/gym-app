@@ -19,7 +19,7 @@ describe("session length", () => {
       [w(5), 10], // Push
       [w(5), 9], // Pull
       [[...w(4), "timed"], 10], // Legs + Core
-      [w(6), 10], // Upper (light)
+      [w(6), 10], // Upper
       [[...w(5), "timed"], 15], // Lower + Core + Cardio
       [[...w(5), "timed"], 10], // Full A
       [w(6), 10], // Full B
