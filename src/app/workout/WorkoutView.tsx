@@ -717,7 +717,7 @@ export function WorkoutView({ page }: { page: WorkoutPage }) {
               <button type="button" className="btn btn-secondary" onClick={() => (ex.swapped ? run(swap(ws), { toast: "Swap undone.", undoable: true }) : setSwapOpen(true))}>
                 <Icon name="repeat" />{ex.swapped ? "Undo swap" : "Swap"}
               </button>
-              <button type="button" className="btn btn-secondary" onClick={onSkip}><Icon name="skip-forward" />Skip</button>
+              <button type="button" className="btn btn-tertiary" onClick={onSkip}><Icon name="skip-forward" />Skip</button>
             </div>
             {ex.swapped && <p className="t-small c-2">Machine busy? Backup: {ex.backup}. Tap Undo swap when the machine frees up.</p>}
 

@@ -39,7 +39,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
       </div>
       <div className="col g1">
         <span className="t-small c-2">{DAY.format(new Date(`${w.planned_date}T00:00:00Z`))}</span>
-        <h1 className="t-title">{w.day_name}{w.is_light ? " (light)" : ""}</h1>
+        <h1 className="t-title">{w.day_name}</h1>
       </div>
 
       <section className="card">

@@ -57,7 +57,7 @@ export default async function HistoryPage() {
             return (
               <Link key={w.id} className="list-row row-link" href={`/progress/history/${w.id}`} style={{ textDecoration: "none", color: "var(--text)" }}>
                 <span className="col" style={{ flex: 1, minWidth: 0 }}>
-                  <strong className="t-body">{w.day_name}{w.is_light ? " (light)" : ""}</strong>
+                  <strong className="t-body">{w.day_name}</strong>
                   <span className="t-small c-2">
                     {dayOf(w.planned_date)} · {count.get(w.id) ?? 0} sets{secs !== null ? ` · ${mmss(secs)}` : ""}
                   </span>
@@ -65,6 +65,7 @@ export default async function HistoryPage() {
                     {c?.soreness != null && c?.energy != null ? `Soreness: ${wordFor("soreness", c.soreness)} · Energy: ${wordFor("energy", c.energy)}` : "No check-in"}
                   </span>
                 </span>
+                <span className="c-2"><Icon name="chevron-right" size={16} /></span>
               </Link>
             );
           })}
