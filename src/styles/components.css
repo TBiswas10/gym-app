@@ -246,7 +246,7 @@ a,button,[role="tab"],input,select,textarea{touch-action:manipulation}
 
 /* ----- workout components ----- */
 .set{appearance:none;min-height:56px;width:100%;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:transparent;color:var(--text);padding:var(--space-2) var(--space-3);display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:var(--space-2);text-align:left;font:600 1rem/1.25rem var(--font-body);transition:background var(--dur-press) var(--ease-out),border-color var(--dur-press) var(--ease-out),transform var(--dur-press) var(--ease-out)}
-.set .set-n{display:flex;flex-direction:column;gap:0}.set .set-n small{font:600 .8125rem/1rem var(--font-body);color:var(--text-2)}
+.set .set-n{display:flex;flex-direction:column;gap:0;white-space:nowrap}.set .set-n small{font:600 .8125rem/1rem var(--font-body);color:var(--text-2)}
 .set .set-v{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
 .set.logged{background:var(--accent-subtle);border-color:var(--accent-edge)}
 .set.logged .set-n{color:var(--accent)}

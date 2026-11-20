@@ -259,11 +259,6 @@ a.verdict:active{transform:scale(.985);transition-duration:var(--dur-press)}
 .segs>i.skip{background:var(--border-strong);border-color:var(--hairline)}
 .segs>i.now{background:var(--accent-subtle);border-color:var(--accent);box-shadow:0 0 8px 0 var(--accent-edge);transform:scaleY(1.25)}
 /* Safety reminder: one line until you ask. */
-.safety-pill{align-self:flex-start;border-radius:var(--radius-full);border:1px solid var(--warning-edge);background:var(--warning-subtle);color:var(--text-2)}
-.safety-pill summary{display:inline-flex;align-items:center;gap:var(--space-2);min-height:var(--size-tap);padding:0 var(--space-3);font:700 .8125rem/1rem var(--font-body);color:var(--warning);cursor:pointer;list-style:none}
-.safety-pill summary::-webkit-details-marker{display:none}
-.safety-pill[open]{border-radius:var(--radius-md)}
-.safety-pill p{padding:0 var(--space-3) var(--space-3)}
 /* One glass briefing card: cue, goal, last time. */
 .briefing{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-3);border-radius:var(--radius-md);background:var(--glass);border:1px solid var(--hairline);box-shadow:inset 0 1px 0 0 var(--highlight)}
 .briefing .key-cue,.briefing .goal-line{padding:0;border-left:0;background:none;border-radius:0}
@@ -304,8 +299,6 @@ a.verdict:active{transform:scale(.985);transition-duration:var(--dur-press)}
 /* Swap drawer rows */
 .swap-row{appearance:none;width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:var(--space-1);min-height:var(--size-tap);padding:var(--space-3);border-radius:var(--radius-md);background:var(--surface);border:1px solid var(--hairline);box-shadow:inset 0 1px 0 0 var(--highlight);color:var(--text);text-align:left;transition:transform var(--dur-spring) var(--ease-spring),border-color var(--dur-press) var(--ease-out)}
 .swap-row:active{transform:scale(.985);border-color:var(--accent);transition-duration:var(--dur-press)}
-.safety-pill{align-self:center}
-.head .safety-pill[open]{align-self:stretch}
 .t-title{letter-spacing:-0.025em}
 .scroll.under-bar{padding-bottom:calc(var(--space-6) + env(safe-area-inset-bottom))}
 /* Our own 3D renders: square frames, shown whole (not cropped) on the raised plate. */
@@ -383,4 +376,4 @@ a.verdict:active{transform:scale(.985);transition-duration:var(--dur-press)}
 .set-trend{margin-right:var(--space-2);font-weight:800}
 .set-trend-up{color:var(--success)}
 .set-trend-down{color:var(--warning)}
-.set-trend-same{color:var(--text-2)}
+
